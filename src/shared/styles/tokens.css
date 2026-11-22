@@ -1,0 +1,38 @@
+/* shared/styles/tokens.css : seul endroit où les couleurs sont écrites en dur */
+/* Source : docs/charte-graphique.md §11. Ailleurs, utiliser uniquement ces variables. */
+:root {
+  /* Couleurs principales */
+  --couleur-iut: #F5403D;
+  --couleur-action: #DD2E2B;
+  --couleur-action-texte: #FFFFFF;
+  --couleur-structure: #6C4DF0;
+  --couleur-succes: #0E9F8E;
+  --couleur-alerte: #FFB020;
+  --couleur-fond: #F4F2FB;
+  --couleur-texte: #231F3A;
+  --couleur-carte: #FFFFFF;
+
+  /* Réponses A à D */
+  --couleur-reponse-a: #E8478C;
+  --couleur-reponse-b: #6C4DF0;
+  --couleur-reponse-c: #0E9F8E;
+  --couleur-reponse-d: #E58A00;
+
+  /* Typographie */
+  --police: "Rubik", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+
+  /* Formes et tailles */
+  --rayon: 12px;
+  --bordure: 1px solid rgba(35, 31, 58, 0.12);
+  --hauteur-touche-min: 44px;
+  --hauteur-touche-reponse: 62px;
+
+  /* Animations */
+  --duree-animation: 200ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duree-animation: 0ms;
+  }
+}

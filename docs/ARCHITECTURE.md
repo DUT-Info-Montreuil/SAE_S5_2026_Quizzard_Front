@@ -76,6 +76,7 @@ src/
     ├── config/             Lecture de la configuration (import.meta.env)
     ├── http/               Client HTTP commun : session, CSRF, jeton de participant, erreurs
     ├── lib/                Utilitaires sans lien avec une feature (dates, heure du serveur…)
+    ├── styles/             Variables de la charte (tokens.css, seul fichier avec des couleurs en dur), police Rubik
     └── ui/                 Composants communs de la charte (bouton, carte, champ, en-tête avec logo…)
 ```
 

@@ -88,13 +88,14 @@ Indicateur à part : connexion perdue (bandeau) ; à la reconnexion ──▶ CH
 
 - [x] **B0 Préparation** : branche recréée depuis `9d32892`, `npm ci`, `npm run lint` et `npm run build` passent,
   plan enregistré.
-- [ ] **B1 Socle partagé** : `shared/config` (`VITE_API_URL`, mode développement) ; `shared/http` (fetch,
-  `credentials: 'include'`, `X-Jeton-Participant`, erreur typée `{status, error, request_id, champs, code?}`, relevé
-  de l'écart sur `Date` tolérant à `null`) ; `shared/lib` (`lireInstantServeur`, temps restant, échéance avec repli
-  D12).
+- [x] **B1 Socle partagé** : `shared/config` (`VITE_API_URL`, mode développement) ; `shared/http` (fetch,
+  `credentials: 'include'`, `X-Jeton-Participant`, erreur typée `{statut, error, request_id, champs, code?}`, relevé
+  de l'écart sur `Date` tolérant à `null`) ; `shared/lib` (`lireInstantServeur`, écart avec le serveur ou `null`,
+  temps restant) ; `shared/styles` (variables de la charte, police Rubik embarquée). Le repli D12 n'est pas dans
+  `shared` : il dépend de `dureeSec`, propre à l'UC9 (déplacé en B2).
 - [ ] **B2 Domaine `seance`** : types, `reponseComplete` (avec `choixMultiple`), corps de la requête par type, table
-  des erreurs (code ou statut → message, corrigeable, écran), reducer de la machine à états (dont `renvoi` et
-  `DEJA_REPONDU` → CONFIRMEE).
+  des erreurs (code ou statut → message, corrigeable, écran), échéance avec repli D12 (réception + `dureeSec`),
+  reducer de la machine à états (dont `renvoi` et `DEJA_REPONDU` → CONFIRMEE).
 - [ ] **B3 API `seance`** : `envoyerReponse`. `lireEtat` et `reconnexion` partiellement bloqués (formes inconnues,
   question B7).
 - [ ] **B4 Présentation E8** : décompte (barre et chiffre), énoncé, image facultative, zone QCM (radio ou cases selon
