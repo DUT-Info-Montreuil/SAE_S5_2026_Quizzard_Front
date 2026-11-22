@@ -5,6 +5,7 @@ import { Decompte } from './Decompte.tsx'
 import { ZoneQcm } from './ZoneQcm.tsx'
 import { ZoneRelier } from './ZoneRelier.tsx'
 import { ZoneReponseLibre } from './ZoneReponseLibre.tsx'
+import './ecranEtudiant.css'
 import './EcranQuestion.css'
 
 interface EcranQuestionProps {
@@ -36,7 +37,7 @@ export function EcranQuestion({
   const validerDesactive = verrouille || !reponseComplete(question, saisie)
 
   return (
-    <main className="ecran-question">
+    <main className="ecran-etudiant">
       <header className="ecran-question-entete">
         <LogoIut />
       </header>
@@ -87,7 +88,7 @@ export function EcranQuestion({
         />
       )}
 
-      <div className="ecran-question-pied">
+      <div className="ecran-etudiant-pied">
         {erreur && <p className="message-erreur" role="alert">{erreur}</p>}
         <button
           type="button"

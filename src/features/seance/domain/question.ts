@@ -69,6 +69,10 @@ export interface ResultatQuestion {
   nombreParticipants: number
   // TODO(UC9): type de `evolution` inconnu (plan UC9, question B10). Valeur provisoire : un nombre.
   evolution: number
+  /** Libellés de la bonne réponse, s'ils sont fournis (UC9 : « Afficher E9 : justesse, bonne réponse, points et rang »). */
+  // TODO(UC9): champ absent du contrat ; vient-il de `/user/queue/resultat` ou de `/correction` (plan UC9, questions
+  // B7 et B10) ? Valeur provisoire : liste de libellés, facultative.
+  bonneReponse?: string[]
 }
 
 /** Longueur maximale d'une réponse libre (UC9, contrat du message). */

@@ -101,8 +101,11 @@ Indicateur à part : connexion perdue (bandeau) ; à la reconnexion ──▶ CH
 - [x] **B4 Présentation E8** : décompte (barre et chiffre), énoncé, image facultative, zone QCM (radio ou cases selon
   `choixMultiple`), zone relier, zone réponse libre (1000 caractères au plus), Valider, message d'erreur. Données
   par props. Démo temporaire sans back : `http://localhost:5173/?demo=e8` (dossier `src/app/demo/`, à supprimer).
-- [ ] **B5 Présentation E9** : réponse enregistrée, temps écoulé, erreur, résultat (points, score total, rang sur le
-  nombre de participants, évolution), attente.
+- [x] **B5 Présentation E9** : réponse enregistrée, temps écoulé, erreur, résultat (points, score total, rang sur le
+  nombre de participants, évolution), attente. Aussi : séance close, boutons « Rejoindre » (401) et « Recharger »
+  (400), bonne réponse si elle est fournie (champ provisoire `bonneReponse`). Le rang de l'étudiant seul : la liste des
+  voisins de la maquette n'est pas affichée (charte §10). Libellés provisoires à valider (U3). Styles communs E8/E9
+  dans `ecranEtudiant.css`. Démo temporaire : `http://localhost:5173/?demo=e9`.
 - [ ] **B6 Temps réel** – **bloqué** par le choix du client STOMP : trame `CONNECT` avec `X-Jeton-Participant`,
   abonnements `question`, `etat`, `correction`, `/user/queue/resultat`, reconnexion puis resynchronisation REST,
   bandeau, renvoi D14.
