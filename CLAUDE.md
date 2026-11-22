@@ -9,9 +9,15 @@ Un enseignant importe un cours PDF, y intercale des pages de quiz et de classeme
 les étudiants répondent depuis leur téléphone (QR code ou lien), sans compte ou avec leur compte LDAP pour un quiz noté.
 Le back-end Spring Boot est dans le dépôt séparé `DUT-Info-Montreuil/SAE_S5_2026_Quizzard_Back`.
 
-Pile (vérifiée dans `package.json`) : **React 19**, **TypeScript 6**, **Vite 8**, ESLint 10. Pas encore installés,
-à choisir par l'équipe : routeur, client STOMP, outil de test. PDF.js est retenu par l'étude de faisabilité pour le
+Pile front (vérifiée dans `package.json`) : **React 19.3**, **TypeScript 6.0**, **Vite 8.3**
+(`@vitejs/plugin-react` 6), **ESLint 10** (`typescript-eslint` 8, `eslint-plugin-react-hooks` 7,
+`eslint-plugin-react-refresh` 0.5). Node.js **20.19+ ou 22.13+** (`CONTRIBUTING.md`). Pas encore installés, à
+choisir par l'équipe : routeur, client STOMP, outil de test. PDF.js est retenu par l'étude de faisabilité pour le
 rendu du PDF mais n'est pas encore installé.
+
+Pile back (dépôt séparé, versions non vérifiables depuis ce dépôt) : **Spring Boot** lancé par Maven
+(`./mvnw spring-boot:run`), WebSocket/STOMP sur `/ws`, PostgreSQL (dépôts `Postgres…Repository` dans les cas
+d'utilisation), JPA. Versions exactes de Java, Spring Boot et PostgreSQL : voir le `pom.xml` du back.
 
 Documentation à lire avant de modifier une zone :
 
@@ -91,6 +97,24 @@ Règles à respecter :
 - JSON échangé avec le back en `camelCase`, mêmes noms que le back (`idCours`, `dureeParDefautSec`).
 - Couleurs, tailles et espacements passent par les variables CSS de la charte (`docs/DESIGN.md`), jamais en dur.
 - Mettre à jour `docs/` dans la même modification qu'un écran, une route du front ou un usage de l'API.
+- Style observé dans le code existant (`src/app/main.tsx`, `vite.config.ts`, `eslint.config.js`) : indentation de
+  2 espaces, guillemets simples, pas de point-virgule, virgule finale dans les appels multilignes, imports nommés
+  depuis `react`, import des fichiers locaux avec l'extension (`'../App.tsx'`). Aucun Prettier configuré : ESLint
+  est la seule vérification de style.
+- TypeScript strict sur l'inutilisé (`noUnusedLocals`, `noUnusedParameters`) et `verbatimModuleSyntax` : importer
+  les types avec `import type`. `erasableSyntaxOnly` : pas d'`enum` ni de `namespace`, préférer des unions de
+  chaînes.
+
+## Workflow
+
+- Les cas d'utilisation (spécifications) sont dans `docs/uc/` (PDF d'origine et conversion Markdown, par exemple
+  `docs/uc/UC9-repondre-question.md`). Les plans d'implémentation sont dans `docs/plans/`.
+- **Toujours lire le plan correspondant avant de coder**, puis le cas d'utilisation qu'il cite. Cocher (`- [x]`)
+  dans le plan chaque étape terminée, dans la même modification que le code.
+- **Les messages affichés à l'utilisateur sont exactement ceux de la spec** (colonne « Message affiché » du tableau
+  des cas d'erreur, libellés des écrans) : mot pour mot, ponctuation et guillemets compris. Ne pas reformuler.
+- **Si une information manque ou se contredit** dans la spec, le plan ou `docs/`, **demander au lieu de deviner** ;
+  ne pas inventer de route, de code d'erreur, de message ni de règle de calcul.
 
 ## Git et livraison
 
@@ -107,3 +131,7 @@ Règles à respecter :
 - Plusieurs règles sont « à valider » avec le client (charte graphique, mode d'affichage du cours en séance, bornes
   des durées et des pseudonymes, durées de conservation) : ne pas les présenter comme définitives.
 - `index.html` a encore `lang="en"` et le titre du modèle Vite.
+- **UC9 et STOMP (tranché)** : l'UC9 fait envoyer la réponse par STOMP (`SEND /app/sessions/{idSession}/reponses`),
+  mais **la règle 4 prime** : le front envoie la réponse en REST, `POST /api/public/sessions/{codeAcces}/reponses`
+  (`docs/API.md`), et lit l'erreur dans la réponse HTTP. Codes d'erreur et messages affichés : ceux du tableau de
+  l'UC9.
