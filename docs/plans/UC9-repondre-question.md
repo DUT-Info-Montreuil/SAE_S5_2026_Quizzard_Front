@@ -93,7 +93,7 @@ Indicateur à part : connexion perdue (bandeau) ; à la reconnexion ──▶ CH
   de l'écart sur `Date` tolérant à `null`) ; `shared/lib` (`lireInstantServeur`, écart avec le serveur ou `null`,
   temps restant) ; `shared/styles` (variables de la charte, police Rubik embarquée). Le repli D12 n'est pas dans
   `shared` : il dépend de `dureeSec`, propre à l'UC9 (déplacé en B2).
-- [ ] **B2 Domaine `seance`** : types, `reponseComplete` (avec `choixMultiple`), corps de la requête par type, table
+- [x] **B2 Domaine `seance`** : types, `reponseComplete` (avec `choixMultiple`), corps de la requête par type, table
   des erreurs (code ou statut → message, corrigeable, écran), échéance avec repli D12 (réception + `dureeSec`),
   reducer de la machine à états (dont `renvoi` et `DEJA_REPONDU` → CONFIRMEE).
 - [ ] **B3 API `seance`** : `envoyerReponse`. `lireEtat` et `reconnexion` partiellement bloqués (formes inconnues,
