@@ -117,3 +117,28 @@ export function basculerProposition(choix: number[], idProposition: number, choi
   if (choix.includes(idProposition)) return choix.filter((id) => id !== idProposition)
   return choixMultiple ? [...choix, idProposition] : [idProposition]
 }
+
+/**
+ * Relie un élément de gauche à un élément de droite (D8). Chaque élément n'est relié qu'une fois :
+ * un lien existant de l'un ou l'autre élément est remplacé.
+ */
+export function relier(liens: Lien[], gauche: number, droite: number): Lien[] {
+  return [...liens.filter((l) => l.gauche !== gauche && l.droite !== droite), { gauche, droite }]
+}
+
+/** Défait le lien de l'élément donné, à gauche ou à droite. */
+export function delier(liens: Lien[], cote: 'gauche' | 'droite', id: number): Lien[] {
+  return liens.filter((l) => l[cote] !== id)
+}
+
+/** Saisie vide du type de la question, à l'arrivée d'une nouvelle question. */
+export function saisieVide(question: Question): ReponseSaisie {
+  switch (question.type) {
+    case 'QCM':
+      return { type: 'QCM', propositions: [] }
+    case 'POINTS_A_RELIER':
+      return { type: 'POINTS_A_RELIER', liens: [] }
+    case 'REPONSE_LIBRE':
+      return { type: 'REPONSE_LIBRE', texte: '' }
+  }
+}

@@ -98,9 +98,9 @@ Indicateur à part : connexion perdue (bandeau) ; à la reconnexion ──▶ CH
   reducer de la machine à états (dont `renvoi` et `DEJA_REPONDU` → CONFIRMEE).
 - [x] **B3 API `seance`** : `envoyerReponse` (acceptée avec écart, refusée avec `ErreurHttp`, échec réseau).
   `lireEtat` et `reconnexion` : signatures seules, formes inconnues (question B7).
-- [ ] **B4 Présentation E8** : décompte (barre et chiffre), énoncé, image facultative, zone QCM (radio ou cases selon
+- [x] **B4 Présentation E8** : décompte (barre et chiffre), énoncé, image facultative, zone QCM (radio ou cases selon
   `choixMultiple`), zone relier, zone réponse libre (1000 caractères au plus), Valider, message d'erreur. Données
-  par props.
+  par props. Démo temporaire sans back : `http://localhost:5173/?demo=e8` (dossier `src/app/demo/`, à supprimer).
 - [ ] **B5 Présentation E9** : réponse enregistrée, temps écoulé, erreur, résultat (points, score total, rang sur le
   nombre de participants, évolution), attente.
 - [ ] **B6 Temps réel** – **bloqué** par le choix du client STOMP : trame `CONNECT` avec `X-Jeton-Participant`,

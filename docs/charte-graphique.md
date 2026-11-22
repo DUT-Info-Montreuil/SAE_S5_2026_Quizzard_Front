@@ -116,6 +116,16 @@
   --bordure: 1px solid rgba(35, 31, 58, 0.12);
   --hauteur-touche-min: 44px;
   --hauteur-touche-reponse: 62px;
+  --arete: 4px;
+  --largeur-ecran-max: 480px;
+
+  /* Espacements et tailles de texte (écrans étudiant, d'après la maquette E8) */
+  --espace: 16px;
+  --espace-petit: 8px;
+  --taille-texte: 1rem;
+  --taille-reponse: 1.25rem;
+  --taille-enonce: 1.625rem;
+  --taille-decompte: 2rem;
 
   /* Animations */
   --duree-animation: 200ms;
@@ -128,5 +138,6 @@
 }
 ```
 
-> Les valeurs `--rayon`, `--bordure` et `--duree-animation` ne figurent pas dans le cahier des
+> Les valeurs `--rayon`, `--bordure`, `--duree-animation`, `--arete`, `--largeur-ecran-max`, les espacements et
+> les tailles de texte ne figurent pas dans le cahier des
 > charges : ce sont des propositions à ajuster d'après les maquettes.
