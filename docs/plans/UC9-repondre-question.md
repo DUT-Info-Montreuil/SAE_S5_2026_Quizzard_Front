@@ -13,7 +13,8 @@ enseignant, UC7), correction des réponses libres (UC16).
   (`src/features/*` et `src/shared/*` ne contiennent que des `.gitkeep`).
 - Back (`SAE_S5_2026_Quizzard_Back`, branche `develop`) : seul le socle existe. UC7 et UC9 ne sont pas codés. Le
   contrat vient de son `docs/API.md` (cible) et de `ReponseErreur.java` (seul format réel).
-- Routeur, client STOMP et outil de test : **à choisir par l'équipe**. Les blocs qui en dépendent sont bloqués.
+- Routeur, client STOMP et outil de test : **choisis par l'équipe** (22/11/2026) : React Router, `@stomp/stompjs`,
+  Vitest + React Testing Library (D6).
 
 ## 2. Décisions prises
 
@@ -21,10 +22,10 @@ enseignant, UC7), correction des réponses libres (UC16).
 |---|---|
 | D1 | La réponse part en **REST** (`CLAUDE.md`, règle 4) : `POST /api/public/sessions/{codeAcces}/reponses`, erreur lue dans la réponse HTTP. STOMP sert uniquement aux abonnements. |
 | D2 | Branche de travail recréée depuis `9d32892`. |
-| D3 | L'**écran** (E8 ou E9) se choisit par le statut HTTP, qui suffit (§4). Le **message** se choisit par `code` quand le back le fournit. Sans `code` : message de l'UC9 pour 401, 422 et 500 ; message `error` du back pour 409 (trois cas possibles). |
+| D3 | L'**écran** (E8 ou E9) se choisit par le statut HTTP, qui suffit (§4). Le **message** se choisit par `code` du corps d'erreur (fourni par le contrat, D16). Repli sans `code` (corps qui ne vient pas du back) : message de l'UC9 pour 401, 422 et 500 ; message `error` du back pour 409 (trois cas possibles). |
 | D4 | Code dans la feature `seance` (`docs/ARCHITECTURE.md` §3). |
 | D5 | Machine à états (§5) = reducer pur dans `seance/domain`, sans React ni réseau. |
-| D6 | Aucune nouvelle dépendance tant que l'équipe n'a pas choisi le routeur, le client STOMP et l'outil de test. |
+| D6 | Dépendances choisies par l'équipe : `@stomp/stompjs` (client STOMP, B6), `react-router` (routeur, B7) ; en développement `vitest`, `@testing-library/react`, `@testing-library/dom` et `jsdom` (tests, B8), avec le script `"test": "vitest run"`. Versions : celles du `package-lock.json` à l'installation. Aucune autre dépendance. |
 | D7 | Le front n'affiche pas `pointsProvisoires` et ne calcule pas la justesse avant la clôture. |
 | D8 | Relier des points : toucher un élément à gauche puis un élément à droite. Pas de bibliothèque de glisser-déposer. |
 | D9 | Décompte = échéance − (heure de l'appareil + écart avec le serveur). « Valider » se désactive à 0 ; le serveur reste seul juge. |
@@ -34,14 +35,17 @@ enseignant, UC7), correction des réponses libres (UC16).
 | D13 | **QCM** : le front lit `choixMultiple` dans le message de question (champ demandé au back). Absent = **choix unique**. Choix unique : un nouveau choix remplace le précédent. Réponse complète dès 1 choix dans les deux cas. |
 | D14 | **Renvoi après coupure** : si l'envoi échoue sans réponse HTTP (réseau), l'état garde `renvoi = true` et le front renvoie le même corps à la reconnexion, s'il reste du temps. Un renvoi qui reçoit `DEJA_REPONDU` mène à CONFIRMEE (« Réponse enregistrée »), pas à une erreur. Sans champ `code`, un 409 reste ambigu : repli sur le message `error` du back en E9. Si `GET .../etat` fournit `dejaRepondu`, la reprise passe directement à CONFIRMEE. |
 | D15 | Image de la question : affichée sous l'énoncé, avec un texte alternatif, si le champ `image` existe. Ne bloque pas E8. |
+| D16 | **Architecture du dossier v3** (consigne du 22/11/2026). **Envoi en REST** : `POST /api/public/sessions/{codeAcces}/reponses`, jeton dans `X-Jeton-Participant`, corps `{idQuestion, idPropositions \| liens \| texteLibre}` ; `201 {idQuestion, horodatageServeur}`, sans points ni justesse ; erreurs `{error, request_id, champs}` avec le `code` du tableau de l'UC9. **Réception en STOMP** : connexion sur `/ws` avec `X-Jeton-Participant` dans la trame `CONNECT` ; événements `question_demarree`, `question_close`, `session_terminee` et résultat personnel. **Pas de polling.** Le fichier `docs/uc/UC9-repondre-question.md` du dépôt est encore la version précédente (envoi STOMP, `requestId`, `/user/queue/reponses`, `/user/queue/erreurs`) : à remplacer par la v3 quand le PDF sera fourni. Les codes et messages d'erreur ne changent pas. |
 
-## 3. Contrat des messages (provisoire)
+## 3. Contrat des messages
+
+Envoi, succès et erreur : fixés (D16). Réception : provisoire (question O1).
 
 | Sens | Canal | Forme | Source |
 |---|---|---|---|
-| Envoi | `POST /api/public/sessions/{codeAcces}/reponses`, en-tête `X-Jeton-Participant` | `{idQuestion, propositions: [id]}` / `{idQuestion, liens: [{gauche, droite}]}` / `{idQuestion, texte}` ; aucun horodatage. Noms à aligner (question B3). | `docs/API.md` du back §3.5 |
-| Succès | Réponse HTTP | `201 {pointsProvisoires}` (ignoré, retrait demandé) | `docs/API.md` du back §3.5 |
-| Erreur | Réponse HTTP | `{error, request_id, champs?}` (+ `code` demandé) | `ReponseErreur.java` |
+| Envoi | `POST /api/public/sessions/{codeAcces}/reponses`, en-tête `X-Jeton-Participant` | `{idQuestion, idPropositions: [id]}` / `{idQuestion, liens: [{gauche, droite}]}` / `{idQuestion, texteLibre}` ; ni horodatage, ni `idParticipant`, ni `requestId` | D16 |
+| Succès | Réponse HTTP | `201 {idQuestion, horodatageServeur}`, sans points ni justesse (non lu) | D16 |
+| Erreur | Réponse HTTP | `{error, request_id, champs?, code}`, `code` du tableau de l'UC9 | D16 |
 | Question | `/topic/sessions/{codeAcces}/question` | `{idQuestion, position, type, enonce, propositions: [{idProposition, libelle}], dureeSec, echeance}` (+ `choixMultiple`, `image` demandés). Formes pour `POINTS_A_RELIER` et `REPONSE_LIBRE` : inconnues. | `docs/API.md` du back §4 |
 | État | `/topic/sessions/{codeAcces}/etat` | `{etat, position, idQuestion, echeance}` | `docs/API.md` du back §4 |
 | Correction | `/topic/sessions/{codeAcces}/correction` | « Bonnes réponses, répartition finale » : forme inconnue | `docs/API.md` du back §4 |
@@ -106,14 +110,30 @@ Indicateur à part : connexion perdue (bandeau) ; à la reconnexion ──▶ CH
   (400), bonne réponse si elle est fournie (champ provisoire `bonneReponse`). Le rang de l'étudiant seul : la liste des
   voisins de la maquette n'est pas affichée (charte §10). Libellés provisoires à valider (U3). Styles communs E8/E9
   dans `ecranEtudiant.css`. Démo temporaire : `http://localhost:5173/?demo=e9`.
-- [ ] **B6 Temps réel** – **bloqué** par le choix du client STOMP : trame `CONNECT` avec `X-Jeton-Participant`,
-  abonnements `question`, `etat`, `correction`, `/user/queue/resultat`, reconnexion puis resynchronisation REST,
-  bandeau, renvoi D14.
-- [ ] **B7 Assemblage** – **bloqué** par le choix du routeur : hook `useRepondreQuestion`, route
-  `/rejoindre/:codeAcces/question`, garde étudiant (jeton par `codeAcces`), mise à jour de `docs/ARCHITECTURE.md`,
+### Corrections avant B6
+
+Écarts trouvés à l'audit de B1 à B5 (22/11/2026) par rapport à D16.
+
+- [x] **C1** `seance/domain/corpsReponse.ts` : champs `idPropositions` et `texteLibre` (au lieu de `propositions` et
+  `texte`), `CHAMPS_CORPS` retiré, `CorpsReponse` typé par l'union exacte des trois formes.
+- [x] **C2** `seance/api/reponsesApi.ts` : commentaire du `201` aligné sur `{idQuestion, horodatageServeur}` (plus de
+  `pointsProvisoires`).
+- [x] **C3** `shared/http/ErreurHttp.ts` : `code` fait partie du contrat (n'est plus « demandé au back »).
+- [x] **C4** `seance/domain/erreursReponse.ts` : commentaire du repli 409 sans `code` aligné sur D3 et D16.
+- [x] **C5** `app/demo/DemoE8.tsx` : image SVG de démonstration retirée (couleurs en dur hors de `tokens.css`).
+
+### Suite
+
+- [ ] **B6 Temps réel** : installer `@stomp/stompjs`. Client sur `/ws` (URL déduite de `VITE_API_URL`), en-tête
+  `X-Jeton-Participant` dans la trame `CONNECT`. Abonnements aux événements de la séance (`question_demarree`,
+  `question_close`, `session_terminee`) et au résultat personnel, selon la correspondance de la question O1.
+  Reconnexion automatique de la bibliothèque, puis resynchronisation par REST. Bandeau « connexion perdue »,
+  renvoi D14. Le front n'envoie rien par STOMP.
+- [ ] **B7 Assemblage** : installer `react-router`. Hook `useRepondreQuestion`, route `/rejoindre/:codeAcces/question`,
+  garde étudiant (jeton par `codeAcces`), suppression de `src/app/demo/`, mise à jour de `docs/ARCHITECTURE.md`,
   `docs/DESIGN.md` et `docs/API.md`.
-- [ ] **B8 Tests** – **bloqué** par le choix de l'outil : reducer, table des erreurs, `reponseComplete`,
-  `lireInstantServeur`, composants E8 et E9.
+- [ ] **B8 Tests** : installer `vitest`, `@testing-library/react`, `@testing-library/dom`, `jsdom` ; script `test`.
+  Reducer, table des erreurs, `reponseComplete`, `corpsReponse`, `lireInstantServeur`, composants E8 et E9.
 
 ## 7. Questions ouvertes
 
@@ -121,12 +141,13 @@ Indicateur à part : connexion perdue (bandeau) ; à la reconnexion ──▶ CH
 
 | # | Question | Bloque |
 |---|---|---|
-| B1 | Ajouter un champ `code` à `ReponseErreur`, pour distinguer les 409 et les 422 | Message exact des 409, D14 |
-| B2 | Retirer `pointsProvisoires` du `201` : les points ne doivent pas apparaître avant la clôture | Rien (déjà ignoré, D7) |
-| B3 | Aligner les noms de champs avec le dossier (`propositions`/`idPropositions`, `texte`/`texteLibre`) | B3 |
-| B4 | `echeance` avec fuseau horaire (`+01:00`) ou en millisecondes | D11 (repli en attendant) |
+| O1 | Correspondance entre les événements du dossier v3 et les destinations STOMP de l'`API.md` : `question_demarree` → `/topic/sessions/{codeAcces}/question` ? `question_close` → `/etat` ou `/correction` ? `session_terminee` → `/etat` avec `etat = CLOTUREE` ? résultat personnel → `/user/queue/resultat` ? | B6 |
+| ~~B1~~ | ~~Ajouter un champ `code` à `ReponseErreur`~~ : réglé, `code` dans le contrat (D16) | – |
+| ~~B2~~ | ~~Retirer `pointsProvisoires` du `201`~~ : réglé, `201 {idQuestion, horodatageServeur}` (D16) | – |
+| ~~B3~~ | ~~Aligner les noms de champs~~ : réglé, `idPropositions`, `liens`, `texteLibre` (D16, C1) | – |
+| B4 | Fuseau d'`echeance` (`+01:00`, `Z`) ou millisecondes ; même question pour `horodatageServeur`, qui pourrait alors servir à calculer l'écart avec le serveur | D11 (repli en attendant) |
 | B5 | Exposer l'en-tête `Date` en CORS, ou renvoyer `heureServeur` dans `GET .../etat` | D12, reprise en milieu de question |
-| B6 | Exemples du message de question pour `POINTS_A_RELIER` et `REPONSE_LIBRE`, plus les champs `image` et `choixMultiple` | B2, B4 |
+| B6 | Forme des messages pour `POINTS_A_RELIER` et `REPONSE_LIBRE`, plus les champs `image` et `choixMultiple` | B6, B7 |
 | B7 | Formes de `/correction`, `POST .../reconnexion` et `GET .../etat` (avec `dejaRepondu`) | B3, B5, B6 |
 | B8 | Confirmer que `/api/public/**` est exclu du CSRF | B1 |
 | B9 | Dans `liens`, que désignent `gauche` et `droite` (identifiants de quels éléments) ? | B2, B3 |
@@ -143,7 +164,7 @@ Indicateur à part : connexion perdue (bandeau) ; à la reconnexion ──▶ CH
 | U3 | Libellés exacts de E9 (temps écoulé sans réponse, attente) : absents de la spec | Aucun, à fournir |
 | U4 | Comment tester sans back et sans E7 ? | À décider |
 | U5 | Message d'une panne réseau sans réponse HTTP | Aucun, à fournir |
-| U6 | Routeur, client STOMP, outil de test | À choisir par l'équipe |
+| ~~U6~~ | ~~Routeur, client STOMP, outil de test~~ | Réglé : React Router, `@stomp/stompjs`, Vitest + RTL (D6) |
 
 ## 8. Critères d'acceptation
 
@@ -164,4 +185,6 @@ Indicateur à part : connexion perdue (bandeau) ; à la reconnexion ──▶ CH
 - [ ] Une nouvelle question ramène sur E8, remis à zéro.
 - [ ] Après une coupure : bandeau, puis resynchronisation ; une réponse confirmée reste affichée comme confirmée.
 - [ ] Ni `dangerouslySetInnerHTML`, ni donnée personnelle dans la console, ni couleur en dur.
-- [ ] `npm run lint` et `npm run build` passent.
+- [ ] Aucun polling : la réception passe uniquement par STOMP, la resynchronisation REST n'a lieu qu'après une
+  reconnexion.
+- [ ] `npm run lint`, `npm run build` et `npm test` passent.

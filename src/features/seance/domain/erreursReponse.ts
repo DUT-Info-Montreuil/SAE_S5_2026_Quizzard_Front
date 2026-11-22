@@ -97,7 +97,8 @@ export function codeErreur(erreur: ErreurEnvoi): CodeErreurReponse | null {
 export function lireErreurEnvoi(erreur: ErreurEnvoi, resteDuTemps: boolean): ErreurAffichee {
   const code = codeErreur(erreur)
   if (code === null) {
-    // 409 sans code (D3) : QUESTION_CLOSE, HORS_DELAI ou DEJA_REPONDU ; message `error` du back, en E9.
+    // 409 sans code (D3) : le contrat fournit `code`, mais un corps qui ne vient pas du back peut ne pas l'avoir.
+    // Le statut ne suffit pas (QUESTION_CLOSE, HORS_DELAI ou DEJA_REPONDU) : message `error` du back, en E9.
     return { code, message: erreur.error, corrigeable: false, ecran: 'E9', supprimerJeton: false }
   }
   const entree = ERREURS_REPONSE[code]

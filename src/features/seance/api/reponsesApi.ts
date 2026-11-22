@@ -16,8 +16,8 @@ export type ResultatEnvoi =
 
 /**
  * Envoie la réponse de l'étudiant : `POST /api/public/sessions/{codeAcces}/reponses`.
- * Le corps vient de `corpsReponse()` du domaine. Le `201` contient `pointsProvisoires` : il est ignoré ici et ne
- * sort pas de cette fonction (D7).
+ * Le corps vient de `corpsReponse()` du domaine. Le `201` contient `{idQuestion, horodatageServeur}`, sans points
+ * ni justesse (D7) : il n'est pas lu.
  * Une annulation (`signal`) est relancée telle quelle : ce n'est pas une panne réseau.
  */
 export async function envoyerReponse(

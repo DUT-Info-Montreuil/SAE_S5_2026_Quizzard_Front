@@ -9,26 +9,18 @@ import type { Question, ReponseSaisie } from '../../features/seance/domain/quest
 import { EcranQuestion } from '../../features/seance/presentation/EcranQuestion.tsx'
 import './DemoE8.css'
 
-// Image locale (aucune ressource distante, CLAUDE.md règle 7).
-const IMAGE = `data:image/svg+xml,${encodeURIComponent(
-  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200"><rect width="400" height="200" fill="#E6E1FC"/>' +
-    '<circle cx="300" cy="60" r="24" fill="#FFB020"/><path d="M40 180 140 70 230 180Z" fill="#0E9F8E"/>' +
-    '<path d="M170 180 260 90 360 180Z" fill="#6C4DF0"/></svg>',
-)}`
-
 const DUREE_SEC = 30
 
 const commun = { position: 1, dureeSec: DUREE_SEC, echeance: '' }
 
 const QUESTIONS: { nom: string, question: Question }[] = [
   {
-    nom: 'QCM choix unique, avec image',
+    nom: 'QCM choix unique',
     question: {
       ...commun,
       idQuestion: 1,
       type: 'QCM',
       enonce: 'Quelle structure garantit un accès en O(1) en moyenne ?',
-      image: IMAGE,
       propositions: [
         { idProposition: 11, libelle: 'Liste chaînée' },
         { idProposition: 12, libelle: 'Table de hachage' },
@@ -38,7 +30,7 @@ const QUESTIONS: { nom: string, question: Question }[] = [
     },
   },
   {
-    nom: 'QCM choix multiple, sans image',
+    nom: 'QCM choix multiple',
     question: {
       ...commun,
       idQuestion: 2,
@@ -55,7 +47,7 @@ const QUESTIONS: { nom: string, question: Question }[] = [
     },
   },
   {
-    nom: 'Points à relier, sans image',
+    nom: 'Points à relier',
     question: {
       ...commun,
       idQuestion: 3,
@@ -75,43 +67,13 @@ const QUESTIONS: { nom: string, question: Question }[] = [
     },
   },
   {
-    nom: 'Points à relier, avec image',
-    question: {
-      ...commun,
-      idQuestion: 4,
-      position: 4,
-      type: 'POINTS_A_RELIER',
-      enonce: 'Relie chaque forme à sa couleur sur l\'image.',
-      image: IMAGE,
-      elementsGauche: [
-        { id: 41, libelle: 'Soleil' },
-        { id: 42, libelle: 'Montagne de gauche' },
-      ],
-      elementsDroite: [
-        { id: 43, libelle: 'Vert' },
-        { id: 44, libelle: 'Jaune' },
-      ],
-    },
-  },
-  {
-    nom: 'Réponse libre, sans image',
+    nom: 'Réponse libre',
     question: {
       ...commun,
       idQuestion: 5,
       position: 5,
       type: 'REPONSE_LIBRE',
       enonce: 'Explique en une phrase le principe d\'une file (FIFO).',
-    },
-  },
-  {
-    nom: 'Réponse libre, avec image',
-    question: {
-      ...commun,
-      idQuestion: 6,
-      position: 6,
-      type: 'REPONSE_LIBRE',
-      enonce: 'Décris ce que représente cette image.',
-      image: IMAGE,
     },
   },
 ]

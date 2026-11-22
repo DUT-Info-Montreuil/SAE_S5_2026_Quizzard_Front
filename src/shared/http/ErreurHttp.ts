@@ -7,7 +7,7 @@ export interface CorpsErreur {
   error: string
   request_id: string | null
   champs?: Record<string, string>
-  /** Code métier de l'erreur (exemple : `DEJA_REPONDU`). Demandé au back, pas encore envoyé. */
+  /** Code métier de l'erreur (exemple : `DEJA_REPONDU`). Absent si le corps ne vient pas du back (proxy…). */
   code?: string
 }
 
