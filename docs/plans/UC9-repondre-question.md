@@ -96,8 +96,8 @@ Indicateur à part : connexion perdue (bandeau) ; à la reconnexion ──▶ CH
 - [x] **B2 Domaine `seance`** : types, `reponseComplete` (avec `choixMultiple`), corps de la requête par type, table
   des erreurs (code ou statut → message, corrigeable, écran), échéance avec repli D12 (réception + `dureeSec`),
   reducer de la machine à états (dont `renvoi` et `DEJA_REPONDU` → CONFIRMEE).
-- [ ] **B3 API `seance`** : `envoyerReponse`. `lireEtat` et `reconnexion` partiellement bloqués (formes inconnues,
-  question B7).
+- [x] **B3 API `seance`** : `envoyerReponse` (acceptée avec écart, refusée avec `ErreurHttp`, échec réseau).
+  `lireEtat` et `reconnexion` : signatures seules, formes inconnues (question B7).
 - [ ] **B4 Présentation E8** : décompte (barre et chiffre), énoncé, image facultative, zone QCM (radio ou cases selon
   `choixMultiple`), zone relier, zone réponse libre (1000 caractères au plus), Valider, message d'erreur. Données
   par props.
