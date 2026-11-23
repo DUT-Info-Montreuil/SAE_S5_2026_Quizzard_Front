@@ -52,7 +52,7 @@ Contraintes du cahier des charges qui pèsent sur le front :
 | Client HTTP | Rien d'installé | Proposition : `fetch` du navigateur, enveloppé dans `shared/http` (§6) |
 | Client STOMP | En place | `@stomp/stompjs` 7, WebSocket natif, sans SockJS (§7) |
 | PDF.js | **Retenu, pas installé** | Choix de l'étude de faisabilité (§8) |
-| Tests | **À choisir** | Aucun outil installé |
+| Tests | En place | Vitest (`jsdom`), React Testing Library, `user-event`, `jest-dom` ; `npm test` |
 | Image Docker du front | **À écrire** | Serveur de fichiers statiques à choisir (§11) |
 
 ## 3. Organisation du code
@@ -302,6 +302,6 @@ Vite lit `.env` (non commité) ; seules les variables préfixées par `VITE_` so
 | F3 | Commandes en REST, diffusion en STOMP, resynchronisation REST après reconnexion | Retenu (aligné sur le back) |
 | F4 | Décompte calé sur l'échéance et l'heure du serveur | Retenu |
 | F5 | PDF.js embarqué, PDF chargé par route protégée | Retenu, à installer |
-| F6 | Routeur, client STOMP, outil de test | Retenu : React Router (`react-router`, installé), `@stomp/stompjs` (installé), Vitest + RTL |
+| F6 | Routeur, client STOMP, outil de test | Retenu et installé : React Router (`react-router`), `@stomp/stompjs`, Vitest + RTL |
 | F7 | Chemins des écrans (§4) et format du `lien` de séance | Proposition, à confirmer avec le back |
 | F8 | Mode d'affichage du cours sur les appareils étudiants | Point ouvert du cahier des charges, à redemander au client |

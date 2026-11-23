@@ -25,7 +25,7 @@ enseignant, UC7), correction des réponses libres (UC16).
 | D3 | L'**écran** (E8 ou E9) se choisit par le statut HTTP, qui suffit (§4). Le **message** se choisit par `code` du corps d'erreur (fourni par le contrat, D16). Repli sans `code` (corps qui ne vient pas du back) : message de l'UC9 pour 401, 422 et 500 ; message `error` du back pour 409 (trois cas possibles). |
 | D4 | Code dans la feature `seance` (`docs/ARCHITECTURE.md` §3). |
 | D5 | Machine à états (§5) = reducer pur dans `seance/domain`, sans React ni réseau. |
-| D6 | Dépendances choisies par l'équipe : `@stomp/stompjs` (client STOMP, B6), `react-router` (routeur, B7) ; en développement `vitest`, `@testing-library/react`, `@testing-library/dom` et `jsdom` (tests, B8), avec le script `"test": "vitest run"`. Versions : celles du `package-lock.json` à l'installation. Aucune autre dépendance. |
+| D6 | Dépendances choisies par l'équipe : `@stomp/stompjs` (client STOMP, B6), `react-router` (routeur, B7) ; en développement `vitest`, `@testing-library/react`, `@testing-library/dom`, `@testing-library/user-event`, `@testing-library/jest-dom` et `jsdom` (tests, B8 ; `user-event` et `jest-dom` ajoutés le 23/11/2026), avec le script `"test": "vitest run"`. Versions : celles du `package-lock.json` à l'installation. Aucune autre dépendance. |
 | D7 | Le front n'affiche pas `pointsProvisoires` et ne calcule pas la justesse avant la clôture. |
 | D8 | Relier des points : toucher un élément à gauche puis un élément à droite. Pas de bibliothèque de glisser-déposer. |
 | D9 | Décompte = échéance − (heure de l'appareil + écart avec le serveur). « Valider » se désactive à 0 ; le serveur reste seul juge. |
@@ -147,8 +147,14 @@ Indicateur à part : connexion perdue (bandeau) ; à la reconnexion ──▶ CH
   suite si STOMP est resté connecté, sinon à la reconnexion ; s'il échoue aussi, la reconnexion suivante repasse par
   CHARGEMENT. Conséquences : `surRenvoi` renvoie un booléen (`useTempsReelSeance`) et une réponse HTTP au renvoi
   efface le bandeau (reducer).
-- [ ] **B8 Tests** : installer `vitest`, `@testing-library/react`, `@testing-library/dom`, `jsdom` ; script `test`.
+- [x] **B8 Tests** : installer `vitest`, `@testing-library/react`, `@testing-library/dom`, `jsdom` ; script `test`.
   Reducer, table des erreurs, `reponseComplete`, `corpsReponse`, `lireInstantServeur`, composants E8 et E9.
+  Fait : Vitest (`jsdom`, préparation `src/test/preparation.ts`, données `src/test/fabriques.ts`), fichiers
+  `*.test.ts(x)` à côté du code. Couvert : table des erreurs, reducer (chaque transition du §5 et absence de toute
+  autre), `reponseComplete`, `corpsReponse`, `envoyerReponse` et `lireEtat` (faux `fetch`), `lireInstantServeur`,
+  écart et repli D12, `echeanceQuestion`, messages STOMP, `useTempsReelSeance` (faux client), E8, E9, `PageQuestion`
+  (un seul envoi au double clic, temps écoulé, nouvelle question). Non couvert : le `400` (`REQUETE_INVALIDE`,
+  message à fixer, question B11) et le renvoi automatique D14 par `useRepondreQuestion`.
 
 ## 7. Questions ouvertes
 

@@ -290,5 +290,5 @@ un état vide (« Aucun cours pour l'instant », etc.).
 
 ### Tests
 
-Outil **à choisir**. Attendu ensuite : tests unitaires de `domain`, tests de composants des écrans (états chargement,
+Vitest et React Testing Library (`npm test`), fichiers `*.test.ts(x)` à côté du code testé. Attendu : tests unitaires de `domain`, tests de composants des écrans (états chargement,
 erreur, vide, nominal), noms de tests en français qui décrivent le comportement.

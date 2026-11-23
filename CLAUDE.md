@@ -12,7 +12,8 @@ Le back-end Spring Boot est dans le dépôt séparé `DUT-Info-Montreuil/SAE_S5_
 Pile front (vérifiée dans `package.json`) : **React 19.3**, **TypeScript 6.0**, **Vite 8.3**
 (`@vitejs/plugin-react` 6), **ESLint 10** (`typescript-eslint` 8, `eslint-plugin-react-hooks` 7,
 `eslint-plugin-react-refresh` 0.5). Node.js **20.19+ ou 22.13+** (`CONTRIBUTING.md`). Pas encore installés, à
-choisir par l'équipe : outil de test (Vitest + RTL retenu). Installés depuis : `react-router` 7, `@stomp/stompjs` 7. PDF.js est retenu par l'étude de faisabilité pour le
+choisir par l'équipe : plus rien pour l'UC9. Installés depuis : `react-router` 7, `@stomp/stompjs` 7, et en développement
+Vitest 5 avec React Testing Library (`user-event`, `jest-dom`) et `jsdom`. PDF.js est retenu par l'étude de faisabilité pour le
 rendu du PDF mais n'est pas encore installé.
 
 Pile back (dépôt séparé, versions non vérifiables depuis ce dépôt) : **Spring Boot** lancé par Maven
@@ -52,7 +53,7 @@ npm run build
 ```
 
 Vérification des types puis build de production dans `dist/`. Avec `npm run lint`, c'est la vérification à faire
-avant une pull request. Aucun script `test` pour l'instant.
+avant une pull request, avec `npm test` (Vitest, une seule exécution).
 
 ## Architecture en bref
 
