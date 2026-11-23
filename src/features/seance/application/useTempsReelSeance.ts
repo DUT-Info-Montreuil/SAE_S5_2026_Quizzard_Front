@@ -6,9 +6,10 @@
 // Cycle :
 // - chaque message reçu est converti par `convertirMessage` puis passé au reducer ;
 // - coupure : CONNEXION_PERDUE (bandeau), la bibliothèque retente seule avec une attente croissante ;
-// - (re)connexion : RECONNEXION (après une coupure), puis resynchronisation par REST et RESYNCHRONISEE ;
-//   si une réponse attend son renvoi (D14), qu'il reste du temps et que `surRenvoi` l'accepte, le renvoi remplace
-//   la resynchronisation ;
+// - (re)connexion : RECONNEXION (après une coupure ; si une réponse attend son renvoi D14, `surRenvoi` le lance
+//   d'abord), puis resynchronisation par REST et RESYNCHRONISEE, qui corrige l'écran sans l'effacer ;
+// - écran en CHARGEMENT alors que STOMP est connecté (renvoi D14 échoué) : resynchronisation tout de suite, aucune
+//   reconnexion ne viendra la déclencher ;
 // - JETON_REFUSE ou SEANCE_CLOTUREE : déconnexion définitive, sans reconnexion.
 
 import { useEffect, useRef } from 'react'
@@ -29,11 +30,12 @@ export interface OptionsTempsReelSeance {
   /** État courant du reducer (lu à la reconnexion). */
   etat: EtatReponse
   dispatch: Dispatch<ActionReponse>
-  /** Vrai s'il reste du temps sur la question courante (D9). */
-  resteDuTemps: () => boolean
   /** Lecture de l'état par REST après une (re)connexion, par exemple avec `lireEtat`. */
   resynchroniser: (signal: AbortSignal) => Promise<Resynchronisation>
-  /** Renvoi du même corps après une coupure (D14) ; renvoie `false` si le renvoi n'est plus permis (déjà fait). */
+  /**
+   * Renvoi du même corps à la reconnexion (D14) ; vrai si le renvoi est parti, maintenant ou avant (sa réponse est
+   * attendue), faux s'il n'est plus possible (temps écoulé).
+   */
   surRenvoi: (corps: CorpsReponse) => boolean
   /** Fabrique du client ; `creerClientStomp` par défaut, un faux client pour les tests et les démos. */
   creerClient?: () => ClientTempsReel
@@ -44,33 +46,23 @@ export function useTempsReelSeance({
   jetonParticipant,
   etat,
   dispatch,
-  resteDuTemps,
   resynchroniser,
   surRenvoi,
   creerClient = creerClientStomp,
 }: OptionsTempsReelSeance): void {
   // Dernières valeurs des props, lues par les rappels du client sans le recréer.
-  const courant = useRef({
-    etat,
-    dispatch,
-    resteDuTemps,
-    resynchroniser,
-    surRenvoi,
-    /** Dernière question confirmée (voir le TODO de `resynchroniserParRest`). */
-    idConfirmee: null as number | null,
-  })
+  const courant = useRef({ etat, dispatch, resynchroniser, surRenvoi })
   useEffect(() => {
-    const { ecran } = etat
-    const idConfirmee = ecran.nom === 'CONFIRMEE' && ecran.idQuestion !== null
-      ? ecran.idQuestion
-      : courant.current.idConfirmee
-    courant.current = { etat, dispatch, resteDuTemps, resynchroniser, surRenvoi, idConfirmee }
+    courant.current = { etat, dispatch, resynchroniser, surRenvoi }
   })
+  /** Relit l'état par REST si STOMP est connecté ; fourni par l'effet de connexion. */
+  const relireEtat = useRef(() => {})
 
   useEffect(() => {
     const client = creerClient()
     const controleur = new AbortController()
     let arrete = false
+    let estConnecte = false
 
     function arreter() {
       arrete = true
@@ -85,21 +77,23 @@ export function useTempsReelSeance({
     }
 
     function resynchroniserParRest() {
+      if (!estConnecte) return
       courant.current.resynchroniser(controleur.signal).then(
-        ({ question, dejaRepondu }) => {
-          // TODO(UC9): `dejaRepondu` pas encore fourni par GET .../etat (plan UC9, question B7). Valeur provisoire :
-          // une question déjà confirmée sur cet appareil reste confirmée.
-          const dejaConfirmee = question !== null && question.idQuestion === courant.current.idConfirmee
-          emettre({ type: 'RESYNCHRONISEE', question, dejaRepondu: dejaRepondu || dejaConfirmee })
+        // TODO(UC9): `dejaRepondu` pas encore fourni par GET .../etat (plan UC9, question B7). En attendant, une
+        // réponse confirmée reste confirmée tant que la page n'est pas rechargée (RESYNCHRONISEE garde l'écran).
+        // Une lecture qui revient pendant une coupure est ignorée : la reconnexion en relancera une.
+        (resynchronisation) => {
+          if (estConnecte) emettre({ type: 'RESYNCHRONISEE', ...resynchronisation })
         },
         () => {
-          // L'écran reste en CHARGEMENT jusqu'au prochain message (une nouvelle question en sort).
+          // L'écran garde son état ; CHARGEMENT en sort par une nouvelle question ou un résultat.
           if (!controleur.signal.aborted && estEnDeveloppement) {
             console.warn('[temps réel] resynchronisation par REST impossible')
           }
         },
       )
     }
+    relireEtat.current = resynchroniserParRest
 
     const destinations = destinationsSeance(codeAcces)
     for (const canal of Object.keys(destinations) as CanalSeance[]) {
@@ -111,17 +105,17 @@ export function useTempsReelSeance({
 
     client.connecter({ 'X-Jeton-Participant': jetonParticipant }, {
       connecte(reconnexion) {
+        estConnecte = true
         if (reconnexion) {
-          const { etat: { ecran }, resteDuTemps, surRenvoi } = courant.current
-          const renvoye = ecran.nom === 'ENVOI' && ecran.renvoi && resteDuTemps() && surRenvoi(ecran.corps)
-          // `resteDuTemps: renvoye` : le reducer garde ENVOI seulement si le renvoi est parti ; sinon CHARGEMENT,
-          // puis resynchronisation par REST.
-          emettre({ type: 'RECONNEXION', resteDuTemps: renvoye })
-          if (renvoye) return
+          const { etat: { ecran }, surRenvoi } = courant.current
+          // Sans renvoi possible, le reducer passe en CHARGEMENT ; sinon il garde ENVOI jusqu'à la réponse HTTP.
+          const renvoiEnCours = ecran.nom === 'ENVOI' && ecran.renvoi && surRenvoi(ecran.corps)
+          emettre({ type: 'RECONNEXION', renvoiEnCours })
         }
         resynchroniserParRest()
       },
       coupe() {
+        estConnecte = false
         emettre({ type: 'CONNEXION_PERDUE' })
       },
       refuse(message) {
@@ -130,6 +124,16 @@ export function useTempsReelSeance({
       },
     })
 
-    return arreter
+    return () => {
+      relireEtat.current = () => {}
+      arreter()
+    }
   }, [codeAcces, jetonParticipant, creerClient])
+
+  // CHARGEMENT après l'échec du renvoi D14 : si STOMP est resté connecté, aucune reconnexion ne relira l'état.
+  // Au montage, le client n'est pas encore connecté : la connexion fera la lecture.
+  const enChargement = etat.ecran.nom === 'CHARGEMENT'
+  useEffect(() => {
+    if (enChargement) relireEtat.current()
+  }, [enChargement])
 }

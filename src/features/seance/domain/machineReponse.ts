@@ -3,9 +3,6 @@
 //
 // Transitions (toute action absente de cette liste laisse l'état inchangé) :
 //
-//   CHARGEMENT      ──RESYNCHRONISEE (dejaRepondu)──────────────▶ CONFIRMEE
-//   CHARGEMENT      ──RESYNCHRONISEE (question en cours)────────▶ SAISIE
-//   CHARGEMENT      ──RESYNCHRONISEE (sinon)────────────────────▶ ATTENTE (E9)
 //   ATTENTE         ──QUESTION_RECUE────────────────────────────▶ SAISIE
 //   SAISIE          ──VALIDER (réponse complète, t > 0)─────────▶ ENVOI (renvoi = false ; Valider désactivé)
 //   SAISIE          ──TEMPS_ECOULE──────────────────────────────▶ TEMPS_ECOULE (E9)
@@ -14,19 +11,30 @@
 //   ENVOI           ──ENVOI_REFUSE (401)────────────────────────▶ SESSION_EXPIREE (E9, état final)
 //   ENVOI           ──ENVOI_REFUSE (422 ou 500, t > 0)──────────▶ SAISIE + message (E8)
 //   ENVOI           ──ENVOI_REFUSE (422 ou 500 avec t = 0, 409, 400)──▶ REFUSEE (E9 + message)
-//   ENVOI           ──ECHEC_RESEAU──────────────────────────────▶ ENVOI (renvoi = true, connexion perdue)
-//   ENVOI (renvoi)  ──RECONNEXION (t > 0)───────────────────────▶ ENVOI (l'appelant renvoie le même corps)
-//   ENVOI (renvoi)  ──RECONNEXION (t = 0)───────────────────────▶ CHARGEMENT
-//   CONFIRMEE | TEMPS_ECOULE | REFUSEE ──RESULTAT_RECU──────────▶ RESULTAT (E9)
+//   ENVOI           ──ECHEC_RESEAU (t > 0)──────────────────────▶ ENVOI (renvoi = true : l'appelant renvoie le même corps)
+//   ENVOI           ──ECHEC_RESEAU (t = 0)──────────────────────▶ CHARGEMENT (réponse peut-être enregistrée : état relu)
+//   ENVOI (renvoi)  ──ECHEC_RESEAU (le renvoi a échoué)─────────▶ CHARGEMENT (idem)
+//   ENVOI (renvoi)  ──RECONNEXION (renvoi parti ou en cours)────▶ ENVOI
+//   ENVOI (renvoi)  ──RECONNEXION (renvoi impossible, t = 0)────▶ CHARGEMENT
+//   CONFIRMEE | TEMPS_ECOULE | REFUSEE | CHARGEMENT ──RESULTAT_RECU──▶ RESULTAT (E9)
 //   tout état sauf SESSION_EXPIREE ──QUESTION_RECUE (nouvelle)──▶ SAISIE (remise à zéro)
 //   tout état sauf SESSION_EXPIREE ──SEANCE_CLOTUREE────────────▶ SEANCE_CLOSE
 //   tout état sauf SESSION_EXPIREE ──JETON_REFUSE (trame ERROR STOMP)──▶ SESSION_EXPIREE (message de JETON_INVALIDE)
-//   tout état sauf SESSION_EXPIREE ──CONNEXION_PERDUE───────────▶ même état, connexion perdue (bandeau)
-//   tout état sauf SESSION_EXPIREE et ENVOI (renvoi) ──RECONNEXION──▶ CHARGEMENT
+//   tout état sauf SESSION_EXPIREE ──CONNEXION_PERDUE───────────▶ même écran, temps réel coupé
+//   tout autre état sauf SESSION_EXPIREE ──RECONNEXION──────────▶ même écran, temps réel rétabli (une réponse en cours
+//                   d'envoi attend sa réponse HTTP ; l'écran est ensuite corrigé par RESYNCHRONISEE)
 //   SESSION_EXPIREE : état final, aucune transition.
-//   ENVOI (renvoi) ──ENVOI_REUSSI ou ENVOI_REFUSE──▶ en plus, connexion perdue effacée (le réseau répond).
+//
+//   RESYNCHRONISEE (état relu par REST, à la connexion, après chaque reconnexion et en CHARGEMENT) corrige l'écran
+//   sans effacer ce que l'appareil sait déjà :
+//     autre question en cours que celle de l'écran ──▶ SAISIE, ou CONFIRMEE si dejaRepondu
+//     même question ──▶ écran gardé (saisie, envoi en cours, confirmation, refus, temps écoulé) ;
+//                       SAISIE avec dejaRepondu ──▶ CONFIRMEE
+//     aucune question en cours ──▶ CHARGEMENT et SAISIE passent en ATTENTE (CHARGEMENT avec dejaRepondu : CONFIRMEE) ;
+//                                  les autres écrans sont gardés
 //
 // « Nouvelle » question : identifiant différent de la question courante ; la même question rediffusée est ignorée.
+// Bandeau « connexion perdue » (`connexionInterrompue`) : temps réel coupé, ou réponse en attente de son renvoi.
 
 import { corpsReponse } from './corpsReponse.ts'
 import type { CorpsReponse } from './corpsReponse.ts'
@@ -49,7 +57,7 @@ export type Ecran =
 
 export interface EtatReponse {
   ecran: Ecran
-  /** Indicateur à part : bandeau « connexion perdue ». */
+  /** Indicateur à part : temps réel (STOMP) coupé. Le bandeau se décide avec `connexionInterrompue`. */
   connexionPerdue: boolean
 }
 
@@ -62,9 +70,10 @@ export type ActionReponse =
   | { type: 'TEMPS_ECOULE' }
   | { type: 'ENVOI_REUSSI' }
   | { type: 'ENVOI_REFUSE', erreur: ErreurEnvoi, resteDuTemps: boolean }
-  | { type: 'ECHEC_RESEAU' }
+  | { type: 'ECHEC_RESEAU', resteDuTemps: boolean }
   | { type: 'CONNEXION_PERDUE' }
-  | { type: 'RECONNEXION', resteDuTemps: boolean }
+  /** `renvoiEnCours` : en ENVOI (renvoi), le renvoi D14 est parti, maintenant ou avant, et sa réponse est attendue. */
+  | { type: 'RECONNEXION', renvoiEnCours: boolean }
   | { type: 'RESULTAT_RECU', resultat: ResultatQuestion }
   | { type: 'SEANCE_CLOTUREE' }
   /** Jeton refusé à la connexion STOMP (plan UC9, B6). */
@@ -91,9 +100,9 @@ function vers(etat: EtatReponse, ecran: Ecran): EtatReponse {
   return { ...etat, ecran }
 }
 
-/** Une réponse HTTP au renvoi prouve que le réseau est revenu : le bandeau posé par ECHEC_RESEAU disparaît. */
-function apresRenvoi(etat: EtatReponse, ecran: Extract<Ecran, { nom: 'ENVOI' }>): EtatReponse {
-  return ecran.renvoi ? { ...etat, connexionPerdue: false } : etat
+/** Bandeau « connexion perdue » : temps réel coupé, ou réponse en attente de son renvoi après une panne réseau (D14). */
+export function connexionInterrompue(etat: EtatReponse): boolean {
+  return etat.connexionPerdue || (etat.ecran.nom === 'ENVOI' && etat.ecran.renvoi)
 }
 
 export function reducerReponse(etat: EtatReponse, action: ActionReponse): EtatReponse {
@@ -101,13 +110,22 @@ export function reducerReponse(etat: EtatReponse, action: ActionReponse): EtatRe
   if (ecran.nom === 'SESSION_EXPIREE') return etat
 
   switch (action.type) {
-    case 'RESYNCHRONISEE':
-      if (ecran.nom !== 'CHARGEMENT') return etat
-      if (action.dejaRepondu) {
-        return vers(etat, { nom: 'CONFIRMEE', idQuestion: action.question?.idQuestion ?? null })
+    case 'RESYNCHRONISEE': {
+      const { question, dejaRepondu } = action
+      if (question === null) {
+        if (ecran.nom === 'CHARGEMENT' && dejaRepondu) return vers(etat, { nom: 'CONFIRMEE', idQuestion: null })
+        // Question close pendant la coupure (SAISIE) ; les écrans E9 et un envoi en cours sont gardés.
+        if (ecran.nom === 'CHARGEMENT' || ecran.nom === 'SAISIE') return vers(etat, { nom: 'ATTENTE' })
+        return etat
       }
-      if (action.question !== null) return vers(etat, { nom: 'SAISIE', question: action.question, erreur: null })
-      return vers(etat, { nom: 'ATTENTE' })
+      if (question.idQuestion !== idQuestionCourante(ecran)) {
+        return vers(etat, dejaRepondu
+          ? { nom: 'CONFIRMEE', idQuestion: question.idQuestion }
+          : { nom: 'SAISIE', question, erreur: null })
+      }
+      if (dejaRepondu && ecran.nom === 'SAISIE') return vers(etat, { nom: 'CONFIRMEE', idQuestion: question.idQuestion })
+      return etat
+    }
 
     case 'QUESTION_RECUE':
       if (idQuestionCourante(ecran) === action.question.idQuestion) return etat
@@ -127,11 +145,10 @@ export function reducerReponse(etat: EtatReponse, action: ActionReponse): EtatRe
 
     case 'ENVOI_REUSSI':
       if (ecran.nom !== 'ENVOI') return etat
-      return vers(apresRenvoi(etat, ecran), { nom: 'CONFIRMEE', idQuestion: ecran.question.idQuestion })
+      return vers(etat, { nom: 'CONFIRMEE', idQuestion: ecran.question.idQuestion })
 
     case 'ENVOI_REFUSE': {
       if (ecran.nom !== 'ENVOI') return etat
-      etat = apresRenvoi(etat, ecran)
       const { idQuestion } = ecran.question
       if (ecran.renvoi && codeErreur(action.erreur) === 'DEJA_REPONDU') {
         return vers(etat, { nom: 'CONFIRMEE', idQuestion })
@@ -144,17 +161,22 @@ export function reducerReponse(etat: EtatReponse, action: ActionReponse): EtatRe
 
     case 'ECHEC_RESEAU':
       if (ecran.nom !== 'ENVOI') return etat
-      return { ecran: { ...ecran, renvoi: true }, connexionPerdue: true }
+      // Un seul renvoi (D14) : s'il échoue aussi, ou s'il n'a plus le temps de partir, la réponse a peut-être été
+      // enregistrée ; l'état est relu par REST depuis CHARGEMENT.
+      if (ecran.renvoi || !action.resteDuTemps) return vers(etat, { nom: 'CHARGEMENT' })
+      return vers(etat, { ...ecran, renvoi: true })
 
     case 'CONNEXION_PERDUE':
       return { ...etat, connexionPerdue: true }
 
-    case 'RECONNEXION':
-      if (ecran.nom === 'ENVOI' && ecran.renvoi && action.resteDuTemps) return { ecran, connexionPerdue: false }
-      return { ecran: { nom: 'CHARGEMENT' }, connexionPerdue: false }
+    case 'RECONNEXION': {
+      const renvoiImpossible = ecran.nom === 'ENVOI' && ecran.renvoi && !action.renvoiEnCours
+      return { ecran: renvoiImpossible ? { nom: 'CHARGEMENT' } : ecran, connexionPerdue: false }
+    }
 
     case 'RESULTAT_RECU':
-      if (ecran.nom !== 'CONFIRMEE' && ecran.nom !== 'TEMPS_ECOULE' && ecran.nom !== 'REFUSEE') return etat
+      // CHARGEMENT : résultat reçu avant (ou sans) la relecture de l'état, par exemple après l'échec du renvoi.
+      if (!['CONFIRMEE', 'TEMPS_ECOULE', 'REFUSEE', 'CHARGEMENT'].includes(ecran.nom)) return etat
       return vers(etat, { nom: 'RESULTAT', resultat: action.resultat })
 
     case 'SEANCE_CLOTUREE':

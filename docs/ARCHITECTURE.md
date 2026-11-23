@@ -211,16 +211,18 @@ Le broker du back est en mémoire et ne rejoue pas les messages manqués. Après
 3. le front **resynchronise l'état par REST** : `GET /api/public/sessions/{codeAcces}/etat` (forme provisoire,
    plan UC9 question B7) ou `POST /api/public/sessions/{codeAcces}/reconnexion` pour l'étudiant (état courant et
    score), `GET /api/sessions/{idSession}` pour l'enseignant ;
-4. pendant la coupure, un bandeau indique la perte de connexion ; une réponse déjà confirmée reste affichée comme
-   confirmée.
+4. pendant la coupure, un bandeau indique la perte de connexion ; à la reconnexion, l'écran est gardé puis corrigé par
+   l'état relu : une réponse confirmée reste confirmée, un résultat affiché reste affiché, un envoi en cours attend sa
+   réponse HTTP.
 
 Un rechargement de la page suit le même chemin : le jeton de participant conservé (§5) permet de relire l'état
 (`GET .../etat` pour l'instant) ; l'écran reste en chargement jusque-là, puis affiche E8 ou E9.
 
 Renvoi d'une réponse après une panne réseau (plan UC9, D14, précisé le 23/11/2026) : **un seul** renvoi automatique
 du même corps, tout de suite si STOMP est resté connecté, sinon à la reconnexion. `DEJA_REPONDU` au renvoi mène à
-« Réponse enregistrée ». Si le renvoi échoue aussi, la reconnexion suivante repasse par le chargement et relit
-l'état.
+« Réponse enregistrée ». Si le renvoi échoue aussi, ou s'il n'a plus le temps de partir, l'écran repasse par le
+chargement et relit l'état : tout de suite si STOMP est connecté, sinon à la reconnexion. Un résultat reçu entre-temps
+s'affiche.
 
 ### Décompte
 

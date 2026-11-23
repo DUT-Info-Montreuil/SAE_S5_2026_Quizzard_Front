@@ -111,7 +111,7 @@ sont celles du back.
 | E5 Quiz en cours | `GET /api/sessions/{idSession}`, `GET /api/sessions/{idSession}/qrcode`, `POST .../question-suivante`, `POST .../cloture-question`, `POST .../cloture`, `POST .../identites-non-verifiees` |
 | E6 Classement | `GET /api/sessions/{idSession}/classement` ; pour une page de classement cumulé : `GET /api/classements/{idClassement}` |
 | E7 Rejoindre | `GET /api/public/sessions/{codeAcces}`, `POST .../participants`, `POST .../participants/ldap` |
-| E8 Question | `GET /api/public/sessions/{codeAcces}/etat` (au chargement et après chaque reconnexion STOMP), `POST .../reponses` (un seul renvoi automatique après une panne réseau), `POST .../reconnexion` (pas encore appelé : forme inconnue) |
+| E8 Question | `GET /api/public/sessions/{codeAcces}/etat` (au chargement, après chaque reconnexion STOMP et après l'échec du renvoi), `POST .../reponses` (un seul renvoi automatique après une panne réseau), `POST .../reconnexion` (pas encore appelé : forme inconnue) |
 | E9 Résultat | Message `/user/queue/resultat` ; `GET /api/public/sessions/{codeAcces}/etat` après une reconnexion |
 | E10 Résultats | `GET /api/cours/{idCours}/sessions`, `GET /api/sessions/{idSession}/resultats`, `GET /api/sessions/{idSession}/export.csv` |
 | E11 Correction | `GET .../questions/{idQuestion}/reponses-libres`, `PUT .../corrections`, `POST .../motifs`, `POST /api/sessions/{idSession}/recalcul` |

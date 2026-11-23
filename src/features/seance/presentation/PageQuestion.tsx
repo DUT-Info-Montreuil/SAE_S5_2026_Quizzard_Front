@@ -1,5 +1,6 @@
 import { useRepondreQuestion } from '../application/useRepondreQuestion.ts'
 import type { OptionsRepondreQuestion } from '../application/useRepondreQuestion.ts'
+import { connexionInterrompue } from '../domain/machineReponse.ts'
 import { BandeauConnexion } from './BandeauConnexion.tsx'
 import { EcranQuestion } from './EcranQuestion.tsx'
 import { EcranResultat } from './EcranResultat.tsx'
@@ -20,7 +21,7 @@ export function PageQuestion({ onRejoindre, ...options }: PageQuestionProps) {
 
   return (
     <>
-      {etat.connexionPerdue && <BandeauConnexion />}
+      {connexionInterrompue(etat) && <BandeauConnexion />}
       {ecran.nom === 'CHARGEMENT' && (
         <main className="ecran-etudiant"><p role="status">{LIBELLE_CHARGEMENT}</p></main>
       )}

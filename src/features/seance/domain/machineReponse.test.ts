@@ -3,9 +3,9 @@
 import { describe, expect, it } from 'vitest'
 import { questionQcm } from '../../../test/fabriques.ts'
 import type { CorpsReponse } from './corpsReponse.ts'
-import { ETAT_INITIAL, reducerReponse } from './machineReponse.ts'
+import { connexionInterrompue, ETAT_INITIAL, reducerReponse } from './machineReponse.ts'
 import type { ActionReponse, Ecran, EtatReponse } from './machineReponse.ts'
-import type { ResultatQuestion } from './question.ts'
+import type { Question, ResultatQuestion } from './question.ts'
 
 const question = questionQcm()
 const autreQuestion = questionQcm({ idQuestion: 7 })
@@ -43,9 +43,9 @@ const ACTIONS: Record<ActionReponse['type'], ActionReponse> = {
   TEMPS_ECOULE: { type: 'TEMPS_ECOULE' },
   ENVOI_REUSSI: { type: 'ENVOI_REUSSI' },
   ENVOI_REFUSE: { type: 'ENVOI_REFUSE', erreur: { statut: 409, code: 'HORS_DELAI', error: null }, resteDuTemps: true },
-  ECHEC_RESEAU: { type: 'ECHEC_RESEAU' },
+  ECHEC_RESEAU: { type: 'ECHEC_RESEAU', resteDuTemps: true },
   CONNEXION_PERDUE: { type: 'CONNEXION_PERDUE' },
-  RECONNEXION: { type: 'RECONNEXION', resteDuTemps: true },
+  RECONNEXION: { type: 'RECONNEXION', renvoiEnCours: true },
   RESULTAT_RECU: { type: 'RESULTAT_RECU', resultat },
   SEANCE_CLOTUREE: { type: 'SEANCE_CLOTUREE' },
   JETON_REFUSE: { type: 'JETON_REFUSE' },
@@ -62,7 +62,8 @@ function transitionPrevue(ecran: Ecran['nom'], action: ActionReponse['type']): b
     case 'RECONNEXION':
       return true
     case 'RESYNCHRONISEE':
-      return ecran === 'CHARGEMENT'
+      // L'exemple porte sur la question de ces écrans : ils sont gardés.
+      return !['SAISIE', 'ENVOI', 'CONFIRMEE', 'TEMPS_ECOULE', 'REFUSEE'].includes(ecran)
     case 'VALIDER':
     case 'TEMPS_ECOULE':
       return ecran === 'SAISIE'
@@ -71,7 +72,7 @@ function transitionPrevue(ecran: Ecran['nom'], action: ActionReponse['type']): b
     case 'ECHEC_RESEAU':
       return ecran === 'ENVOI'
     case 'RESULTAT_RECU':
-      return ecran === 'CONFIRMEE' || ecran === 'TEMPS_ECOULE' || ecran === 'REFUSEE'
+      return ['CONFIRMEE', 'TEMPS_ECOULE', 'REFUSEE', 'CHARGEMENT'].includes(ecran)
   }
 }
 
@@ -185,23 +186,41 @@ describe('reducerReponse : transitions du plan', () => {
   })
 
   describe('panne réseau et renvoi (D14)', () => {
-    const enRenvoi = etat({ nom: 'ENVOI', question, corps, renvoi: true }, true)
+    const enRenvoi = etat({ nom: 'ENVOI', question, corps, renvoi: true })
 
-    it('ENVOI ──échec réseau──▶ ENVOI (renvoi = true, bandeau)', () => {
-      expect(reducerReponse(etat(ECRANS.ENVOI), ACTIONS.ECHEC_RESEAU)).toEqual(enRenvoi)
+    it('ENVOI ──échec réseau, t > 0──▶ ENVOI (renvoi = true), bandeau', () => {
+      const apres = reducerReponse(etat(ECRANS.ENVOI), ACTIONS.ECHEC_RESEAU)
+      expect(apres).toEqual(enRenvoi)
+      expect(connexionInterrompue(apres)).toBe(true)
     })
 
-    it('ENVOI (renvoi) ──reconnexion, t > 0──▶ reste en ENVOI, même corps', () => {
-      expect(reducerReponse(enRenvoi, { type: 'RECONNEXION', resteDuTemps: true }))
-        .toEqual(etat({ nom: 'ENVOI', question, corps, renvoi: true }))
+    it('ENVOI ──échec réseau, t = 0──▶ CHARGEMENT (renvoi impossible, état relu)', () => {
+      expect(reducerReponse(etat(ECRANS.ENVOI), { type: 'ECHEC_RESEAU', resteDuTemps: false }))
+        .toEqual(etat(ECRANS.CHARGEMENT))
     })
 
-    it('ENVOI (renvoi) ──reconnexion, t = 0──▶ CHARGEMENT', () => {
-      expect(reducerReponse(enRenvoi, { type: 'RECONNEXION', resteDuTemps: false })).toEqual(etat(ECRANS.CHARGEMENT))
+    it('ENVOI (renvoi) ──échec du renvoi──▶ CHARGEMENT (un seul renvoi, état relu)', () => {
+      expect(reducerReponse(enRenvoi, ACTIONS.ECHEC_RESEAU)).toEqual(etat(ECRANS.CHARGEMENT))
+    })
+
+    it('ENVOI (renvoi) ──reconnexion, renvoi parti──▶ reste en ENVOI, même corps', () => {
+      expect(reducerReponse(etat(enRenvoi.ecran, true), { type: 'RECONNEXION', renvoiEnCours: true })).toEqual(enRenvoi)
+    })
+
+    it('ENVOI (renvoi) ──reconnexion, renvoi impossible (t = 0)──▶ CHARGEMENT', () => {
+      expect(reducerReponse(etat(enRenvoi.ecran, true), { type: 'RECONNEXION', renvoiEnCours: false }))
+        .toEqual(etat(ECRANS.CHARGEMENT))
+    })
+
+    it('ENVOI en cours (sans renvoi) ──reconnexion──▶ reste en ENVOI : la réponse HTTP est attendue', () => {
+      expect(reducerReponse(etat(ECRANS.ENVOI, true), { type: 'RECONNEXION', renvoiEnCours: false }))
+        .toEqual(etat(ECRANS.ENVOI))
     })
 
     it('ENVOI (renvoi) ──201──▶ CONFIRMEE, bandeau effacé', () => {
-      expect(reducerReponse(enRenvoi, ACTIONS.ENVOI_REUSSI)).toEqual(etat({ nom: 'CONFIRMEE', idQuestion: 1 }))
+      const apres = reducerReponse(enRenvoi, ACTIONS.ENVOI_REUSSI)
+      expect(apres).toEqual(etat({ nom: 'CONFIRMEE', idQuestion: 1 }))
+      expect(connexionInterrompue(apres)).toBe(false)
     })
 
     it('ENVOI (renvoi) ──DEJA_REPONDU──▶ CONFIRMEE (pas une erreur)', () => {
@@ -223,7 +242,7 @@ describe('reducerReponse : transitions du plan', () => {
     })
   })
 
-  it.each(['CONFIRMEE', 'TEMPS_ECOULE', 'REFUSEE'] as const)('%s ──résultat reçu──▶ RESULTAT', (nom) => {
+  it.each(['CONFIRMEE', 'TEMPS_ECOULE', 'REFUSEE', 'CHARGEMENT'] as const)('%s ──résultat reçu──▶ RESULTAT', (nom) => {
     expect(reducerReponse(etat(ECRANS[nom]), ACTIONS.RESULTAT_RECU).ecran).toEqual({ nom: 'RESULTAT', resultat })
   })
 
@@ -257,8 +276,68 @@ describe('reducerReponse : transitions du plan', () => {
     expect(reducerReponse(etat(ECRANS[nom]), ACTIONS.CONNEXION_PERDUE)).toEqual(etat(ECRANS[nom], true))
   })
 
-  it.each(saufExpiree)('%s ──reconnexion──▶ CHARGEMENT, bandeau retiré', (nom) => {
-    expect(reducerReponse(etat(ECRANS[nom], true), ACTIONS.RECONNEXION)).toEqual(etat(ECRANS.CHARGEMENT))
+  it.each(saufExpiree)('%s ──reconnexion──▶ même écran, bandeau retiré', (nom) => {
+    const apres = reducerReponse(etat(ECRANS[nom], true), ACTIONS.RECONNEXION)
+    expect(apres).toEqual(etat(ECRANS[nom]))
+    expect(connexionInterrompue(apres)).toBe(false)
+  })
+
+  describe('resynchronisation par REST : l\'écran est corrigé, pas effacé', () => {
+    const resync = (question: Question | null, dejaRepondu = false): ActionReponse =>
+      ({ type: 'RESYNCHRONISEE', question, dejaRepondu })
+
+    it.each(['SAISIE', 'ENVOI', 'CONFIRMEE', 'TEMPS_ECOULE', 'REFUSEE'] as const)(
+      '%s, même question en cours : écran gardé',
+      (nom) => {
+        const avant = etat(ECRANS[nom])
+        expect(reducerReponse(avant, resync(question))).toEqual(avant)
+      },
+    )
+
+    it('SAISIE avec un message d\'erreur, même question : saisie et message gardés', () => {
+      const avecErreur = etat({ nom: 'SAISIE', question, erreur: { ...erreurAffichee, corrigeable: true, ecran: 'E8' } })
+      expect(reducerReponse(avecErreur, resync(question))).toEqual(avecErreur)
+    })
+
+    it('SAISIE, même question, dejaRepondu → CONFIRMEE', () => {
+      expect(reducerReponse(etat(ECRANS.SAISIE), resync(question, true)).ecran).toEqual({ nom: 'CONFIRMEE', idQuestion: 1 })
+    })
+
+    it.each(['RESULTAT', 'CONFIRMEE', 'TEMPS_ECOULE', 'REFUSEE', 'ENVOI', 'ATTENTE'] as const)(
+      '%s, aucune question en cours : écran gardé',
+      (nom) => {
+        const avant = etat(ECRANS[nom])
+        expect(reducerReponse(avant, resync(null))).toEqual(avant)
+      },
+    )
+
+    it('SAISIE, aucune question en cours (close pendant la coupure) → ATTENTE', () => {
+      expect(reducerReponse(etat(ECRANS.SAISIE), resync(null)).ecran).toEqual({ nom: 'ATTENTE' })
+    })
+
+    it.each(['RESULTAT', 'CONFIRMEE', 'SAISIE', 'ATTENTE'] as const)(
+      '%s, autre question en cours (manquée pendant la coupure) → SAISIE, ou CONFIRMEE si dejaRepondu',
+      (nom) => {
+        expect(reducerReponse(etat(ECRANS[nom]), resync(autreQuestion)).ecran)
+          .toEqual({ nom: 'SAISIE', question: autreQuestion, erreur: null })
+        expect(reducerReponse(etat(ECRANS[nom]), resync(autreQuestion, true)).ecran)
+          .toEqual({ nom: 'CONFIRMEE', idQuestion: 7 })
+      },
+    )
+  })
+
+  describe('bandeau « connexion perdue » (connexionInterrompue)', () => {
+    it('temps réel coupé : bandeau, quel que soit l\'écran', () => {
+      expect(connexionInterrompue(etat(ECRANS.RESULTAT, true))).toBe(true)
+    })
+
+    it('réponse en attente de son renvoi : bandeau, même avec STOMP connecté', () => {
+      expect(connexionInterrompue(etat({ nom: 'ENVOI', question, corps, renvoi: true }))).toBe(true)
+    })
+
+    it('envoi en cours sans panne : pas de bandeau', () => {
+      expect(connexionInterrompue(etat(ECRANS.ENVOI))).toBe(false)
+    })
   })
 
   it.each(saufExpiree)('%s ──jeton refusé (STOMP)──▶ SESSION_EXPIREE avec le message de JETON_INVALIDE', (nom) => {

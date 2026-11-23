@@ -9,7 +9,8 @@
 // - Envoi : l'appel part quand l'écran passe en ENVOI, une seule fois par corps ; un double clic ne fait qu'un envoi
 //   (le second VALIDER est ignoré par le reducer, déjà en ENVOI).
 // - Panne réseau (D14, précisé le 23/11/2026) : un seul renvoi automatique, tout de suite si STOMP est connecté,
-//   sinon à la reconnexion. Si ce renvoi échoue aussi, la reconnexion suivante repasse par CHARGEMENT et relit l'état.
+//   sinon à la reconnexion. Si ce renvoi échoue aussi, ou s'il n'a plus le temps de partir, l'écran passe en
+//   CHARGEMENT et l'état est relu par REST (`useTempsReelSeance`).
 // - Nouvelle question : saisie remise à zéro (le reducer repasse en SAISIE).
 //
 // Le client temps réel (`creerClient`) et l'API (`api`) sont injectables : vrais par défaut, faux pour la démo et les
@@ -116,12 +117,9 @@ export function useRepondreQuestion({
     dispatchReducer(action)
   }, [])
 
-  /** Envoie `corps` ; un renvoi n'est permis qu'une fois par corps (renvoie `false` sinon). */
-  const envoyer = useCallback(function envoyer(corps: CorpsReponse, renvoi: boolean): boolean {
-    if (renvoi) {
-      if (corpsRenvoye.current === corps) return false
-      corpsRenvoye.current = corps
-    }
+  /** Envoie `corps` ; `renvoi` : renvoi D14, le seul permis pour ce corps. */
+  const envoyer = useCallback(function envoyer(corps: CorpsReponse, renvoi: boolean): void {
+    if (renvoi) corpsRenvoye.current = corps
     corpsEnvoye.current = corps
     void api.envoyerReponse(codeAcces, jetonParticipant, corps).then((resultat) => {
       if (corpsEnvoye.current !== corps) return
@@ -133,15 +131,25 @@ export function useRepondreQuestion({
         case 'REFUSEE':
           dispatch({ type: 'ENVOI_REFUSE', erreur: resultat.erreur, resteDuTemps: resteDuTemps() })
           break
-        case 'ECHEC_RESEAU':
-          dispatch({ type: 'ECHEC_RESEAU' })
+        case 'ECHEC_RESEAU': {
+          // Même valeur pour le reducer et pour la décision du renvoi : le reducer attend le renvoi si t > 0.
+          const reste = resteDuTemps()
+          dispatch({ type: 'ECHEC_RESEAU', resteDuTemps: reste })
           // STOMP toujours connecté : aucune reconnexion ne viendra déclencher le renvoi, il part tout de suite.
-          if (!stompCoupe.current && resteDuTemps()) envoyer(corps, true)
+          if (reste && !renvoi && !stompCoupe.current) envoyer(corps, true)
           break
+        }
       }
     })
-    return true
   }, [api, codeAcces, jetonParticipant, dispatch, noterEcart, resteDuTemps])
+
+  /** Renvoi à la reconnexion (D14) : vrai s'il est parti, maintenant ou avant (sa réponse est attendue). */
+  const surRenvoi = useCallback((corps: CorpsReponse): boolean => {
+    if (corpsRenvoye.current === corps) return true
+    if (!resteDuTemps()) return false
+    envoyer(corps, true)
+    return true
+  }, [envoyer, resteDuTemps])
 
   const { ecran } = etat
   useEffect(() => {
@@ -153,13 +161,12 @@ export function useRepondreQuestion({
     jetonParticipant,
     etat,
     dispatch,
-    resteDuTemps,
     resynchroniser: async (signal) => {
       const { ecartMs: ecart, ...resynchronisation } = await api.lireEtat(codeAcces, jetonParticipant, signal)
       noterEcart(ecart)
       return resynchronisation
     },
-    surRenvoi: (corps) => envoyer(corps, true),
+    surRenvoi,
     creerClient,
   })
 

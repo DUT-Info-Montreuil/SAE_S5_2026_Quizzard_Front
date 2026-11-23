@@ -56,7 +56,7 @@ function espionner(scenario: EvenementFactice[]) {
   return { clients, creerClient }
 }
 
-function monter(scenario: EvenementFactice[], { strict = false, resteDuTemps = true } = {}) {
+function monter(scenario: EvenementFactice[], { strict = false } = {}) {
   const espion = espionner(scenario)
   const actions: ActionReponse[] = []
   const rendu = renderHook(
@@ -70,7 +70,6 @@ function monter(scenario: EvenementFactice[], { strict = false, resteDuTemps = t
           actions.push(action)
           dispatch(action)
         },
-        resteDuTemps: () => resteDuTemps,
         resynchroniser: async (signal) => {
           const { question, dejaRepondu } = await lireEtat(CODE, 'jeton', signal)
           return { question, dejaRepondu }
@@ -162,6 +161,24 @@ describe('useTempsReelSeance', () => {
 
     await avancer(3000)
     expect(rendu.result.current.etat.ecran).toEqual({ nom: 'CONFIRMEE', idQuestion: 1 })
+  })
+
+  it('CHARGEMENT avec STOMP connecté (renvoi échoué) : l\'état est relu sans attendre de reconnexion', async () => {
+    const faux = fauxFetchEtat()
+    const { rendu } = monter([])
+    await avancer(500)
+    expect(appelsEtat(faux)).toBe(1)
+
+    act(() => {
+      rendu.result.current.dispatch({ type: 'VALIDER', saisie: { type: 'QCM', propositions: [12] }, resteDuTemps: true })
+      rendu.result.current.dispatch({ type: 'ECHEC_RESEAU', resteDuTemps: true })
+      rendu.result.current.dispatch({ type: 'ECHEC_RESEAU', resteDuTemps: true })
+    })
+    expect(rendu.result.current.etat.ecran.nom).toBe('CHARGEMENT')
+
+    await avancer(100)
+    expect(appelsEtat(faux)).toBe(2)
+    expect(rendu.result.current.etat.ecran.nom).toBe('SAISIE')
   })
 
   it('aucun double abonnement (StrictMode) : un seul client ouvert, une fois par destination', async () => {

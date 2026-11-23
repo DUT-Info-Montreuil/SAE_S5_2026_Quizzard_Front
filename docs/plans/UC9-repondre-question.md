@@ -78,14 +78,17 @@ ENVOI ──201──▶ CONFIRMEE (E9 « Réponse enregistrée »)
 ENVOI ──422 ou 500, t > 0──▶ SAISIE + message (E8)
 ENVOI ──422 ou 500 avec t = 0, ou 409──▶ REFUSEE (E9 + message)
 ENVOI ──401──▶ SESSION_EXPIREE (E9, état final)
-ENVOI ──échec réseau──▶ ENVOI (renvoi = true, bandeau)
-ENVOI (renvoi) ──reconnexion, t > 0──▶ renvoi du même corps
+ENVOI ──échec réseau, t > 0──▶ ENVOI (renvoi = true, bandeau)
+ENVOI ──échec réseau, t = 0──▶ CHARGEMENT (réponse peut-être enregistrée : état relu par REST)
+ENVOI (renvoi) ──tout de suite si STOMP est connecté, sinon à la reconnexion──▶ renvoi du même corps
 ENVOI (renvoi) ──201 ou DEJA_REPONDU──▶ CONFIRMEE
-ENVOI (renvoi) ──reconnexion, t = 0──▶ CHARGEMENT
-CONFIRMEE | TEMPS_ECOULE | REFUSEE ──résultat reçu──▶ RESULTAT (E9)
+ENVOI (renvoi) ──échec du renvoi, ou reconnexion avec t = 0──▶ CHARGEMENT (état relu par REST)
+CONFIRMEE | TEMPS_ECOULE | REFUSEE | CHARGEMENT ──résultat reçu──▶ RESULTAT (E9)
 tout état sauf SESSION_EXPIREE ──nouvelle question──▶ SAISIE (remise à zéro)
 etat = CLOTUREE ──▶ SEANCE_CLOSE
-Indicateur à part : connexion perdue (bandeau) ; à la reconnexion ──▶ CHARGEMENT
+Indicateur à part : connexion perdue (bandeau). À la reconnexion, l'écran est gardé (un envoi en cours attend sa
+réponse HTTP), puis corrigé par la resynchronisation : autre question en cours ──▶ SAISIE (CONFIRMEE si dejaRepondu) ;
+même question ──▶ écran gardé ; aucune question en cours ──▶ SAISIE passe en ATTENTE, les écrans E9 sont gardés.
 ```
 
 ## 6. Étapes (un bloc = une session de travail)
@@ -155,6 +158,23 @@ Indicateur à part : connexion perdue (bandeau) ; à la reconnexion ──▶ CH
   écart et repli D12, `echeanceQuestion`, messages STOMP, `useTempsReelSeance` (faux client), E8, E9, `PageQuestion`
   (un seul envoi au double clic, temps écoulé, nouvelle question). Non couvert : le `400` (`REQUETE_INVALIDE`,
   message à fixer, question B11) et le renvoi automatique D14 par `useRepondreQuestion`.
+
+### Corrections après la relecture (23/11/2026)
+
+Bloquants trouvés à la relecture de B1 à B8, reproduits par un test avant correction.
+
+- [x] **R1** Deux pannes réseau avec STOMP connecté : l'écran restait en ENVOI (bandeau, « 0:00 ») et ignorait le
+  résultat. Désormais, l'échec du renvoi unique (ou une panne à t = 0) mène à CHARGEMENT ; l'état est relu par REST
+  tout de suite si STOMP est connecté (`useTempsReelSeance`), et un résultat reçu en CHARGEMENT s'affiche.
+- [x] **R2** Reconnexion STOMP pendant le `POST` : l'écran passait en CHARGEMENT et le `201` était perdu (retour sur
+  E8, puis « Tu as déjà répondu. »). Désormais, la reconnexion garde l'écran ; un envoi en cours attend sa réponse
+  HTTP, un renvoi déjà parti aussi (`RECONNEXION.renvoiEnCours`).
+- [x] **R3** Une reconnexion effaçait le résultat affiché sur E9. Désormais, `RESYNCHRONISEE` corrige l'écran sans
+  l'effacer (§5) ; le repli « question confirmée sur cet appareil » de B6 devient inutile et est retiré.
+- [x] Bandeau : `connexionPerdue` ne suit plus que STOMP ; `connexionInterrompue` (domaine) l'affiche aussi pour une
+  réponse en attente de son renvoi. Il ne reste plus affiché après le retour du réseau.
+- [x] Tests : transitions du §5 mises à jour, resynchronisation, relecture en CHARGEMENT, et dans `PageQuestion` les
+  trois scénarios ci-dessus (dont le renvoi D14 par `useRepondreQuestion` avec STOMP connecté).
 
 ## 7. Questions ouvertes
 
