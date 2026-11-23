@@ -7,7 +7,8 @@
 // - chaque message reçu est converti par `convertirMessage` puis passé au reducer ;
 // - coupure : CONNEXION_PERDUE (bandeau), la bibliothèque retente seule avec une attente croissante ;
 // - (re)connexion : RECONNEXION (après une coupure), puis resynchronisation par REST et RESYNCHRONISEE ;
-//   si une réponse attend son renvoi (D14) et qu'il reste du temps, `surRenvoi` est appelé à la place ;
+//   si une réponse attend son renvoi (D14), qu'il reste du temps et que `surRenvoi` l'accepte, le renvoi remplace
+//   la resynchronisation ;
 // - JETON_REFUSE ou SEANCE_CLOTUREE : déconnexion définitive, sans reconnexion.
 
 import { useEffect, useRef } from 'react'
@@ -32,8 +33,8 @@ export interface OptionsTempsReelSeance {
   resteDuTemps: () => boolean
   /** Lecture de l'état par REST après une (re)connexion, par exemple avec `lireEtat`. */
   resynchroniser: (signal: AbortSignal) => Promise<Resynchronisation>
-  /** Renvoi du même corps après une coupure (D14). */
-  surRenvoi: (corps: CorpsReponse) => void
+  /** Renvoi du même corps après une coupure (D14) ; renvoie `false` si le renvoi n'est plus permis (déjà fait). */
+  surRenvoi: (corps: CorpsReponse) => boolean
   /** Fabrique du client ; `creerClientStomp` par défaut, un faux client pour les tests et les démos. */
   creerClient?: () => ClientTempsReel
 }
@@ -111,13 +112,12 @@ export function useTempsReelSeance({
     client.connecter({ 'X-Jeton-Participant': jetonParticipant }, {
       connecte(reconnexion) {
         if (reconnexion) {
-          const { etat: { ecran }, resteDuTemps: tempsRestant, surRenvoi: renvoyer } = courant.current
-          const resteDuTemps = tempsRestant()
-          emettre({ type: 'RECONNEXION', resteDuTemps })
-          if (ecran.nom === 'ENVOI' && ecran.renvoi && resteDuTemps) {
-            renvoyer(ecran.corps)
-            return
-          }
+          const { etat: { ecran }, resteDuTemps, surRenvoi } = courant.current
+          const renvoye = ecran.nom === 'ENVOI' && ecran.renvoi && resteDuTemps() && surRenvoi(ecran.corps)
+          // `resteDuTemps: renvoye` : le reducer garde ENVOI seulement si le renvoi est parti ; sinon CHARGEMENT,
+          // puis resynchronisation par REST.
+          emettre({ type: 'RECONNEXION', resteDuTemps: renvoye })
+          if (renvoye) return
         }
         resynchroniserParRest()
       },

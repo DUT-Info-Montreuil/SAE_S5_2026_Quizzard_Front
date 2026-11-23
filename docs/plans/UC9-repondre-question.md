@@ -136,9 +136,17 @@ Indicateur à part : connexion perdue (bandeau) ; à la reconnexion ──▶ CH
   B7) ; `BandeauConnexion` (libellé provisoire, U5) ; démo `?demo=temps-reel`. `/correction` : abonné, sans effet
   (forme inconnue, B7). En attendant `dejaRepondu`, une question confirmée sur l'appareil reste confirmée après
   une reconnexion.
-- [ ] **B7 Assemblage** : installer `react-router`. Hook `useRepondreQuestion`, route `/rejoindre/:codeAcces/question`,
+- [x] **B7 Assemblage** : installer `react-router`. Hook `useRepondreQuestion`, route `/rejoindre/:codeAcces/question`,
   garde étudiant (jeton par `codeAcces`), suppression de `src/app/demo/`, mise à jour de `docs/ARCHITECTURE.md`,
   `docs/DESIGN.md` et `docs/API.md`.
+  Fait : `react-router` 7 ; `seance/application/useRepondreQuestion.ts` (client temps réel et API injectables) ;
+  `seance/application/jetonParticipant.ts` (`sessionStorage`, clé provisoire) ; `seance/presentation/PageQuestion.tsx` ;
+  `app/RouteQuestion.tsx` (garde) ; `app/RejoindreProvisoire.tsx` (E7 vide, en attendant UC8) ; routes dans
+  `app/main.tsx`. Démos E8, E9 et temps réel supprimées, remplacées par une seule démo `/demo/question`, en
+  développement seulement (accord du 23/11/2026). Précision de D14 (23/11/2026) : un seul renvoi automatique, tout de
+  suite si STOMP est resté connecté, sinon à la reconnexion ; s'il échoue aussi, la reconnexion suivante repasse par
+  CHARGEMENT. Conséquences : `surRenvoi` renvoie un booléen (`useTempsReelSeance`) et une réponse HTTP au renvoi
+  efface le bandeau (reducer).
 - [ ] **B8 Tests** : installer `vitest`, `@testing-library/react`, `@testing-library/dom`, `jsdom` ; script `test`.
   Reducer, table des erreurs, `reponseComplete`, `corpsReponse`, `lireInstantServeur`, composants E8 et E9.
 

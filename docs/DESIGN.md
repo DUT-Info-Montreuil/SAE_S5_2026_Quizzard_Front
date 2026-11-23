@@ -212,6 +212,10 @@ Onze écrans : six pour l'enseignant, deux projetés en salle, trois pour l'étu
 
 ### E8 – Question (étudiant) · UC8, UC9
 
+Route `/rejoindre/:codeAcces/question`, partagée avec E9 (composant `seance/presentation/PageQuestion.tsx`) ;
+sans jeton de participant, retour à E7. Écran de chargement (libellé provisoire « Chargement… ») tant que l'état
+n'est pas relu par REST. Démo sans back en développement : `/demo/question`.
+
 - Barre et décompte du temps restant, synchronisés sur le serveur ; « Valider » désactivé à 0.
 - Énoncé en lecture seule.
 - Zone de réponse selon le type : QCM, boutons avec lettre et couleur ; points à relier, deux colonnes ; réponse
@@ -224,7 +228,8 @@ Onze écrans : six pour l'enseignant, deux projetés en salle, trois pour l'étu
 - Confirmation après la validation ou à l'expiration du temps.
 - Points de la question et score total.
 - Rang sur le nombre de participants, avec l'évolution ; l'étudiant ne voit que son propre rang.
-- Message d'attente ; retour automatique sur E8 à la question suivante.
+- Message d'attente ; retour automatique sur E8, saisie remise à zéro, à la question suivante.
+- Session expirée : le bouton « Rejoindre » ramène à E7 (`/rejoindre/:codeAcces`), le jeton étant supprimé.
 
 ### E10 – Résultats de la séance (enseignant, ordinateur) · UC17, UC18
 

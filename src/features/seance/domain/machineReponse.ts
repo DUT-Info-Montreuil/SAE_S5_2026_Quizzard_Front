@@ -24,6 +24,7 @@
 //   tout état sauf SESSION_EXPIREE ──CONNEXION_PERDUE───────────▶ même état, connexion perdue (bandeau)
 //   tout état sauf SESSION_EXPIREE et ENVOI (renvoi) ──RECONNEXION──▶ CHARGEMENT
 //   SESSION_EXPIREE : état final, aucune transition.
+//   ENVOI (renvoi) ──ENVOI_REUSSI ou ENVOI_REFUSE──▶ en plus, connexion perdue effacée (le réseau répond).
 //
 // « Nouvelle » question : identifiant différent de la question courante ; la même question rediffusée est ignorée.
 
@@ -90,6 +91,11 @@ function vers(etat: EtatReponse, ecran: Ecran): EtatReponse {
   return { ...etat, ecran }
 }
 
+/** Une réponse HTTP au renvoi prouve que le réseau est revenu : le bandeau posé par ECHEC_RESEAU disparaît. */
+function apresRenvoi(etat: EtatReponse, ecran: Extract<Ecran, { nom: 'ENVOI' }>): EtatReponse {
+  return ecran.renvoi ? { ...etat, connexionPerdue: false } : etat
+}
+
 export function reducerReponse(etat: EtatReponse, action: ActionReponse): EtatReponse {
   const { ecran } = etat
   if (ecran.nom === 'SESSION_EXPIREE') return etat
@@ -121,10 +127,11 @@ export function reducerReponse(etat: EtatReponse, action: ActionReponse): EtatRe
 
     case 'ENVOI_REUSSI':
       if (ecran.nom !== 'ENVOI') return etat
-      return vers(etat, { nom: 'CONFIRMEE', idQuestion: ecran.question.idQuestion })
+      return vers(apresRenvoi(etat, ecran), { nom: 'CONFIRMEE', idQuestion: ecran.question.idQuestion })
 
     case 'ENVOI_REFUSE': {
       if (ecran.nom !== 'ENVOI') return etat
+      etat = apresRenvoi(etat, ecran)
       const { idQuestion } = ecran.question
       if (ecran.renvoi && codeErreur(action.erreur) === 'DEJA_REPONDU') {
         return vers(etat, { nom: 'CONFIRMEE', idQuestion })

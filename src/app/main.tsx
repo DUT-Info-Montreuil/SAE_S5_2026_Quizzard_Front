@@ -1,28 +1,27 @@
-import { StrictMode, Suspense, lazy } from 'react'
+import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { createBrowserRouter, RouterProvider } from 'react-router'
 import '../shared/styles/tokens.css'
 import '../shared/styles/police.css'
 import '../index.css'
 import App from '../App.tsx'
+import { RejoindreProvisoire } from './RejoindreProvisoire.tsx'
+import { RouteQuestion } from './RouteQuestion.tsx'
 
-// Début du bloc « démo » : démos temporaires de E8 (?demo=e8), E9 (?demo=e9) et du temps réel
-// (?demo=temps-reel), en développement seulement. À supprimer avec src/app/demo/.
-const demo = import.meta.env.DEV ? new URLSearchParams(location.search).get('demo') : null
-/* eslint-disable react-refresh/only-export-components -- point d'entrée, sans fast refresh à préserver */
-const Racine = demo === 'e8'
-  ? lazy(() => import('./demo/DemoE8.tsx'))
-  : demo === 'e9'
-    ? lazy(() => import('./demo/DemoE9.tsx'))
-    : demo === 'temps-reel'
-      ? lazy(() => import('./demo/DemoTempsReel.tsx'))
-      : App
-/* eslint-enable react-refresh/only-export-components */
-// Fin du bloc « démo ».
+// Routes de la SPA (docs/ARCHITECTURE.md §4).
+const routeur = createBrowserRouter([
+  { path: '/rejoindre/:codeAcces', Component: RejoindreProvisoire },
+  { path: '/rejoindre/:codeAcces/question', Component: RouteQuestion },
+  // Démo sans back, en développement seulement : absente du build de production.
+  ...(import.meta.env.DEV
+    ? [{ path: '/demo/question', lazy: async () => ({ Component: (await import('./demo/DemoQuestion.tsx')).default }) }]
+    : []),
+  // Modèle Vite, à remplacer.
+  { path: '*', Component: App },
+])
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <Suspense>
-      <Racine />
-    </Suspense>
+    <RouterProvider router={routeur} />
   </StrictMode>,
 )

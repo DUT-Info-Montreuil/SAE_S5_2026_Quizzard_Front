@@ -12,7 +12,7 @@ Le back-end Spring Boot est dans le dépôt séparé `DUT-Info-Montreuil/SAE_S5_
 Pile front (vérifiée dans `package.json`) : **React 19.3**, **TypeScript 6.0**, **Vite 8.3**
 (`@vitejs/plugin-react` 6), **ESLint 10** (`typescript-eslint` 8, `eslint-plugin-react-hooks` 7,
 `eslint-plugin-react-refresh` 0.5). Node.js **20.19+ ou 22.13+** (`CONTRIBUTING.md`). Pas encore installés, à
-choisir par l'équipe : routeur, client STOMP, outil de test. PDF.js est retenu par l'étude de faisabilité pour le
+choisir par l'équipe : outil de test (Vitest + RTL retenu). Installés depuis : `react-router` 7, `@stomp/stompjs` 7. PDF.js est retenu par l'étude de faisabilité pour le
 rendu du PDF mais n'est pas encore installé.
 
 Pile back (dépôt séparé, versions non vérifiables depuis ce dépôt) : **Spring Boot** lancé par Maven
@@ -58,7 +58,7 @@ avant une pull request. Aucun script `test` pour l'instant.
 
 ```text
 src/
-├── app/                main.tsx : point d'entrée ; à venir : routeur, fournisseurs de contexte
+├── app/                main.tsx : point d'entrée et routes ; à venir : fournisseurs de contexte
 ├── features/<feature>/{api, application, domain, presentation}
 └── shared/{config, http, lib, ui}
 ```
