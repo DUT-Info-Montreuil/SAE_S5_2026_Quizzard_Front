@@ -50,7 +50,7 @@ Contraintes du cahier des charges qui pèsent sur le front :
 | Routeur | **À choisir** | Aucun installé (§4) |
 | Gestion de l'état | Rien d'installé | Proposition : outils de React seuls, bibliothèque seulement si le besoin apparaît (§5) |
 | Client HTTP | Rien d'installé | Proposition : `fetch` du navigateur, enveloppé dans `shared/http` (§6) |
-| Client STOMP | **À choisir** | Aucun installé (§7) |
+| Client STOMP | En place | `@stomp/stompjs` 7, WebSocket natif, sans SockJS (§7) |
 | PDF.js | **Retenu, pas installé** | Choix de l'étude de faisabilité (§8) |
 | Tests | **À choisir** | Aucun outil installé |
 | Image Docker du front | **À écrire** | Serveur de fichiers statiques à choisir (§11) |
@@ -179,9 +179,14 @@ Un seul client, dans `src/shared/http`, construit sur `fetch`. Toutes les featur
 
 Le serveur **pousse** l'état de la séance ; le front **n'envoie aucune commande par STOMP** (commandes en REST).
 
-- Connexion : `/ws` sur la même origine que l'API (`wss://` en production), protocole STOMP. La bibliothèque cliente
-  est **à choisir** ; critères : WebSocket natif, reconnexion automatique, battements de cœur (heartbeats),
-  en-têtes personnalisés dans la trame `CONNECT`, taille raisonnable du bundle.
+- Connexion : `/ws` sur la même origine que l'API (`wss://` en production), protocole STOMP. Bibliothèque :
+  `@stomp/stompjs`, en WebSocket natif (pas de SockJS). Adresse `urlWs` de `shared/config`, déduite de
+  `VITE_API_URL`.
+- Code : interface `ClientTempsReel` (`connecter`, `sAbonner`, `deconnecter`) dans `shared/tempsReel`, avec
+  `creerClientStomp` (réel) et `creerClientFactice` (rejoue un scénario, pour les tests et les démos). Pour
+  l'étudiant : destinations dans `seance/api/destinationsSeance.ts` (seul endroit), conversion des messages en
+  actions du reducer dans `seance/api/messagesSeance.ts` (message mal formé ignoré), cycle de connexion dans le hook
+  `seance/application/useTempsReelSeance.ts`. Démo sans back : `http://localhost:5173/?demo=temps-reel`.
 - Authentification : cookie de session pour l'enseignant ; en-tête STOMP `X-Jeton-Participant` dans la trame
   `CONNECT` pour l'étudiant.
 - Abonnements par écran (destinations du back, [API.md](API.md)) :
@@ -195,10 +200,12 @@ Le serveur **pousse** l'état de la séance ; le front **n'envoie aucune command
 
 Le broker du back est en mémoire et ne rejoue pas les messages manqués. Après une coupure :
 
-1. le client STOMP retente la connexion avec un délai croissant et borné ;
+1. le client STOMP retente la connexion avec un délai croissant et borné (1 s, doublé à chaque échec, 30 s au
+   plus) ; un jeton refusé (`JETON_INVALIDE`) ou la clôture de la séance arrête le client, sans reconnexion ;
 2. une fois reconnecté, il se réabonne aux mêmes destinations ;
-3. le front **resynchronise l'état par REST** : `POST /api/public/sessions/{codeAcces}/reconnexion` pour l'étudiant
-   (état courant et score), `GET /api/sessions/{idSession}` pour l'enseignant ;
+3. le front **resynchronise l'état par REST** : `GET /api/public/sessions/{codeAcces}/etat` (forme provisoire,
+   plan UC9 question B7) ou `POST /api/public/sessions/{codeAcces}/reconnexion` pour l'étudiant (état courant et
+   score), `GET /api/sessions/{idSession}` pour l'enseignant ;
 4. pendant la coupure, un bandeau indique la perte de connexion ; une réponse déjà confirmée reste affichée comme
    confirmée.
 
@@ -285,6 +292,6 @@ Vite lit `.env` (non commité) ; seules les variables préfixées par `VITE_` so
 | F3 | Commandes en REST, diffusion en STOMP, resynchronisation REST après reconnexion | Retenu (aligné sur le back) |
 | F4 | Décompte calé sur l'échéance et l'heure du serveur | Retenu |
 | F5 | PDF.js embarqué, PDF chargé par route protégée | Retenu, à installer |
-| F6 | Routeur, client STOMP, outil de test | À choisir |
+| F6 | Routeur, client STOMP, outil de test | Retenu : React Router, `@stomp/stompjs` (installé), Vitest + RTL |
 | F7 | Chemins des écrans (§4) et format du `lien` de séance | Proposition, à confirmer avec le back |
 | F8 | Mode d'affichage du cours sur les appareils étudiants | Point ouvert du cahier des charges, à redemander au client |

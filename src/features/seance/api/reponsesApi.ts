@@ -5,6 +5,8 @@ import { ErreurHttp } from '../../../shared/http/ErreurHttp.ts'
 import { requete } from '../../../shared/http/clientHttp.ts'
 import { ecartAvecServeur } from '../../../shared/lib/heureServeur.ts'
 import type { CorpsReponse } from '../domain/corpsReponse.ts'
+import { convertirResynchronisation } from './messagesSeance.ts'
+import type { Resynchronisation } from './messagesSeance.ts'
 
 export type ResultatEnvoi =
   /** 201 : réponse enregistrée. `ecartMs` : écart avec le serveur relevé sur l'en-tête Date (`null` si illisible). */
@@ -39,12 +41,30 @@ export async function envoyerReponse(
   }
 }
 
-// TODO(UC9): forme de « état courant + score » inconnue (plan UC9, question B7 ; `dejaRepondu` et `heureServeur`
-// demandés au back). Signatures seules, à implémenter quand le back aura fixé le format.
-export type EtatSessionEtudiant = unknown
+export interface EtatSessionEtudiant extends Resynchronisation {
+  /** Écart avec le serveur relevé sur l'en-tête Date (`null` si illisible). */
+  ecartMs: number | null
+}
 
-/** `GET /api/public/sessions/{codeAcces}/etat`. */
-export type LireEtat = (codeAcces: string, jetonParticipant: string) => Promise<EtatSessionEtudiant>
+/**
+ * `GET /api/public/sessions/{codeAcces}/etat` : resynchronisation après une (re)connexion STOMP (plan UC9, B6).
+ * Le corps est lu par `convertirResynchronisation` (forme provisoire, question B7). Lève l'erreur de `requete()`
+ * (`ErreurHttp` ou panne réseau), ou une `Error` si le corps est mal formé.
+ */
+export async function lireEtat(
+  codeAcces: string,
+  jetonParticipant: string,
+  signal?: AbortSignal,
+): Promise<EtatSessionEtudiant> {
+  const { donnees, enTeteDate } = await requete<unknown>(
+    `/api/public/sessions/${encodeURIComponent(codeAcces)}/etat`,
+    { jetonParticipant, signal },
+  )
+  const etat = convertirResynchronisation(donnees)
+  if (etat === null) throw new Error('État de la séance mal formé.')
+  return { ...etat, ecartMs: ecartAvecServeur(enTeteDate) }
+}
 
+// TODO(UC9): forme de « état courant + score » inconnue (plan UC9, question B7). Signature seule.
 /** `POST /api/public/sessions/{codeAcces}/reconnexion`. */
 export type Reconnexion = (codeAcces: string, jetonParticipant: string) => Promise<EtatSessionEtudiant>

@@ -124,11 +124,18 @@ Indicateur à part : connexion perdue (bandeau) ; à la reconnexion ──▶ CH
 
 ### Suite
 
-- [ ] **B6 Temps réel** : installer `@stomp/stompjs`. Client sur `/ws` (URL déduite de `VITE_API_URL`), en-tête
+- [x] **B6 Temps réel** : installer `@stomp/stompjs`. Client sur `/ws` (URL déduite de `VITE_API_URL`), en-tête
   `X-Jeton-Participant` dans la trame `CONNECT`. Abonnements aux événements de la séance (`question_demarree`,
   `question_close`, `session_terminee`) et au résultat personnel, selon la correspondance de la question O1.
   Reconnexion automatique de la bibliothèque, puis resynchronisation par REST. Bandeau « connexion perdue »,
   renvoi D14. Le front n'envoie rien par STOMP.
+  Fait : `shared/tempsReel` (interface `ClientTempsReel`, `creerClientStomp`, `creerClientFactice`) ;
+  `seance/api/destinationsSeance.ts` (destinations provisoires, O1), `messagesSeance.ts` (validation et conversion
+  en actions, `convertirRefus`, `convertirResynchronisation`), `scenarioFactice.ts`, `lireEtat` (forme provisoire,
+  B7) ; action `JETON_REFUSE` du reducer ; hook `useTempsReelSeance` (renvoi D14 délégué à `surRenvoi`, branché en
+  B7) ; `BandeauConnexion` (libellé provisoire, U5) ; démo `?demo=temps-reel`. `/correction` : abonné, sans effet
+  (forme inconnue, B7). En attendant `dejaRepondu`, une question confirmée sur l'appareil reste confirmée après
+  une reconnexion.
 - [ ] **B7 Assemblage** : installer `react-router`. Hook `useRepondreQuestion`, route `/rejoindre/:codeAcces/question`,
   garde étudiant (jeton par `codeAcces`), suppression de `src/app/demo/`, mise à jour de `docs/ARCHITECTURE.md`,
   `docs/DESIGN.md` et `docs/API.md`.

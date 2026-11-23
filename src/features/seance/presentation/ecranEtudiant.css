@@ -87,3 +87,17 @@
   box-shadow: none;
   cursor: not-allowed;
 }
+
+/* Bandeau « connexion perdue » (B6) : fixé en haut, au-dessus de E8 comme de E9 */
+.bandeau-connexion {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 1;
+  margin: 0;
+  padding: 12px var(--espace);
+  background: var(--couleur-alerte);
+  color: var(--couleur-texte);
+  font-family: var(--police);
+  font-weight: 600;
+  text-align: center;
+}

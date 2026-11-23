@@ -20,6 +20,7 @@
 //   CONFIRMEE | TEMPS_ECOULE | REFUSEE ──RESULTAT_RECU──────────▶ RESULTAT (E9)
 //   tout état sauf SESSION_EXPIREE ──QUESTION_RECUE (nouvelle)──▶ SAISIE (remise à zéro)
 //   tout état sauf SESSION_EXPIREE ──SEANCE_CLOTUREE────────────▶ SEANCE_CLOSE
+//   tout état sauf SESSION_EXPIREE ──JETON_REFUSE (trame ERROR STOMP)──▶ SESSION_EXPIREE (message de JETON_INVALIDE)
 //   tout état sauf SESSION_EXPIREE ──CONNEXION_PERDUE───────────▶ même état, connexion perdue (bandeau)
 //   tout état sauf SESSION_EXPIREE et ENVOI (renvoi) ──RECONNEXION──▶ CHARGEMENT
 //   SESSION_EXPIREE : état final, aucune transition.
@@ -65,6 +66,8 @@ export type ActionReponse =
   | { type: 'RECONNEXION', resteDuTemps: boolean }
   | { type: 'RESULTAT_RECU', resultat: ResultatQuestion }
   | { type: 'SEANCE_CLOTUREE' }
+  /** Jeton refusé à la connexion STOMP (plan UC9, B6). */
+  | { type: 'JETON_REFUSE' }
 
 export const ETAT_INITIAL: EtatReponse = { ecran: { nom: 'CHARGEMENT' }, connexionPerdue: false }
 
@@ -149,5 +152,14 @@ export function reducerReponse(etat: EtatReponse, action: ActionReponse): EtatRe
 
     case 'SEANCE_CLOTUREE':
       return vers(etat, { nom: 'SEANCE_CLOSE' })
+
+    case 'JETON_REFUSE':
+      return {
+        ecran: {
+          nom: 'SESSION_EXPIREE',
+          erreur: lireErreurEnvoi({ statut: 401, code: 'JETON_INVALIDE', error: null }, false),
+        },
+        connexionPerdue: false,
+      }
   }
 }

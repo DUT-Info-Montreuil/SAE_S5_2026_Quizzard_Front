@@ -16,5 +16,11 @@ function lireUrlApi(): string {
 /** Adresse du back, sans barre finale (exemple : `http://localhost:8080`). */
 export const urlApi = lireUrlApi()
 
+/**
+ * Adresse du point d'entrée STOMP `/ws`, déduite de `urlApi` (`http` → `ws`, `https` → `wss`).
+ * `urlApi` vide (même origine) : origine de la page.
+ */
+export const urlWs = (urlApi === '' ? location.origin : urlApi).replace(/^http/, 'ws') + '/ws'
+
 /** Vrai avec `npm run dev`, faux dans le build de production. */
 export const estEnDeveloppement = import.meta.env.DEV
