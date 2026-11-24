@@ -157,10 +157,11 @@ les états ; les titres E7-1 (« titreCours • titreQuiz ») le sont dans FORMU
 
 ## 7. Étapes (un bloc = une session de travail)
 
-- [ ] **B0 Préparation** : vérifier la branche `feature/uc8-front` ; `npm ci` ; `npm run lint`, `npm run build` et
+- [x] **B0 Préparation** : vérifier la branche `feature/uc8-front` ; `npm ci` ; `npm run lint`, `npm run build` et
   `npm test` passent avant toute modification ; enregistrer ce plan. Remettre les noms des maquettes à l'endroit
   (`E7.png` ↔ `E8-E9.png`, à confirmer). Le PDF de l'UC9 supprimé et le dossier `.claude/` non suivi restent tels
-  quels : décision de l'auteur.
+  quels : décision de l'auteur. Fait le 24/11/2026 : 293 tests, lint et build passent. Inversion des maquettes
+  vérifiée, mais renommage **pas encore fait** (en attente de confirmation, question U6).
 - [ ] **B1 Domaine** : `pseudonyme.ts` (D8), `erreursRejoindre.ts` (§4 et repli D6), `ecranRejoindre.ts` (types et
   reducer du §5). Rien d'autre que du TypeScript pur.
 - [ ] **B2 API et stockage** : `suggestion` dans `shared/http` ; `rejoindreApi.ts` (§3, conversion vérifiée, résultat
