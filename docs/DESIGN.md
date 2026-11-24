@@ -210,6 +210,22 @@ Onze écrans : six pour l'enseignant, deux projetés en salle, trois pour l'étu
 - « Entrer dans le quiz » : refusé si la séance est close ; sinon E8, sur la question en cours si le quiz a commencé.
 - Mention d'information RGPD : finalité, base légale, durée de conservation, contact **(textes à valider)**.
 
+En place pour le quiz non noté (UC8) : route `/rejoindre/:codeAcces`, composants `seance/presentation/PageRejoindre.tsx`
+et `EcranRejoindre.tsx` ; démo `/demo/rejoindre?cas=…` en développement.
+
+- E7-1 : « titreCours • titreQuiz », puis le titre **provisoire** « Choisis ton pseudo pour rejoindre » (maquette,
+  absent de la spec).
+- E7-2 : champ au libellé « Pseudonyme » caché à l'écran (lu par les lecteurs d'écran), compteur `x/20` sur le
+  pseudonyme nettoyé, message d'erreur sous le champ relié par `aria-describedby` ; `autocomplete="nickname"`, sans
+  majuscule forcée ni correction automatique, sans `maxLength`.
+- E7-3 : « Entrer dans le quiz » (rouge `--couleur-action`), désactivé si le pseudonyme nettoyé est invalide ou
+  pendant l'envoi ; Entrée valide le formulaire.
+- Pseudonyme pris avec proposition : message, puis bouton secondaire portant le pseudonyme proposé ; un clic remplit
+  le champ.
+- E7-4 (quiz noté, UC15) **non fait** : titres et « Ce quiz est noté : connecte-toi avec ton compte IUT. » seulement.
+- E7-5 : texte **provisoire** de la maquette, dans `seance/presentation/mentionInformation.ts` seulement.
+- Sans formulaire : « Chargement… », quiz inexistant, quiz terminé, échec du chargement (message et « Recharger »).
+
 ### E8 – Question (étudiant) · UC8, UC9
 
 Route `/rejoindre/:codeAcces/question`, partagée avec E9 (composant `seance/presentation/PageQuestion.tsx`) ;

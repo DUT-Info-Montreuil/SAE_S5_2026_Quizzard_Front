@@ -92,6 +92,12 @@ Les messages `error` sont en français et sans donnée personnelle : ils s'affic
   STOMP `CONNECT` (§6). Il n'est valable que pour cette séance et devient invalide à sa clôture.
 - Le front conserve le jeton par `codeAcces` pour la durée de la séance (emplacement proposé dans
   [ARCHITECTURE.md](ARCHITECTURE.md) §5, à valider) et le supprime à la clôture ou sur un `401`.
+- **E7 (UC8, en place pour le quiz non noté)** : `GET /api/public/sessions/{codeAcces}` →
+  `{titreCours, titreQuiz, estNotee, etat}` (un `etat` `CLOTUREE` est traité comme un `409`), puis
+  `POST .../participants` avec le pseudonyme **nettoyé** (espaces retirés et réduits, NFC). Seul `jeton` est lu dans
+  le `201`. Le `409` « pseudonyme pris » ajoute `suggestion` (chaîne) au corps d'erreur ; le client HTTP la lit dans
+  `ErreurHttp.suggestion`, jamais dans le message. Fonctions : `seance/api/rejoindreApi.ts`. Messages affichés : ceux
+  du tableau de l'UC8, par `code`, avec repli par statut (plan UC8, §4).
 - **Reprise** après une coupure ou un rechargement : `POST /api/public/sessions/{codeAcces}/reconnexion` → état courant
   et score.
 - **Répondre** : `POST /api/public/sessions/{codeAcces}/reponses` ; le corps dépend du type de question (voir le back).
@@ -178,3 +184,5 @@ la seconde. Le serveur reste seul juge : une réponse hors délai reçoit un `40
 | A3 | Forme du corps de `GET /api/auth/csrf` | Le front doit savoir où lire le jeton à renvoyer dans `X-XSRF-TOKEN`. |
 | A4 | Format du `lien` renvoyé au lancement d'une séance | Il doit pointer vers la route de E7 du front ([ARCHITECTURE.md](ARCHITECTURE.md) §4). |
 | A5 | Accès étudiant au PDF (`.../fichier` avec `X-Jeton-Participant`) | Utile seulement si le mode « cours visible sur les appareils étudiants » est retenu (point ouvert du cahier des charges). |
+| A6 | Codes d'erreur de l'UC8 dans `ReponseErreur` : `SESSION_INTROUVABLE`, `SESSION_CLOSE`, `CONNEXION_IUT_REQUISE`, `PSEUDONYME_INVALIDE`, `PSEUDONYME_DEJA_PRIS`, `ERREUR_SERVEUR`, `REQUETE_INVALIDE` (noms proposés), et champ `suggestion` | Sans `code`, un `409` sans `suggestion` est ambigu (séance close, quiz noté, doublon) : le front affiche alors le message `error` du back (plan UC8, questions K1, K2, K5). |
+| A7 | Façon de compter les 2 à 20 caractères du pseudonyme et espaces retirés | Le front compte en points de code et nettoie avec `trim()` et `\s+` (plan UC8, question K3) ; il doit suivre le back. |

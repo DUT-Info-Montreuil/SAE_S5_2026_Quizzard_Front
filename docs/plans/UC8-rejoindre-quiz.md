@@ -176,7 +176,7 @@ les états ; les titres E7-1 (« titreCours • titreQuiz ») le sont dans FORMU
   note|introuvable|termine|pris|doublon|echec`, en développement seulement. Fait le 24/11/2026 : libellé du champ
   caché (D4, reconfirmé le 24/11/2026), compteur `x/20` (longueur du pseudonyme nettoyé), démo avec un sélecteur
   de cas (plus `chargement`), tests de chaque état.
-- [ ] **B4 Assemblage** : `PageRejoindre`, `app/RouteRejoindre.tsx` (garde inverse D3, `onRejoint` → navigation
+- [x] **B4 Assemblage** : `PageRejoindre`, `app/RouteRejoindre.tsx` (garde inverse D3, `onRejoint` → navigation
   `replace` vers `/rejoindre/:codeAcces/question`), route dans `app/main.tsx`, suppression de
   `RejoindreProvisoire.tsx`. Mise à jour de la documentation :
   - `docs/ARCHITECTURE.md` §4 (route E7 en place, garde inverse) et §5 ;
@@ -184,6 +184,10 @@ les états ; les titres E7-1 (« titreCours • titreQuiz ») le sont dans FORMU
   - `docs/API.md` (E7, `suggestion`, codes demandés) ;
   - `TODO.md` ;
   - les points d'attention de `CLAUDE.md` si besoin.
+
+  Fait le 24/11/2026 : parcours E7 → E8 testé (`app/RouteRejoindre.test.tsx`, garde inverse, un seul `POST`,
+  `replace`, retour à E7 après `JETON_INVALIDE`) ; la démo passe par `PageRejoindre` ; `CLAUDE.md` inchangé (rien
+  à ajouter).
 - [ ] **B5 Tests** (Vitest + RTL, fichiers `*.test.ts(x)` à côté du code) :
   - `nettoyerPseudonyme` et `pseudonymeValide` : bornes 1, 2, 20 et 21, emoji, `e` + accent combinant, tabulation,
     caractère de contrôle ;

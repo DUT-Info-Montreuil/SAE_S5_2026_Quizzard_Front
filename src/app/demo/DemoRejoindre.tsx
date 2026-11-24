@@ -1,14 +1,13 @@
 // DÉMO de E7 « Rejoindre » (plan UC8, B3 et D17), sans back : http://localhost:5173/demo/rejoindre?cas=…, en
 // développement seulement (route absente du build de production). Un sélecteur change le cas affiché.
-// `EcranRejoindre` tourne avec `useRejoindreQuiz` et une fausse API ; un succès mène à /demo/question.
+// `PageRejoindre` tourne avec une fausse API ; un succès mène à /demo/question.
 
 import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import type { ResultatConsultation, ResultatRejoindre } from '../../features/seance/api/rejoindreApi.ts'
-import { useRejoindreQuiz } from '../../features/seance/application/useRejoindreQuiz.ts'
 import type { ApiRejoindre } from '../../features/seance/application/useRejoindreQuiz.ts'
 import type { SessionPublique } from '../../features/seance/domain/ecranRejoindre.ts'
-import { EcranRejoindre } from '../../features/seance/presentation/EcranRejoindre.tsx'
+import { PageRejoindre } from '../../features/seance/presentation/PageRejoindre.tsx'
 import { ErreurHttp } from '../../shared/http/ErreurHttp.ts'
 
 const CODE_ACCES = 'DEMO42'
@@ -60,21 +59,7 @@ function creerApi(cas: Cas): ApiRejoindre {
 function DemoCas({ cas }: { cas: Cas }) {
   const navigate = useNavigate()
   const [api] = useState(() => creerApi(cas))
-  const { ecran, peutEntrer, changerSaisie, entrer, choisirSuggestion } = useRejoindreQuiz({
-    codeAcces: CODE_ACCES,
-    onRejoint: () => navigate('/demo/question', { replace: true }),
-    api,
-  })
-  return (
-    <EcranRejoindre
-      ecran={ecran}
-      peutEntrer={peutEntrer}
-      onSaisie={changerSaisie}
-      onEntrer={entrer}
-      onSuggestion={choisirSuggestion}
-      onRecharger={() => location.reload()}
-    />
-  )
+  return <PageRejoindre codeAcces={CODE_ACCES} onRejoint={() => navigate('/demo/question', { replace: true })} api={api} />
 }
 
 export default function DemoRejoindre() {
