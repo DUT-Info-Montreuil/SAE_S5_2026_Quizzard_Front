@@ -169,11 +169,13 @@ les états ; les titres E7-1 (« titreCours • titreQuiz ») le sont dans FORMU
   `REFUSEE` ou `ECHEC_RESEAU` comme `envoyerReponse`) ; `enregistrerJeton` dans `jetonParticipant.ts` (`false` si le
   stockage est indisponible) ; hook `useRejoindreQuiz`. Fait le 24/11/2026, avec les tests de l'api, du stockage et
   du hook ; `sessionStorage` gardé (D2, reconfirmé le 24/11/2026).
-- [ ] **B3 Présentation E7** : `EcranRejoindre` (logo, titres E7-1, titre provisoire, champ E7-2 avec libellé caché,
+- [x] **B3 Présentation E7** : `EcranRejoindre` (logo, titres E7-1, titre provisoire, champ E7-2 avec libellé caché,
   bouton E7-3, message d'erreur, bouton de suggestion, mention E7-5, états sans formulaire, chargement « Chargement… »
   comme E8), styles par les variables de `tokens.css` et les classes de `ecranEtudiant.css`. Le bouton principal
   prend `--couleur-action` (rouge de la maquette E7). `mentionInformation.ts`. Démo `/demo/rejoindre?cas=formulaire|
-  note|introuvable|termine|pris|doublon|echec`, en développement seulement.
+  note|introuvable|termine|pris|doublon|echec`, en développement seulement. Fait le 24/11/2026 : libellé du champ
+  caché (D4, reconfirmé le 24/11/2026), compteur `x/20` (longueur du pseudonyme nettoyé), démo avec un sélecteur
+  de cas (plus `chargement`), tests de chaque état.
 - [ ] **B4 Assemblage** : `PageRejoindre`, `app/RouteRejoindre.tsx` (garde inverse D3, `onRejoint` → navigation
   `replace` vers `/rejoindre/:codeAcces/question`), route dans `app/main.tsx`, suppression de
   `RejoindreProvisoire.tsx`. Mise à jour de la documentation :
