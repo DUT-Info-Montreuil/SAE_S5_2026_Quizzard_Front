@@ -15,6 +15,16 @@ export function lireJeton(codeAcces: string): string | null {
   }
 }
 
+/** Garde le jeton reçu à l'entrée dans le quiz (UC8, D2) ; `false` si le stockage est indisponible ou plein. */
+export function enregistrerJeton(codeAcces: string, jeton: string): boolean {
+  try {
+    sessionStorage.setItem(cle(codeAcces), jeton)
+    return true
+  } catch {
+    return false
+  }
+}
+
 /** Supprime le jeton : session expirée (`JETON_INVALIDE`) ou séance close. */
 export function supprimerJeton(codeAcces: string): void {
   try {

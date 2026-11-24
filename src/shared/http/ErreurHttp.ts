@@ -1,6 +1,6 @@
 // Erreur levée par le client HTTP pour toute réponse dont le statut n'est pas 2xx.
 // Les champs reprennent le format d'erreur du back (docs/API.md §2) :
-// { "error": "…", "request_id": "…", "champs": { "titre": "…" }, "code": "…" }
+// { "error": "…", "request_id": "…", "champs": { "titre": "…" }, "code": "…", "suggestion": "…" }
 
 /** Corps d'erreur du back, une fois vérifié. */
 export interface CorpsErreur {
@@ -9,6 +9,8 @@ export interface CorpsErreur {
   champs?: Record<string, string>
   /** Code métier de l'erreur (exemple : `DEJA_REPONDU`). Absent si le corps ne vient pas du back (proxy…). */
   code?: string
+  /** Pseudonyme proposé avec un 409 « pseudonyme déjà pris » (UC8). Jamais écrit dans `message`. */
+  suggestion?: string
 }
 
 export class ErreurHttp extends Error {
@@ -26,6 +28,8 @@ export class ErreurHttp extends Error {
   readonly champs: Record<string, string> | undefined
   /** Code métier, s'il est fourni par le back. */
   readonly code: string | undefined
+  /** Pseudonyme proposé par le back (UC8), s'il est fourni. */
+  readonly suggestion: string | undefined
 
   constructor(statut: number, corps: CorpsErreur | null) {
     super(corps?.error ?? `Erreur HTTP ${statut}`)
@@ -35,6 +39,7 @@ export class ErreurHttp extends Error {
     this.request_id = corps?.request_id ?? null
     this.champs = corps?.champs
     this.code = corps?.code
+    this.suggestion = corps?.suggestion
   }
 }
 
@@ -47,13 +52,14 @@ export async function lireCorpsErreur(reponse: Response): Promise<CorpsErreur | 
     return null
   }
   if (typeof corps !== 'object' || corps === null) return null
-  const { error, request_id, champs, code } = corps as Record<string, unknown>
+  const { error, request_id, champs, code, suggestion } = corps as Record<string, unknown>
   if (typeof error !== 'string') return null
   return {
     error,
     request_id: typeof request_id === 'string' ? request_id : null,
     champs: estDictionnaireDeTextes(champs) ? champs : undefined,
     code: typeof code === 'string' ? code : undefined,
+    suggestion: typeof suggestion === 'string' ? suggestion : undefined,
   }
 }
 
