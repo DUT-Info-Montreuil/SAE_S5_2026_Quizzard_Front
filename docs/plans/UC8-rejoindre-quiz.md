@@ -30,8 +30,8 @@ de connectés de E5 (front enseignant), écrans E8 et E9 (UC9, déjà faits), li
   - `DataIntegrityViolationException` donne `409` « Cette opération entre en conflit avec des données existantes. ».
   - Schéma : `code_acces VARCHAR(32)`, `pseudonyme VARCHAR(20)` (longueur comptée en caractères par PostgreSQL),
     `UNIQUE (id_session, pseudonyme)`.
-- Maquettes : les fichiers sont **inversés**. `docs/maquettes/E7.png` montre E8 et E9 ; `docs/maquettes/E8-E9.png`
-  montre E7 (pseudonyme à gauche, quiz noté à droite).
+- Maquettes : les fichiers étaient **inversés** (renommés en B0). `docs/maquettes/E7.png` montre maintenant E7
+  (pseudonyme à gauche, quiz noté à droite) et `docs/maquettes/E8-E9.png` montre E8 et E9.
 
 ## 2. Décisions prises
 
@@ -160,8 +160,8 @@ les états ; les titres E7-1 (« titreCours • titreQuiz ») le sont dans FORMU
 - [x] **B0 Préparation** : vérifier la branche `feature/uc8-front` ; `npm ci` ; `npm run lint`, `npm run build` et
   `npm test` passent avant toute modification ; enregistrer ce plan. Remettre les noms des maquettes à l'endroit
   (`E7.png` ↔ `E8-E9.png`, à confirmer). Le PDF de l'UC9 supprimé et le dossier `.claude/` non suivi restent tels
-  quels : décision de l'auteur. Fait le 24/11/2026 : 293 tests, lint et build passent. Inversion des maquettes
-  vérifiée, mais renommage **pas encore fait** (en attente de confirmation, question U6).
+  quels : décision de l'auteur. Fait le 24/11/2026 : 293 tests, lint et build passent. Maquettes
+  renommées (inversion vérifiée, confirmée le 24/11/2026).
 - [ ] **B1 Domaine** : `pseudonyme.ts` (D8), `erreursRejoindre.ts` (§4 et repli D6), `ecranRejoindre.ts` (types et
   reducer du §5). Rien d'autre que du TypeScript pur.
 - [ ] **B2 API et stockage** : `suggestion` dans `shared/http` ; `rejoindreApi.ts` (§3, conversion vérifiée, résultat
@@ -217,7 +217,7 @@ les états ; les titres E7-1 (« titreCours • titreQuiz ») le sont dans FORMU
 | U3 | Texte définitif de la mention E7-5, à valider par le délégué à la protection des données | Texte de la maquette (D15) |
 | U4 | Titre « Choisis ton pseudo pour rejoindre » (absent de la spec) | Gardé, provisoire (D4) |
 | U5 | Que faire si le stockage du jeton est indisponible (stockage désactivé) ? | Message du `500` |
-| U6 | Faut-il renommer les maquettes inversées (`E7.png` ↔ `E8-E9.png`) ? | Oui, en B0 |
+| U6 | Faut-il renommer les maquettes inversées (`E7.png` ↔ `E8-E9.png`) ? | Oui, fait en B0 (24/11/2026) |
 
 ## 9. Critères d'acceptation
 
