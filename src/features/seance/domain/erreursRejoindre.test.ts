@@ -102,3 +102,43 @@ describe('erreurs du chargement du quiz', () => {
     expect(lireErreurConsultation(erreur)).toEqual({ affichage: 'ECHEC_CHARGEMENT', message: SERVEUR })
   })
 })
+
+// Tableau « Cas d'erreur » de docs/uc/UC8-rejoindre-quiz.md, recopié de la spec ; codes et affichages du plan, §4.
+const TABLEAU_UC8 = [
+  { cas: 'code d\'accès inconnu', statut: 404, code: 'SESSION_INTROUVABLE', message: INTROUVABLE, affichage: 'INTROUVABLE' },
+  { cas: 'séance clôturée', statut: 409, code: 'SESSION_CLOSE', message: TERMINE, affichage: 'TERMINE' },
+  { cas: 'quiz noté sans compte', statut: 409, code: 'CONNEXION_IUT_REQUISE', message: NOTE, affichage: 'QUIZ_NOTE' },
+  { cas: 'pseudonyme invalide', statut: 422, code: 'PSEUDONYME_INVALIDE', message: INVALIDE, affichage: 'FORMULAIRE' },
+  { cas: 'pseudonyme pris', statut: 409, code: 'PSEUDONYME_DEJA_PRIS', message: PRIS, affichage: 'FORMULAIRE', suggestion: 'Alice2' },
+  { cas: 'doublon simultané', statut: 409, code: 'PSEUDONYME_DEJA_PRIS', message: PRIS_SANS, affichage: 'FORMULAIRE' },
+  { cas: 'erreur d\'écriture en base', statut: 500, code: 'ERREUR_SERVEUR', message: SERVEUR, affichage: 'FORMULAIRE' },
+] as const
+
+describe('tableau des erreurs de l\'UC8 (B5)', () => {
+  it.each(TABLEAU_UC8)('$cas ($statut, $code) : message exact et affichage', (ligne) => {
+    const suggestion = 'suggestion' in ligne ? ligne.suggestion : undefined
+    const erreur = lireErreurRejoindre({ statut: ligne.statut, code: ligne.code, error: 'autre message', suggestion })
+    expect(erreur.message).toBe(ligne.message)
+    expect(erreur.affichage).toBe(ligne.affichage)
+    expect(erreur.suggestion).toBe(suggestion ?? null)
+  })
+
+  it.each(TABLEAU_UC8.filter((ligne) => ligne.statut !== 409))(
+    'repli sans code, $statut : même message et même affichage',
+    (ligne) => {
+      const erreur = lireErreurRejoindre({ statut: ligne.statut, error: 'autre message' })
+      expect(erreur.message).toBe(ligne.message)
+      expect(erreur.affichage).toBe(ligne.affichage)
+    },
+  )
+
+  it('409 avec un code inconnu et une suggestion : pseudonyme pris avec proposition', () => {
+    expect(lireErreurRejoindre({ statut: 409, code: 'NOUVEAU', error: 'x', suggestion: 'Bob2' }))
+      .toMatchObject({ message: PRIS, affichage: 'FORMULAIRE', suggestion: 'Bob2' })
+  })
+
+  it('409 avec un code inconnu sans suggestion : message `error` du back, formulaire', () => {
+    expect(lireErreurRejoindre({ statut: 409, code: 'NOUVEAU', error: 'Conflit.' }))
+      .toMatchObject({ code: null, message: 'Conflit.', affichage: 'FORMULAIRE', suggestion: null })
+  })
+})

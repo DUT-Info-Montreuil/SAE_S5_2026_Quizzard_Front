@@ -30,3 +30,30 @@ describe('jetonParticipant', () => {
     expect(() => supprimerJeton('AB12')).not.toThrow()
   })
 })
+
+describe('jetonParticipant (B5)', () => {
+  it('enregistrer remplace le jeton du même code', () => {
+    enregistrerJeton('AB12', 'ancien')
+    enregistrerJeton('AB12', 'nouveau')
+    expect(lireJeton('AB12')).toBe('nouveau')
+  })
+
+  it('des codes proches ne se mélangent pas', () => {
+    enregistrerJeton('AB', 'j1')
+    enregistrerJeton('AB.12', 'j2')
+    enregistrerJeton('AB/12', 'j3')
+    supprimerJeton('AB.12')
+    expect(lireJeton('AB')).toBe('j1')
+    expect(lireJeton('AB.12')).toBeNull()
+    expect(lireJeton('AB/12')).toBe('j3')
+  })
+
+  it('stockage plein à l\'écriture : false, sans erreur levée, rien de gardé', () => {
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('Plein', 'QuotaExceededError')
+    })
+    expect(() => enregistrerJeton('AB12', 'jeton')).not.toThrow()
+    expect(enregistrerJeton('AB12', 'jeton')).toBe(false)
+    expect(lireJeton('AB12')).toBeNull()
+  })
+})

@@ -154,3 +154,39 @@ describe('peutEntrer', () => {
     expect(peutEntrer(ecran)).toBe(attendu)
   })
 })
+
+describe('aucune autre transition que celles du plan (§5)', () => {
+  const ACTIONS: ActionRejoindre[] = [
+    { type: 'SESSION_CHARGEE', session: SESSION },
+    { type: 'CHARGEMENT_REFUSE', erreur: { statut: 404, error: null } },
+    { type: 'CHARGEMENT_ECHOUE' },
+    { type: 'SAISIE', texte: 'Bob' },
+    { type: 'ENTRER' },
+    { type: 'SUGGESTION_CHOISIE' },
+    { type: 'ENVOI_REFUSE', erreur: { statut: 409, error: 'x', suggestion: 'Alice2' } },
+    { type: 'ENVOI_ECHOUE' },
+  ]
+  type TypeAction = ActionRejoindre['type']
+
+  const CAS: { nom: string, ecran: EcranRejoindre, permises: TypeAction[] }[] = [
+    { nom: 'CHARGEMENT', ecran: ETAT_INITIAL_REJOINDRE, permises: ['SESSION_CHARGEE', 'CHARGEMENT_REFUSE', 'CHARGEMENT_ECHOUE'] },
+    {
+      nom: 'FORMULAIRE (saisie, avec suggestion)',
+      ecran: formulaire({ saisie: 'Alice', suggestion: 'Alice2' }),
+      permises: ['SAISIE', 'ENTRER', 'SUGGESTION_CHOISIE'],
+    },
+    { nom: 'FORMULAIRE (envoi)', ecran: formulaire({ saisie: 'Alice', envoi: true }), permises: ['ENVOI_REFUSE', 'ENVOI_ECHOUE'] },
+    { nom: 'INTROUVABLE', ecran: { nom: 'INTROUVABLE', message: 'm' }, permises: [] },
+    { nom: 'TERMINE', ecran: { nom: 'TERMINE', message: 'm' }, permises: [] },
+    { nom: 'ECHEC_CHARGEMENT', ecran: { nom: 'ECHEC_CHARGEMENT', message: 'm' }, permises: [] },
+    { nom: 'QUIZ_NOTE', ecran: { nom: 'QUIZ_NOTE', session: SESSION, message: 'm' }, permises: [] },
+  ]
+
+  describe.each(CAS)('$nom', ({ ecran, permises }) => {
+    it.each(ACTIONS.map((action) => [action.type, action] as const))('%s', (type, action) => {
+      const suivant = reducerRejoindre(ecran, action)
+      if (permises.includes(type)) expect(suivant).not.toBe(ecran)
+      else expect(suivant).toBe(ecran)
+    })
+  })
+})

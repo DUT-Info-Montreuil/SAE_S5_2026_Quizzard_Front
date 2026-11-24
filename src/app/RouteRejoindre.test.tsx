@@ -115,6 +115,47 @@ describe('route /rejoindre/:codeAcces', () => {
     expect(routeur.state.location.pathname).toBe(`/rejoindre/${CODE}`)
   })
 
+  it('succès : le jeton est déjà enregistré au moment de la navigation vers E8', async () => {
+    scenarioStomp.evenements = []
+    fauxBack()
+    const routeur = monter([`/rejoindre/${CODE}`])
+    const jetonsALaNavigation: (string | null)[] = []
+    const desabonner = routeur.subscribe((etat) => {
+      if (etat.location.pathname.endsWith('/question')) jetonsALaNavigation.push(lireJeton(CODE))
+    })
+    await userEvent.type(await champ(), 'Alice{Enter}')
+    await screen.findByText(/prochaine question/i)
+    desabonner()
+    expect(jetonsALaNavigation.length).toBeGreaterThan(0)
+    expect(jetonsALaNavigation.every((jeton) => jeton === 'jeton-secret')).toBe(true)
+  })
+
+  it('pseudonyme pris : proposition choisie en un clic, puis entrée et E8', async () => {
+    scenarioStomp.evenements = []
+    const faux = fauxBack()
+    let essais = 0
+    faux.mockImplementation(async (url, options) => {
+      const chemin = String(url)
+      if (chemin.endsWith('/participants')) {
+        essais += 1
+        return essais === 1
+          ? json({ error: 'Pris.', request_id: 'r', code: 'PSEUDONYME_DEJA_PRIS', suggestion: 'Alice2' }, 409)
+          : json({ idParticipant: 7, jeton: 'jeton-secret', pseudonyme: 'Alice2' }, 201)
+      }
+      if (chemin.endsWith('/etat')) return json({ question: null }, 200)
+      if (options?.method === 'GET') return json(SESSION, 200)
+      return json({ error: 'inattendu', request_id: 'r' }, 500)
+    })
+    monter([`/rejoindre/${CODE}`])
+    await userEvent.type(await champ(), 'Alice{Enter}')
+    await userEvent.click(await screen.findByRole('button', { name: 'Alice2' }))
+    await userEvent.click(bouton())
+
+    await screen.findByText(/prochaine question/i)
+    const corps = appels(faux, '/participants').map(([, options]) => JSON.parse(String(options?.body)))
+    expect(corps).toStrictEqual([{ pseudonyme: 'Alice' }, { pseudonyme: 'Alice2' }])
+  })
+
   it('rien dans la console (ni pseudonyme ni jeton)', async () => {
     scenarioStomp.evenements = []
     const espions = (['log', 'info', 'warn', 'error', 'debug'] as const).map((nom) => vi.spyOn(console, nom))

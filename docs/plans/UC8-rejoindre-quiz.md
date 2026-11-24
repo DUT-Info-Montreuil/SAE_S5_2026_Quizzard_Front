@@ -188,7 +188,7 @@ les états ; les titres E7-1 (« titreCours • titreQuiz ») le sont dans FORMU
   Fait le 24/11/2026 : parcours E7 → E8 testé (`app/RouteRejoindre.test.tsx`, garde inverse, un seul `POST`,
   `replace`, retour à E7 après `JETON_INVALIDE`) ; la démo passe par `PageRejoindre` ; `CLAUDE.md` inchangé (rien
   à ajouter).
-- [ ] **B5 Tests** (Vitest + RTL, fichiers `*.test.ts(x)` à côté du code) :
+- [x] **B5 Tests** (Vitest + RTL, fichiers `*.test.ts(x)` à côté du code) :
   - `nettoyerPseudonyme` et `pseudonymeValide` : bornes 1, 2, 20 et 21, emoji, `e` + accent combinant, tabulation,
     caractère de contrôle ;
   - table des erreurs : chaque code et chaque repli ;
@@ -200,6 +200,10 @@ les états ; les titres E7-1 (« titreCours • titreQuiz ») le sont dans FORMU
   - `RouteRejoindre` dans un `MemoryRouter` : pseudonyme invalide sans `fetch`, un seul `POST` au double clic, la
     suggestion remplit le champ, un succès enregistre le jeton et mène à E8, un jeton présent redirige vers E8, un
     quiz noté n'a pas de formulaire, la console ne reçoit ni pseudonyme ni jeton.
+
+  Fait le 24/11/2026 : cas complétés d'après la spec et le plan (tableau des erreurs recopié de l'UC8, matrice
+  état × action du reducer, E7 assemblé dans `PageRejoindre.test.tsx`, ordre jeton puis navigation, couleurs de
+  `EcranRejoindre.css`). Aucun bug trouvé. Non testables avec jsdom : touches de 44 px, largeur de 360 px, contraste.
 
 ## 8. Questions ouvertes
 
