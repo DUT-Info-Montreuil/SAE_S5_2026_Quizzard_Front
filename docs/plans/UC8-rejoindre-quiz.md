@@ -162,8 +162,9 @@ les états ; les titres E7-1 (« titreCours • titreQuiz ») le sont dans FORMU
   (`E7.png` ↔ `E8-E9.png`, à confirmer). Le PDF de l'UC9 supprimé et le dossier `.claude/` non suivi restent tels
   quels : décision de l'auteur. Fait le 24/11/2026 : 293 tests, lint et build passent. Maquettes
   renommées (inversion vérifiée, confirmée le 24/11/2026).
-- [ ] **B1 Domaine** : `pseudonyme.ts` (D8), `erreursRejoindre.ts` (§4 et repli D6), `ecranRejoindre.ts` (types et
-  reducer du §5). Rien d'autre que du TypeScript pur.
+- [x] **B1 Domaine** : `pseudonyme.ts` (D8), `erreursRejoindre.ts` (§4 et repli D6), `ecranRejoindre.ts` (types et
+  reducer du §5). Rien d'autre que du TypeScript pur. Fait le 24/11/2026, avec les tests du domaine (déjà écrits
+  pour B5) ; longueur comptée dans `longueurPseudonyme` seulement (provisoire, K3).
 - [ ] **B2 API et stockage** : `suggestion` dans `shared/http` ; `rejoindreApi.ts` (§3, conversion vérifiée, résultat
   `REFUSEE` ou `ECHEC_RESEAU` comme `envoyerReponse`) ; `enregistrerJeton` dans `jetonParticipant.ts` (`false` si le
   stockage est indisponible) ; hook `useRejoindreQuiz`.
