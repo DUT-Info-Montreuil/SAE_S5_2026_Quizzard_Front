@@ -73,3 +73,48 @@ describe('emplacementsInsertion', () => {
     expect(liste[i].position).toBe(2 + 1 + 1 + 1)
   })
 })
+
+describe('numérotation : cas limites (B6)', () => {
+  const libelle = (e: ReturnType<typeof listeAffichee>[number]) =>
+    e.genre === 'PAGE_PDF' ? `p${e.numeroPage}@${e.position}` : `q${e.page.idPage}@${e.position}`
+
+  it('plusieurs pages au même endroit : positions consécutives par ordre, page suivante du PDF décalée d\'autant', () => {
+    const liste = listeAffichee(6, [quiz(3, 4, 2), quiz(1, 4, 0), quiz(2, 4, 1)])
+    expect(liste.map(libelle)).toEqual([
+      'p1@1', 'p2@2', 'p3@3', 'p4@4', 'q1@5', 'q2@6', 'q3@7', 'p5@8', 'p6@9',
+    ])
+  })
+
+  it('pages avant la première (numeroPage 0) : en tête, la page 1 du PDF décalée', () => {
+    const liste = listeAffichee(2, [quiz(1, 0, 0), quiz(2, 0, 1)])
+    expect(liste.map(libelle)).toEqual(['q1@1', 'q2@2', 'p1@3', 'p2@4'])
+  })
+
+  it('pages après la dernière (numeroPage = nbPages) : en fin, pages du PDF non décalées', () => {
+    const liste = listeAffichee(3, [quiz(1, 3, 0), quiz(2, 3, 1)])
+    expect(liste.map(libelle)).toEqual(['p1@1', 'p2@2', 'p3@3', 'q1@4', 'q2@5'])
+  })
+})
+
+describe('emplacements : bornes et pages au même endroit (B6)', () => {
+  const pages = [quiz(1, 4, 0), quiz(2, 4, 1)]
+  const emplacements = emplacementsInsertion(5, pages)
+  const texte = emplacements.map((e) => `${e.numeroPage},${e.ordre}`)
+
+  it('premier (0, 0), dernier (nbPages, 0) ; rien hors de 0 ≤ numeroPage ≤ nbPages', () => {
+    expect(texte[0]).toBe('0,0')
+    expect(texte[texte.length - 1]).toBe('5,0')
+    expect(emplacements.every((e) => e.numeroPage >= 0 && e.numeroPage <= 5 && e.ordre >= 0)).toBe(true)
+  })
+
+  it('autour de deux pages en (4, x) : (4,0) juste avant, (4,1) entre, (4,2) juste après', () => {
+    const i = texte.indexOf('4,0')
+    expect(texte.slice(i, i + 3)).toEqual(['4,0', '4,1', '4,2'])
+    expect(texte[i + 3]).toBe('5,0')
+    expect(texte).not.toContain('4,3')
+  })
+
+  it('aucune page insérée : un emplacement par espace, (p, 0) pour p de 0 à nbPages', () => {
+    expect(emplacementsInsertion(3, [])).toEqual([0, 1, 2, 3].map((numeroPage) => ({ numeroPage, ordre: 0 })))
+  })
+})

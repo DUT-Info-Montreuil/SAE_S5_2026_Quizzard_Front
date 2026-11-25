@@ -141,6 +141,13 @@ describe('insererPageQuiz : corps', () => {
     expect(corps).toEqual({ idVersion: 12, numeroPage: 4, ordre: 1 })
     expect(Object.keys(corps)).not.toContain('idQuiz')
   })
+  it('aucun idEnseignant : lu dans la session par le back, jamais dans la requête (contrat UC3)', async () => {
+    const faux = fauxFetch(() => json(REPONSE_201, 201))
+    await insererPageQuiz(1, demande)
+    const cles = Object.keys(dernierAppel(faux).corps)
+    expect(cles).not.toContain('idEnseignant')
+    expect(cles.every((cle) => ['idVersion', 'numeroPage', 'ordre', 'idQuiz', 'repereTexte'].includes(cle))).toBe(true)
+  })
 })
 
 describe('insererPageQuiz : résultat', () => {

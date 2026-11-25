@@ -231,3 +231,44 @@ describe('quizParDefaut (D11)', () => {
     expect(quizParDefaut([], null)).toBeNull()
   })
 })
+
+describe('aucune autre transition que celles du §6 (B6)', () => {
+  const SELECTION = { genre: 'PAGE_PDF', numeroPage: 2 } as const
+  const ACTIONS: ActionEditeur[] = [
+    CHARGE,
+    { type: 'ECHEC_CHARGEMENT', erreur: null },
+    { type: 'RECHARGER' },
+    { type: 'SELECTIONNER', selection: SELECTION },
+    { type: 'OUVRIR_CHOIX', emplacement: EMPLACEMENT },
+    { type: 'ANNULER_CHOIX' },
+    { type: 'CONFIRMER', idQuiz: 40 },
+    { type: 'INSERTION_REUSSIE', reponse: REPONSE },
+    { type: 'INSERTION_REFUSEE', erreur: { statut: 500, error: null } },
+    { type: 'ECHEC_RESEAU_INSERTION', pages: null },
+  ]
+  const bloque = () => reduireEditeur(envoi(), {
+    type: 'INSERTION_REFUSEE',
+    erreur: { statut: 409, code: 'VERSION_PERIMEE', error: null },
+  })
+
+  // Pour chaque état, les seules actions qui le changent (plan §6) ; toutes les autres doivent rendre le même objet.
+  const ETATS: [string, () => EtatEditeur, string[]][] = [
+    ['CHARGEMENT', () => ETAT_INITIAL, ['CHARGE', 'ECHEC_CHARGEMENT']],
+    ['ERREUR_CHARGEMENT', () => suite({ type: 'ECHEC_CHARGEMENT', erreur: null }), ['RECHARGER']],
+    ['CONNEXION', () => suite({ type: 'ECHEC_CHARGEMENT', erreur: { statut: 401, error: null } }), []],
+    ['LECTURE_SEULE', () => suite({ ...CHARGE, cours: cours(true) } as ActionEditeur), ['RECHARGER', 'SELECTIONNER']],
+    ['PRET / AUCUNE', pret, ['RECHARGER', 'SELECTIONNER', 'OUVRIR_CHOIX']],
+    ['PRET / AUCUNE, insertion bloquée', bloque, ['RECHARGER', 'SELECTIONNER']],
+    ['PRET / CHOIX_QUIZ', choix, ['RECHARGER', 'ANNULER_CHOIX', 'CONFIRMER']],
+    ['PRET / ENVOI', () => envoi(), ['INSERTION_REUSSIE', 'INSERTION_REFUSEE', 'ECHEC_RESEAU_INSERTION']],
+  ]
+
+  it.each(ETATS)('%s : seules les actions prévues changent l\'état', (_nom, etat, prevues) => {
+    for (const action of ACTIONS) {
+      const avant = etat()
+      const apres = reduireEditeur(avant, action)
+      if (prevues.includes(action.type)) expect(apres, action.type).not.toBe(avant)
+      else expect(apres, action.type).toBe(avant)
+    }
+  })
+})

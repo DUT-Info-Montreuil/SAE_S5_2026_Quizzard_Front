@@ -101,6 +101,14 @@ describe('requete : CSRF', () => {
     await expect(requete('/api/public/x', { methode: 'POST' })).rejects.toBeInstanceOf(ErreurHttp)
     expect(adresses(faux)).toEqual(['/api/cours/x', '/api/public/x'])
   })
+  it('401 sur un POST enseignant : ErreurHttp 401, ni rejeu ni nouveau jeton (redirection par l\'écran, D5)', async () => {
+    const faux = fauxFetch({
+      '/api/auth/csrf': () => json({ token: 'j' }),
+      '/pages-quiz': () => json({ error: 'Non authentifié', request_id: 'r' }, 401),
+    })
+    await expect(requete('/api/cours/1/pages-quiz', { methode: 'POST', corps: {} })).rejects.toMatchObject({ statut: 401 })
+    expect(adresses(faux)).toEqual(['/api/auth/csrf', '/api/cours/1/pages-quiz'])
+  })
 })
 
 describe('requeteBinaire', () => {

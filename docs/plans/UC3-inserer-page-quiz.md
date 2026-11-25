@@ -189,13 +189,19 @@ ENVOI ──« Insérer un quiz ici » ou « Insérer »──▶ ignoré (D12)
   partent en parallèle après la lecture du cours, et les miniatures se rendent ensuite, à la demande. PDF.js est
   importé dynamiquement par le hook (ouverture par défaut). `app/EcranEditeurCours.tsx` porte le hook, avec une `key`
   par cours ; `RouteEditeur` ne fait que valider l'identifiant.
-- [ ] **B6 Tests** : domaine (formules et exemple de la spec, emplacements uniques et complets, `nettoyerRepere`
+- [x] **B6 Tests** : domaine (formules et exemple de la spec, emplacements uniques et complets, `nettoyerRepere`
   dont page 0, vide, espaces, 300 caractères, paire de substitution), table des erreurs (chaque message mot pour
   mot, replis §4), reducer (chaque transition du §6 et rien d'autre), `shared/http` (en-tête CSRF sur `POST` et pas
   sur `GET`, aucun appel CSRF pour `/api/public/**`, rejeu unique sur `403`, route CSRF absente → envoi sans en-tête,
   binaire), API `cours` (faux `fetch`), composants E3 et hook avec un faux document PDF (PDF.js ne tourne pas sous
   jsdom) et un faux `IntersectionObserver` : double clic → un seul `POST`, `201` → liste remplacée et nouvelle page
   sélectionnée, extraction en échec → `POST` sans `repereTexte`, « Recharger » → relecture, `401` → redirection.
+  Fait : compléments dans `numerotation.test.ts` (plusieurs pages au même endroit, numeroPage 0 et nbPages, bornes des
+  emplacements), `machineEditeur.test.ts` (matrice état × action : seules les transitions du §6 changent l'état),
+  `coursApi.test.ts` (aucun `idEnseignant`), `clientHttp.test.ts` (`401` sans rejeu) ; nouveaux
+  `presentation/EditeurCours.test.tsx`, `application/useEditeurCours.test.tsx`, `app/EcranEditeurCours.test.tsx` et
+  aide `src/test/fauxNavigateur.ts` (faux `IntersectionObserver`, `ResizeObserver`, `<dialog>`, document PDF).
+  Limite : jsdom ne traduit pas Échap en événement `cancel` du `<dialog>` ; le test envoie `cancel` directement.
 
 ## 8. Questions ouvertes
 
