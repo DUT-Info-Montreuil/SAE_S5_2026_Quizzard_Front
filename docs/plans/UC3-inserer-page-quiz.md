@@ -161,11 +161,20 @@ ENVOI ──« Insérer un quiz ici » ou « Insérer »──▶ ignoré (D12)
   écrits dès B3 (part « API `cours` » de B6) ; `insererPageQuiz` renvoie `REUSSIE | REFUSEE | ECHEC_RESEAU`
   (l'appelant relit les pages après `ECHEC_RESEAU`, jamais de renvoi automatique) ; un `201` mal formé est traité
   comme `ECHEC_RESEAU` (provisoire, `TODO(UC3)`) ; une réponse de lecture mal formée lève une `Error`.
-- [ ] **B4 Présentation E3** : en-tête (élément 1 ; emplacement vide de l'élément 11), liste des pages avec
+- [x] **B4 Présentation E3** : en-tête (élément 1 ; emplacement vide de l'élément 11), liste des pages avec
   miniatures paresseuses, pages insérées (couleur + icône) et boutons « Insérer un quiz ici » (éléments 2 et 3),
   dialogue de choix du quiz, aperçu (élément 4 : page du PDF, page de quiz, « Question à paramétrer », page de
   classement), bandeau d'erreur avec « Recharger », zone vide pour les éléments 5 à 18. Données par props, styles
   par variables de la charte (`EditeurCours.css`). Démo `/demo/editeur` (D17).
+  Fait (`cours/presentation` : `EditeurCours`, `EnteteEditeur`, `ListePages`, `MiniaturePage`, `RenduPdf`,
+  `ApercuPage`, `DialogueChoixQuiz`, `BandeauErreur`, `IconePage`, `libelles.ts` ; `app/demo/DemoEditeur.tsx`).
+  Disposition d'après la Figure 30 (lue dans le dossier PDF, U5 : `docs/maquettes/E3.png` toujours absent) :
+  aperçu et zone 5 à 18 côte à côte, bande des pages en bas. Écarts : l'écran reçoit l'état du reducer
+  (`EtatEditeur`) et une fonction `rendrePage` (signature de `DocumentPdf.rendrePage`) ; bouton « + » avec
+  « Insérer un quiz ici » en infobulle et un libellé accessible par position (« Insérer un quiz après la page 4 ») ;
+  titres des quiz des miniatures passés par la prop `titresQuiz` (provisoire, `TODO(UC3)`, Q5) ; bandeau de lecture
+  seule avec le message de `COURS_ARCHIVE` (provisoire, `TODO(UC3)`) ; le focus revient au bouton « + » quand
+  l'insertion se termine. Démo sans PDF : pages dessinées sur le canvas (U8). Tests des composants : B6.
 - [ ] **B5 Assemblage** : hook `useEditeurCours` (API et ouverture du PDF injectables, chargement parallèle,
   insertion D12, rechargement, fermeture du document) ; `app/RouteEditeur.tsx` sur `/cours/:idCours` (`lazy`,
   identifiant non entier → « Cours introuvable. ») ; `app/ConnexionProvisoire.tsx` sur `/connexion` (`TODO(UC1)`).

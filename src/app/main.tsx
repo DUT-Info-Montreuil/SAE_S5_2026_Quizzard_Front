@@ -14,7 +14,10 @@ const routeur = createBrowserRouter([
   { path: '/rejoindre/:codeAcces/question', Component: RouteQuestion },
   // Démo sans back, en développement seulement : absente du build de production.
   ...(import.meta.env.DEV
-    ? [{ path: '/demo/question', lazy: async () => ({ Component: (await import('./demo/DemoQuestion.tsx')).default }) }]
+    ? [
+        { path: '/demo/question', lazy: async () => ({ Component: (await import('./demo/DemoQuestion.tsx')).default }) },
+        { path: '/demo/editeur', lazy: async () => ({ Component: (await import('./demo/DemoEditeur.tsx')).default }) },
+      ]
     : []),
   // Modèle Vite, à remplacer.
   { path: '*', Component: App },
