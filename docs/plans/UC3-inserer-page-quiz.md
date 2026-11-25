@@ -144,8 +144,14 @@ ENVOI ──« Insérer un quiz ici » ou « Insérer »──▶ ignoré (D12)
   `shared/http` écrits dès B1 (`clientHttp.test.ts`) ; `isEvalSupported` (D7) n'existe plus en version 6, qui
   n'utilise plus `eval`. `dist/` vérifié avec un import temporaire : worker dans `dist/assets`, PDF.js dans un chunk
   à part, seules adresses présentes = espaces de noms XML, licence et base factice de `new URL` (rien de chargé).
-- [ ] **B2 Domaine `cours`** : types, numérotation, liste affichée et emplacements des boutons, `nettoyerRepere`,
+- [x] **B2 Domaine `cours`** : types, numérotation, liste affichée et emplacements des boutons, `nettoyerRepere`,
   table des erreurs (§4), reducer (§6).
+  Fait (`cours/domain` : `cours.ts`, `numerotation.ts`, `repere.ts`, `erreursEditeur.ts`, `machineEditeur.ts`).
+  Écarts validés le 25/11/2026 : tests du domaine écrits dès B2 (part « domaine », « table des erreurs » et
+  « reducer » de B6) ; état `LECTURE_SEULE` ajouté au §6 (cours chargé avec `archive`, sans bouton d'insertion,
+  sélection et « Recharger » possibles) ; état final `CONNEXION` pour les `401` (le hook redirige) ; table des
+  erreurs `{message, affichage: BANDEAU | REDIRECTION, action: RECHARGER | AUCUNE, bloquer}` ; `VersionCours` porte
+  aussi `nbPages`. Le quiz choisi dans le dialogue est porté par `CONFIRMER` (proposition : `quizParDefaut`).
 - [ ] **B3 API et PDF `cours`** : `lireCours` (dernière version), `lirePagesInserees`, `lireQuizDuCours`,
   `lireFichierPdf`, `insererPageQuiz` (corps sans `idQuiz` ni `repereTexte` quand ils sont absents) ; conversion et
   vérification des DTO (§3) ; `extraireRepere(document, numeroPage)` (texte brut par `shared/pdf`, nettoyage par le
