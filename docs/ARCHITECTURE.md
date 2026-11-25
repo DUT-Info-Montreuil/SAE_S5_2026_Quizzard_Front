@@ -47,12 +47,12 @@ Contraintes du cahier des charges qui pèsent sur le front :
 | TypeScript | En place | 6.0, mode `bundler`, `noUnusedLocals`, `noUnusedParameters`, `verbatimModuleSyntax` |
 | Vite | En place | 8, extension `@vitejs/plugin-react` ; serveur de développement sur le port 5173 |
 | ESLint | En place | 10, `typescript-eslint`, `eslint-plugin-react-hooks`, `eslint-plugin-react-refresh` |
-| Routeur | **À choisir** | Aucun installé (§4) |
+| Routeur | En place | `react-router` 7 (§4) |
 | Gestion de l'état | Rien d'installé | Proposition : outils de React seuls, bibliothèque seulement si le besoin apparaît (§5) |
 | Client HTTP | Rien d'installé | Proposition : `fetch` du navigateur, enveloppé dans `shared/http` (§6) |
-| Client STOMP | **À choisir** | Aucun installé (§7) |
+| Client STOMP | En place | `@stomp/stompjs` 7 (§7) |
 | PDF.js | **Retenu, pas installé** | Choix de l'étude de faisabilité (§8) |
-| Tests | **À choisir** | Aucun outil installé |
+| Tests | En place | Vitest et Testing Library (`npm run test`) |
 | Image Docker du front | **À écrire** | Serveur de fichiers statiques à choisir (§11) |
 
 ## 3. Organisation du code
@@ -119,7 +119,7 @@ premier ticket qui installe le routeur ; une fois fixés, ils sont reportés ici
 | Chemin proposé | Écran | Accès | Remarque |
 |---|---|---|---|
 | `/connexion` | E1 Connexion | Public | Redirige vers `/cours` si déjà connecté |
-| `/cours` | E2 Mes cours | Enseignant | Page d'accueil de l'enseignant |
+| `/cours` | E2 Mes cours | Enseignant | Page d'accueil de l'enseignant ; réalisé (UC2) |
 | `/cours/:idCours` | E3 Éditeur cours + quiz | Enseignant | Ouvre la dernière version ; sélection de page dans l'URL ou l'état, à choisir |
 | `/classements` | E4 Classements | Enseignant | |
 | `/seances/:idSession` | E5 Quiz en cours, E6 Classement | Enseignant | Présentation projetée : pages du cours, page de quiz (E5), page de classement (E6) |
@@ -284,6 +284,6 @@ Vite lit `.env` (non commité) ; seules les variables préfixées par `VITE_` so
 | F3 | Commandes en REST, diffusion en STOMP, resynchronisation REST après reconnexion | Retenu (aligné sur le back) |
 | F4 | Décompte calé sur l'échéance et l'heure du serveur | Retenu |
 | F5 | PDF.js embarqué, PDF chargé par route protégée | Retenu, à installer |
-| F6 | Routeur, client STOMP, outil de test | À choisir |
+| F6 | Routeur (`react-router`), client STOMP (`@stomp/stompjs`), tests (Vitest) | En place |
 | F7 | Chemins des écrans (§4) et format du `lien` de séance | Proposition, à confirmer avec le back |
 | F8 | Mode d'affichage du cours sur les appareils étudiants | Point ouvert du cahier des charges, à redemander au client |

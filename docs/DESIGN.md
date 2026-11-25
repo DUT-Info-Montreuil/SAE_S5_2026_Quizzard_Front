@@ -153,6 +153,9 @@ Onze écrans : six pour l'enseignant, deux projetés en salle, trois pour l'étu
 - Par cours : « Ouvrir » (E3 sur la dernière version), « Nouvelle version » (UC6), « Résultats » (E10).
 - « Mes classements » : E4.
 - Erreurs d'import affichées clairement : fichier non PDF, trop lourd, déjà importé.
+- **Réalisé (UC2)** : `features/cours`, route `/cours`. Type et taille contrôlés avant l'envoi ; erreurs du fichier et
+  du titre sous leur champ ; PDF déjà importé : « Importer quand même » ou « Ne pas importer ». « Nouvelle version »
+  est désactivé (UC6) ; les écrans E4 et E10 sont à venir.
 
 ### E3 – Éditeur cours + quiz (enseignant, ordinateur) · UC3, UC4, UC5, UC6, UC13, UC14
 

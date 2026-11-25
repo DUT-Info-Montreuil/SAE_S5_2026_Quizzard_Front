@@ -121,7 +121,9 @@ Les chemins abrégés par `...` reprennent le préfixe de la ligne (par exemple
 
 Fichiers :
 
-- **Import d'un PDF** : `FormData` avec le champ `fichier` (et `titre` facultatif) ; ne pas fixer `Content-Type`.
+- **Import d'un PDF** (`POST /api/cours`) : `FormData` avec `fichier`, `titre` (obligatoire, 200 caractères au plus) et
+  `confirmerDoublon` ; ne pas fixer `Content-Type`. Sur `409 DOUBLON_COURS`, le même fichier est renvoyé avec
+  `confirmerDoublon=true` si l'enseignant confirme. La taille (50 Mo) est contrôlée avant l'envoi.
 - **PDF** : chargé par PDF.js depuis la route protégée, jamais par un lien direct.
 - **QR code** : image `image/png` générée par le back, affichée telle quelle sur E5.
 - **Export CSV** : téléchargé par le navigateur (réponse `text/csv` transformée en fichier) ; action journalisée par
@@ -178,3 +180,4 @@ la seconde. Le serveur reste seul juge : une réponse hors délai reçoit un `40
 | A3 | Forme du corps de `GET /api/auth/csrf` | Le front doit savoir où lire le jeton à renvoyer dans `X-XSRF-TOKEN`. |
 | A4 | Format du `lien` renvoyé au lancement d'une séance | Il doit pointer vers la route de E7 du front ([ARCHITECTURE.md](ARCHITECTURE.md) §4). |
 | A5 | Accès étudiant au PDF (`.../fichier` avec `X-Jeton-Participant`) | Utile seulement si le mode « cours visible sur les appareils étudiants » est retenu (point ouvert du cahier des charges). |
+| A6 | Écrire `GET /api/cours` et fixer sa forme | Le front suppose un tableau d'objets identiques à la réponse de l'import (`idCours`, `titre`, `numeroVersion`, `nbPages`, `nbQuiz`, `dateModification`). Tant que la route manque, E2 ne montre que les cours importés depuis l'ouverture de l'écran. |

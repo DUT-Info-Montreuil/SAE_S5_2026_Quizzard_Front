@@ -1,0 +1,116 @@
+/* E2 « Mes cours ». Règles limitées à .mes-cours ; couleurs : variables de tokens.css uniquement. */
+body:has(.mes-cours) { margin: 0; background: var(--couleur-fond); }
+
+.mes-cours {
+  box-sizing: border-box;
+  max-width: 1120px;
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: 24px 32px;
+  color: var(--couleur-texte);
+  font-family: var(--police);
+  font-size: var(--taille-texte);
+
+  & h1, & h2, & p { margin: 0; }
+  & h2 { font-size: var(--taille-reponse); }
+  & main { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--espace); }
+
+  & .mes-cours-entete,
+  & .mes-cours-titre {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--espace);
+  }
+  & .mes-cours-entete { margin-bottom: 24px; }
+
+  & .carte {
+    padding: 24px;
+    border: var(--bordure);
+    border-radius: var(--rayon);
+    background: var(--couleur-carte);
+  }
+  & .formulaire-import { display: grid; gap: var(--espace); }
+
+  & .champ { display: grid; gap: var(--espace-petit); max-width: 640px; }
+  & .champ label { font-weight: 600; }
+  & .champ input {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: var(--hauteur-touche-min);
+    padding: var(--espace-petit) 12px;
+    border: 1px solid color-mix(in srgb, var(--couleur-texte) 55%, var(--couleur-carte));
+    border-radius: var(--rayon);
+    background: var(--couleur-carte);
+    color: inherit;
+    font: inherit;
+  }
+  & .champ input[aria-invalid='true'] { border: 2px solid var(--couleur-action); }
+  & .champ-erreur { color: color-mix(in srgb, var(--couleur-action) 85%, var(--couleur-texte)); font-weight: 600; }
+  & .champ-erreur:empty { display: none; }
+
+  & .tableau-cours { padding: 0 var(--espace); overflow-x: auto; }
+  & table { width: 100%; border-collapse: collapse; text-align: left; }
+  & th, & td { padding: 12px var(--espace-petit); }
+  & tbody tr { border-top: var(--bordure); }
+  & tbody th { max-width: 320px; overflow-wrap: anywhere; }
+
+  & .boutons { display: flex; flex-wrap: wrap; align-items: center; gap: var(--espace); }
+  & .bouton {
+    min-height: var(--hauteur-touche-min);
+    margin-bottom: var(--arete);
+    padding: 8px 24px;
+    border: 0;
+    border-radius: var(--rayon);
+    background: var(--couleur-structure);
+    color: var(--couleur-action-texte);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 var(--arete) 0 color-mix(in srgb, var(--couleur-texte) 40%, transparent);
+    transition: transform var(--duree-animation), box-shadow var(--duree-animation);
+  }
+  & .bouton-action { background: var(--couleur-action); }
+  & .bouton-discret { border: var(--bordure); background: var(--couleur-carte); color: var(--couleur-texte); }
+  & .bouton:active:not(:disabled) { transform: translateY(var(--arete)); box-shadow: none; }
+  & .bouton:disabled {
+    background: color-mix(in srgb, var(--couleur-structure) 20%, var(--couleur-fond));
+    color: color-mix(in srgb, var(--couleur-texte) 75%, var(--couleur-fond));
+    box-shadow: none;
+    cursor: not-allowed;
+  }
+
+  & .lien {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--couleur-structure);
+    font: inherit;
+    font-weight: 600;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  & .lien:disabled {
+    color: color-mix(in srgb, var(--couleur-texte) 65%, var(--couleur-carte));
+    text-decoration: none;
+    cursor: not-allowed;
+  }
+  & :is(a, button, input):focus-visible { outline: 3px solid var(--couleur-texte); outline-offset: 2px; }
+
+  & .alerte,
+  & .succes {
+    margin: 0;
+    padding: 12px var(--espace);
+    border-left: var(--arete) solid var(--couleur-action);
+    border-radius: var(--rayon);
+    background: color-mix(in srgb, var(--couleur-action) 10%, var(--couleur-carte));
+    font-weight: 600;
+  }
+  & .alerte p { margin-bottom: var(--espace-petit); }
+  & .alerte .reference { font-weight: 400; }
+  & .succes {
+    border-color: var(--couleur-succes);
+    background: color-mix(in srgb, var(--couleur-succes) 12%, var(--couleur-carte));
+  }
+}
