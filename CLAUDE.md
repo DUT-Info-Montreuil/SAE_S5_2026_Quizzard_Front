@@ -12,9 +12,8 @@ Le back-end Spring Boot est dans le dépôt séparé `DUT-Info-Montreuil/SAE_S5_
 Pile front (vérifiée dans `package.json`) : **React 19.3**, **TypeScript 6.0**, **Vite 8.3**
 (`@vitejs/plugin-react` 6), **ESLint 10** (`typescript-eslint` 8, `eslint-plugin-react-hooks` 7,
 `eslint-plugin-react-refresh` 0.5). Node.js **20.19+ ou 22.13+** (`CONTRIBUTING.md`). Pas encore installés, à
-choisir par l'équipe : plus rien pour l'UC9. Installés depuis : `react-router` 7, `@stomp/stompjs` 7, et en développement
-Vitest 5 avec React Testing Library (`user-event`, `jest-dom`) et `jsdom`. PDF.js est retenu par l'étude de faisabilité pour le
-rendu du PDF mais n'est pas encore installé.
+choisir par l'équipe : plus rien pour l'UC9. Installés depuis : `react-router` 7, `@stomp/stompjs` 7, `pdfjs-dist` 6 (PDF.js, rendu du PDF, UC3),
+et en développement Vitest 5 avec React Testing Library (`user-event`, `jest-dom`) et `jsdom`.
 
 Pile back (dépôt séparé, versions non vérifiables depuis ce dépôt) : **Spring Boot** lancé par Maven
 (`./mvnw spring-boot:run`), WebSocket/STOMP sur `/ws`, PostgreSQL (dépôts `Postgres…Repository` dans les cas

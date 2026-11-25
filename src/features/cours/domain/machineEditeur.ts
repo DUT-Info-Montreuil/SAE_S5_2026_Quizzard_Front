@@ -21,7 +21,9 @@
 //   ENVOI             ──INSERTION_REFUSEE (VERSION_PERIMEE, EMPLACEMENT_INVALIDE)──▶ AUCUNE + message +
 //                                                                  « Recharger », insertion bloquée
 //   ENVOI             ──INSERTION_REFUSEE (autre)───────────────▶ AUCUNE + message (+ « Recharger » si §4)
-//   ENVOI             ──ECHEC_RESEAU_INSERTION──────────────────▶ AUCUNE + message provisoire + « Recharger »
+//   ENVOI             ──ECHEC_RESEAU_INSERTION──────────────────▶ AUCUNE + message provisoire + « Recharger » ;
+//                                                                  pages = pages relues par le hook, si la relecture
+//                                                                  a réussi (la page a peut-être été créée)
 //   ENVOI             : OUVRIR_CHOIX, CONFIRMER, RECHARGER, SELECTIONNER ignorés (une seule insertion à la fois, D12)
 //
 // « Erreur d'insertion » : PRET, insertion AUCUNE, `erreur` non nulle (bandeau). Elle s'efface à la tentative
@@ -80,7 +82,8 @@ export type ActionEditeur =
   | { type: 'CONFIRMER', idQuiz: number | null }
   | { type: 'INSERTION_REUSSIE', reponse: PageQuizInseree }
   | { type: 'INSERTION_REFUSEE', erreur: ErreurRecue }
-  | { type: 'ECHEC_RESEAU_INSERTION' }
+  /** `pages` : pages relues après la panne (le hook reste en ENVOI pendant la relecture) ; `null` si elle a échoué. */
+  | { type: 'ECHEC_RESEAU_INSERTION', pages: PageInseree[] | null }
 
 export const ETAT_INITIAL: EtatEditeur = { nom: 'CHARGEMENT' }
 
@@ -170,6 +173,11 @@ export function reduireEditeur(etat: EtatEditeur, action: ActionEditeur): EtatEd
     }
     case 'ECHEC_RESEAU_INSERTION':
       if (etat.nom !== 'PRET' || etat.insertion.nom !== 'ENVOI') return etat
-      return { ...etat, insertion: { nom: 'AUCUNE' }, erreur: erreurReseauInsertion() }
+      return {
+        ...etat,
+        insertion: { nom: 'AUCUNE' },
+        pages: action.pages ?? etat.pages,
+        erreur: erreurReseauInsertion(),
+      }
   }
 }

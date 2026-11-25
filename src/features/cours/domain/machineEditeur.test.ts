@@ -186,16 +186,25 @@ describe('insertion', () => {
   })
 
   it('ENVOI ──panne réseau──▶ AUCUNE + message provisoire et « Recharger », boutons réactivés', () => {
-    const etat = enPret(reduireEditeur(envoi(), { type: 'ECHEC_RESEAU_INSERTION' }))
+    const avant = envoi()
+    const etat = enPret(reduireEditeur(avant, { type: 'ECHEC_RESEAU_INSERTION', pages: null }))
     expect(etat.erreur).toMatchObject({ message: 'L\'insertion a échoué, réessayez.', action: 'RECHARGER' })
     expect(insertionPossible(etat)).toBe(true)
+    expect(etat.pages).toBe(enPret(avant).pages)
+  })
+
+  it('ENVOI ──panne réseau, pages relues──▶ liste remplacée par les pages relues', () => {
+    const pages = [{ idPage: 77, numeroPage: 4, ordre: 0, type: 'QUIZ' as const }]
+    const etat = enPret(reduireEditeur(envoi(), { type: 'ECHEC_RESEAU_INSERTION', pages }))
+    expect(etat.pages).toBe(pages)
+    expect(etat.erreur).toMatchObject({ action: 'RECHARGER' })
   })
 
   it('réponses d\'insertion ignorées hors ENVOI', () => {
     const etat = pret()
     expect(reduireEditeur(etat, { type: 'INSERTION_REUSSIE', reponse: REPONSE })).toBe(etat)
     expect(reduireEditeur(etat, { type: 'INSERTION_REFUSEE', erreur: { statut: 500, error: null } })).toBe(etat)
-    expect(reduireEditeur(etat, { type: 'ECHEC_RESEAU_INSERTION' })).toBe(etat)
+    expect(reduireEditeur(etat, { type: 'ECHEC_RESEAU_INSERTION', pages: [] })).toBe(etat)
     expect(reduireEditeur(etat, { type: 'ANNULER_CHOIX' })).toBe(etat)
     expect(reduireEditeur(etat, { type: 'CONFIRMER', idQuiz: 40 })).toBe(etat)
   })

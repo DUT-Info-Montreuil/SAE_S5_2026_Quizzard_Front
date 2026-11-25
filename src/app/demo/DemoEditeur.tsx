@@ -49,7 +49,7 @@ const ETATS: Record<string, () => EtatEditeur> = {
   'Erreur QUIZ_INTROUVABLE': () => refus(404, 'QUIZ_INTROUVABLE'),
   'Erreur QUIZ_EN_SEANCE': () => refus(409, 'QUIZ_EN_SEANCE'),
   'Erreur ERREUR_SERVEUR': () => refus(500, 'ERREUR_SERVEUR'),
-  'Panne réseau pendant l\'insertion': () => reduireEditeur(envoi(), { type: 'ECHEC_RESEAU_INSERTION' }),
+  'Panne réseau pendant l\'insertion': () => reduireEditeur(envoi(), { type: 'ECHEC_RESEAU_INSERTION', pages: null }),
   'Erreur de chargement': () => derouler({
     type: 'ECHEC_CHARGEMENT',
     erreur: { statut: 500, error: null, request_id: 'demo-0001' },

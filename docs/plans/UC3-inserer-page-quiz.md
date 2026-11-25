@@ -34,7 +34,7 @@ motifs, déroulé, image) : **emplacement prévu seulement** ; paramétrage de l
 | D2 | Routes de lecture : celles du `docs/API.md` du back, **à confirmer** ; formes de réponse provisoires (§3), converties et vérifiées dans `cours/api`, seul endroit à changer quand le back les fixera. |
 | D3 | Code dans `features/cours` (`api`, `domain`, `application`, `presentation`), assemblage dans `app`. PDF.js partagé (E3 puis présentation projetée) : `shared/pdf`. |
 | D4 | **CSRF** (choix du 25/11/2026) : `shared/http` demande le jeton par `GET /api/auth/csrf` au premier `POST`/`PUT`/`PATCH`/`DELETE` hors `/api/public/**`, le garde en mémoire et l'envoie dans `X-XSRF-TOKEN`. Lecture du champ `token` (provisoire, A3), isolée dans une seule fonction. Si la route échoue (absente, `SECURITE_OUVERTE`), envoi sans en-tête. Sur un `403` d'une requête enseignant qui modifie : nouveau jeton puis **un seul** rejeu (`docs/API.md` du front §2) ; un `403` refusé avant le contrôleur n'a rien créé. Aucun changement pour `/api/public/**` (UC8, UC9). |
-| D5 | **401** (choix du 25/11/2026) : géré **par écran**, comme `onRejoindre` de l'UC9. Le hook signale l'action `CONNEXION` ; `app/RouteEditeur.tsx` redirige vers `/connexion?retour=/cours/{idCours}`, page provisoire isolée `app/ConnexionProvisoire.tsx` (`TODO(UC1)`), à remplacer par E1. |
+| D5 | **401** (choix du 25/11/2026) : géré **par écran**, comme `onRejoindre` de l'UC9. Le hook signale l'action `CONNEXION` ; `app/RouteEditeur.tsx` redirige vers `/connexion?retour=/cours/{idCours}/editeur`, page provisoire isolée `app/ConnexionProvisoire.tsx` (`TODO(UC1)`), à remplacer par E1. |
 | D6 | **PDF** (choix du 25/11/2026) : téléchargé par `shared/http` (variante binaire, `ArrayBuffer`, mêmes erreurs typées), puis donné à PDF.js (`data`). Un seul document par écran, fermé au démontage et au rechargement. |
 | D7 | **PDF.js** (`pdfjs-dist`, version du `package-lock.json` à l'installation) : worker importé par `?url` de Vite (copié dans `dist/assets`, aucun CDN), `isEvalSupported: false`. Chargé uniquement par la route de l'éditeur (`lazy`) : absent du bundle étudiant (`docs/ARCHITECTURE.md` §4). |
 | D8 | **Miniatures** rendues quand elles deviennent visibles (`IntersectionObserver` natif), rendu annulé si elles sortent du DOM ; **aperçu** rendu à la demande, à la largeur de sa zone. Nombre de pages : `numPages` du document PDF. |
@@ -127,7 +127,8 @@ ENVOI : extraction du repère (échec → sans repère), puis POST
 ENVOI ──201──▶ AUCUNE : pages = réponse.pages, quiz ajouté si quizCree, sélection = nouvelle page (« Question à paramétrer »)
 ENVOI ──401──▶ redirection E1
 ENVOI ──VERSION_PERIMEE | EMPLACEMENT_INVALIDE──▶ AUCUNE + message + « Recharger », insertion bloquée
-ENVOI ──autre erreur ou panne réseau──▶ AUCUNE + message (+ « Recharger » si §4), boutons réactivés
+ENVOI ──autre erreur──▶ AUCUNE + message (+ « Recharger » si §4), boutons réactivés
+ENVOI ──panne réseau──▶ relecture des pages (toujours ENVOI), puis AUCUNE + pages relues + message + « Recharger »
 ENVOI ──« Insérer un quiz ici » ou « Insérer »──▶ ignoré (D12)
 ```
 
@@ -175,11 +176,19 @@ ENVOI ──« Insérer un quiz ici » ou « Insérer »──▶ ignoré (D12)
   titres des quiz des miniatures passés par la prop `titresQuiz` (provisoire, `TODO(UC3)`, Q5) ; bandeau de lecture
   seule avec le message de `COURS_ARCHIVE` (provisoire, `TODO(UC3)`) ; le focus revient au bouton « + » quand
   l'insertion se termine. Démo sans PDF : pages dessinées sur le canvas (U8). Tests des composants : B6.
-- [ ] **B5 Assemblage** : hook `useEditeurCours` (API et ouverture du PDF injectables, chargement parallèle,
-  insertion D12, rechargement, fermeture du document) ; `app/RouteEditeur.tsx` sur `/cours/:idCours` (`lazy`,
+- [x] **B5 Assemblage** : hook `useEditeurCours` (API et ouverture du PDF injectables, chargement parallèle,
+  insertion D12, rechargement, fermeture du document) ; `app/RouteEditeur.tsx` sur `/cours/:idCours/editeur` (`lazy`,
   identifiant non entier → « Cours introuvable. ») ; `app/ConnexionProvisoire.tsx` sur `/connexion` (`TODO(UC1)`).
   Mise à jour de `docs/ARCHITECTURE.md` (§4 route E3, §6 CSRF et binaire, §8 PDF.js installé, §12 F5),
   `docs/API.md` (§5 E3 : `POST .../pages-quiz`), `docs/DESIGN.md` (E3) et `CLAUDE.md` (pile : `pdfjs-dist`).
+  Fait (`cours/application/useEditeurCours.ts` ; `app/RouteEditeur.tsx`, `app/EcranEditeurCours.tsx`,
+  `app/ConnexionProvisoire.tsx`). Écarts validés le 25/11/2026 : route `/cours/:idCours/editeur` (au lieu de
+  `/cours/:idCours`, D5 suivi) ; après une panne réseau, le hook relit les pages en restant en ENVOI, puis
+  `ECHEC_RESEAU_INSERTION` porte `pages` (relues, ou `null` si la relecture échoue) et le reducer remplace la liste
+  (§6 et test du reducer ajustés). `CHARGE` part une fois le PDF ouvert (D8, `numPages`) : les lectures et le PDF
+  partent en parallèle après la lecture du cours, et les miniatures se rendent ensuite, à la demande. PDF.js est
+  importé dynamiquement par le hook (ouverture par défaut). `app/EcranEditeurCours.tsx` porte le hook, avec une `key`
+  par cours ; `RouteEditeur` ne fait que valider l'identifiant.
 - [ ] **B6 Tests** : domaine (formules et exemple de la spec, emplacements uniques et complets, `nettoyerRepere`
   dont page 0, vide, espaces, 300 caractères, paire de substitution), table des erreurs (chaque message mot pour
   mot, replis §4), reducer (chaque transition du §6 et rien d'autre), `shared/http` (en-tête CSRF sur `POST` et pas

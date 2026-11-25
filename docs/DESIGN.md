@@ -156,6 +156,10 @@ Onze écrans : six pour l'enseignant, deux projetés en salle, trois pour l'étu
 
 ### E3 – Éditeur cours + quiz (enseignant, ordinateur) · UC3, UC4, UC5, UC6, UC13, UC14
 
+En place pour l'UC3 (éléments 1 à 4) sur `/cours/:idCours/editeur` : `EditeurCours` (présentation) branché par le
+hook `useEditeurCours`. Aperçu et zone des éléments 5 à 18 côte à côte, bande des pages en bas (Figure 30). Un `401`
+mène à `/connexion` ; « Recharger » relit cours, pages, quiz et PDF. Démo sans back : `/demo/editeur` (développement).
+
 - Titre et version (lecture seule).
 - Colonne des pages : miniatures des pages du PDF et des pages de quiz, distinguées par la couleur **et** une icône ;
   bouton « Insérer un quiz ici » entre deux pages ; un clic affiche la page dans l'aperçu.
