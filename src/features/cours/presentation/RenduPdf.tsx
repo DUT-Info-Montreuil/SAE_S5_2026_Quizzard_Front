@@ -34,6 +34,16 @@ export function RenduPdf({ numeroPage, rendrePage, libelle }: Props) {
     return () => observateur.disconnect()
   }, [])
 
+  // Démontage : canvas vidé, pour que le navigateur libère sa mémoire sans attendre le ramasse-miettes.
+  useEffect(() => {
+    const element = canvas.current
+    return () => {
+      if (!element) return
+      element.width = 0
+      element.height = 0
+    }
+  }, [])
+
   useEffect(() => {
     if (!canvas.current || largeur <= 0) return
     const rendu = rendrePage(numeroPage, canvas.current, largeur)

@@ -5,6 +5,8 @@ import { LIBELLES } from './libelles.ts'
 import { RenduPdf } from './RenduPdf.tsx'
 import type { RendrePage } from './RenduPdf.tsx'
 
+const MARGE_RENDU = '200px'
+
 interface Props {
   element: ElementListe
   /** Titre du quiz d'une page de quiz, s'il est connu (plan UC3, Q5). */
@@ -15,8 +17,9 @@ interface Props {
 }
 
 /**
- * Miniature d'une page (élément 2 de E3) : bouton qui sélectionne la page. Une page du PDF n'est rendue qu'à son
- * premier passage dans la zone visible (plan UC3, D8) ; son rendu est annulé si elle sort du DOM.
+ * Miniature d'une page (élément 2 de E3) : bouton qui sélectionne la page. Une page du PDF n'est rendue que près de la
+ * zone visible (plan UC3, D8) ; hors de cette zone, son canvas est retiré (rendu annulé, mémoire libérée) : un gros
+ * PDF ne garde en mémoire que les miniatures proches de l'écran.
  */
 export function MiniaturePage({ element, titreQuiz, selectionnee, rendrePage, onSelectionner }: Props) {
   const bouton = useRef<HTMLButtonElement>(null)
@@ -24,13 +27,15 @@ export function MiniaturePage({ element, titreQuiz, selectionnee, rendrePage, on
   const pagePdf = element.genre === 'PAGE_PDF'
 
   useEffect(() => {
-    if (!pagePdf || visible || !bouton.current) return
-    const observateur = new IntersectionObserver((entrees) => {
-      if (entrees.some((entree) => entree.isIntersecting)) setVisible(true)
-    })
+    if (!pagePdf || !bouton.current) return
+    const observateur = new IntersectionObserver(
+      (entrees) => setVisible(entrees[entrees.length - 1].isIntersecting),
+      // Marge : les miniatures voisines sont rendues avant d'entrer à l'écran.
+      { rootMargin: MARGE_RENDU },
+    )
     observateur.observe(bouton.current)
     return () => observateur.disconnect()
-  }, [pagePdf, visible])
+  }, [pagePdf])
 
   const type = element.genre === 'PAGE_INSEREE' ? element.page.type : null
   const classe = type === 'QUIZ' ? 'miniature-quiz' : type === 'CLASSEMENT' ? 'miniature-classement' : 'miniature-pdf'

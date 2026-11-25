@@ -37,7 +37,7 @@ motifs, déroulé, image) : **emplacement prévu seulement** ; paramétrage de l
 | D5 | **401** (choix du 25/11/2026) : géré **par écran**, comme `onRejoindre` de l'UC9. Le hook signale l'action `CONNEXION` ; `app/RouteEditeur.tsx` redirige vers `/connexion?retour=/cours/{idCours}/editeur`, page provisoire isolée `app/ConnexionProvisoire.tsx` (`TODO(UC1)`), à remplacer par E1. |
 | D6 | **PDF** (choix du 25/11/2026) : téléchargé par `shared/http` (variante binaire, `ArrayBuffer`, mêmes erreurs typées), puis donné à PDF.js (`data`). Un seul document par écran, fermé au démontage et au rechargement. |
 | D7 | **PDF.js** (`pdfjs-dist`, version du `package-lock.json` à l'installation) : worker importé par `?url` de Vite (copié dans `dist/assets`, aucun CDN), `isEvalSupported: false`. Chargé uniquement par la route de l'éditeur (`lazy`) : absent du bundle étudiant (`docs/ARCHITECTURE.md` §4). |
-| D8 | **Miniatures** rendues quand elles deviennent visibles (`IntersectionObserver` natif), rendu annulé si elles sortent du DOM ; **aperçu** rendu à la demande, à la largeur de sa zone. Nombre de pages : `numPages` du document PDF. |
+| D8 | **Miniatures** rendues quand elles approchent de la zone visible (`IntersectionObserver` natif, marge de 200 px) ; hors de cette zone ou hors du DOM, rendu annulé et canvas retiré et vidé (mémoire bornée pour un gros PDF) ; données de chaque page libérées après rendu ou lecture du texte (`page.cleanup()`) ; **aperçu** rendu à la demande, à la largeur de sa zone. Nombre de pages : `numPages` du document PDF. |
 | D9 | **Numérotation, emplacements, repère** : fonctions pures de `cours/domain` (§5). Le front ne recalcule jamais les décalages : après un `201`, la liste des pages insérées est **remplacée** par `pages` de la réponse. |
 | D10 | **Repère de texte** : texte de la page `numeroPage` (page 1 si `numeroPage` vaut 0) par `getTextContent()`, espaces normalisés, 300 derniers caractères (300 premiers pour 0), absent si vide. Coupe sans casser une paire de substitution UTF-16 (limite du back en unités UTF-16). Si l'extraction échoue : insertion **sans** repère. |
 | D11 | **Choix du quiz** (proposition du 25/11/2026, à valider avec l'auteur de l'UC3, U1) : clic sur « Insérer un quiz ici » → `<dialog>` natif avec boutons radio (quiz du cours, puis « Nouveau quiz ») et deux boutons « Insérer » / « Annuler ». Présélection : quiz de la dernière insertion faite dans l'éditeur, sinon premier quiz, sinon « Nouveau quiz ». « Nouveau quiz » envoie la requête **sans** `idQuiz`. |
@@ -202,6 +202,8 @@ ENVOI ──« Insérer un quiz ici » ou « Insérer »──▶ ignoré (D12)
   `presentation/EditeurCours.test.tsx`, `application/useEditeurCours.test.tsx`, `app/EcranEditeurCours.test.tsx` et
   aide `src/test/fauxNavigateur.ts` (faux `IntersectionObserver`, `ResizeObserver`, `<dialog>`, document PDF).
   Limite : jsdom ne traduit pas Échap en événement `cancel` du `<dialog>` ; le test envoie `cancel` directement.
+  Revue du 25/11/2026 (gros PDF) : une miniature déjà rendue gardait son canvas et PDF.js les données de chaque page ;
+  corrigé (D8 mis à jour : canvas retiré hors de la zone visible, `page.cleanup()` dans `shared/pdf`), test ajouté.
 
 ## 8. Questions ouvertes
 

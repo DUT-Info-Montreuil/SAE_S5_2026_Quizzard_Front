@@ -5,7 +5,7 @@ import type { DocumentPdf, RenduPage } from '../shared/pdf/documentPdf.ts'
 
 type RappelIntersection = (entrees: { isIntersecting: boolean }[]) => void
 
-/** Faux `IntersectionObserver` : rien n'est visible tant que `rendreToutVisible()` n'est pas appelé. */
+/** Faux `IntersectionObserver` : rien n'est visible tant que `changerVisibilite(true)` n'est pas appelé. */
 export function installerFauxIntersectionObserver() {
   const observes: { rappel: RappelIntersection, actif: boolean }[] = []
   vi.stubGlobal('IntersectionObserver', class {
@@ -22,9 +22,9 @@ export function installerFauxIntersectionObserver() {
     }
   })
   return {
-    rendreToutVisible() {
+    changerVisibilite(visible: boolean) {
       act(() => {
-        for (const o of [...observes]) if (o.actif) o.rappel([{ isIntersecting: true }])
+        for (const o of [...observes]) if (o.actif) o.rappel([{ isIntersecting: visible }])
       })
     },
   }

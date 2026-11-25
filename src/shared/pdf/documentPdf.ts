@@ -5,7 +5,7 @@
 // Ressources annexes (cmaps, polices standard) non embarquées : question U6 du plan UC3.
 
 import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist'
-import type { PDFDocumentProxy, RenderTask } from 'pdfjs-dist'
+import type { PDFDocumentProxy, PDFPageProxy, RenderTask } from 'pdfjs-dist'
 import urlWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
 
 GlobalWorkerOptions.workerSrc = urlWorker
@@ -36,8 +36,12 @@ export async function ouvrirDocumentPdf(donnees: ArrayBuffer): Promise<DocumentP
     rendrePage: (numeroPage, canvas, largeur) => rendrePage(document, numeroPage, canvas, largeur),
     lireTextePage: async (numeroPage) => {
       const page = await document.getPage(numeroPage)
-      const { items } = await page.getTextContent()
-      return items.map((item) => ('str' in item ? item.str : '')).join(' ')
+      try {
+        const { items } = await page.getTextContent()
+        return items.map((item) => ('str' in item ? item.str : '')).join(' ')
+      } finally {
+        page.cleanup()
+      }
     },
     fermer: () => chargement.destroy(),
   }
@@ -54,6 +58,16 @@ function rendrePage(
 
   const fin = (async () => {
     const page = await document.getPage(numeroPage)
+    // Données de la page libérées après chaque rendu : PDF.js ne les garde pas pour tout le document. `cleanup()` ne
+    // fait rien tant qu'un autre rendu de la même page (aperçu et miniature) est en cours.
+    try {
+      await dessiner(page)
+    } finally {
+      page.cleanup()
+    }
+  })()
+
+  async function dessiner(page: PDFPageProxy) {
     if (annule) return
     // Échelle multipliée par devicePixelRatio : le canvas reste net sur un écran haute densité.
     const echelle = (largeur / page.getViewport({ scale: 1 }).width) * (window.devicePixelRatio || 1)
@@ -67,7 +81,7 @@ function rendrePage(
     } catch (erreur) {
       if (!annule) throw erreur
     }
-  })()
+  }
 
   return {
     fin,

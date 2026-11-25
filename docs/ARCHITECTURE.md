@@ -257,8 +257,9 @@ route de l'éditeur (`lazy`) et par un `import()` dynamique du hook `useEditeurC
     (**point ouvert** du cahier des charges, §2.7 point 8).
 - Les pages de quiz et de classement ne sont pas dans le PDF : ce sont des composants React placés entre deux pages,
   à partir de `GET /api/cours/{idCours}/versions/{idVersion}/pages`.
-- Performance : rendu des miniatures à la demande (pages visibles seulement, `IntersectionObserver`), une instance
-  du document par écran, fermée au rechargement et quand on quitte l'écran (E3 : `useEditeurCours`).
+- Performance : rendu des miniatures à la demande (pages proches de l'écran seulement, `IntersectionObserver` ; canvas
+  retiré et vidé quand la miniature s'en éloigne), données de chaque page libérées après rendu (`page.cleanup()`
+  dans `shared/pdf`), une instance du document par écran, fermée au rechargement et quand on quitte l'écran (E3 : `useEditeurCours`).
 - Solution de repli en séance (cahier des charges §4.8) : le PDF d'origine reste téléchargeable et projetable sans
   quiz.
 

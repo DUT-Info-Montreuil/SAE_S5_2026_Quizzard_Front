@@ -92,8 +92,24 @@ describe('élément 2 : pages du cours', () => {
     const { rendrePage } = afficher(pret())
     // L'aperçu rend la page 1 ; aucune miniature tant que rien n'est visible.
     const avant = rendrePage.mock.calls.length
-    observateurs.rendreToutVisible()
+    expect(liste().querySelectorAll('canvas')).toHaveLength(0)
+    observateurs.changerVisibilite(true)
     expect(rendrePage.mock.calls.length - avant).toBe(3)
+    expect(liste().querySelectorAll('canvas')).toHaveLength(3)
+  })
+
+  it('miniature sortie de la zone visible : rendu annulé, canvas retiré et vidé (gros PDF)', () => {
+    const { rendrePage } = afficher(pret())
+    observateurs.changerVisibilite(true)
+    const canvas = [...liste().querySelectorAll('canvas')]
+    const rendus = rendrePage.mock.results.slice(-3).map((r) => r.value)
+    observateurs.changerVisibilite(false)
+    expect(liste().querySelectorAll('canvas')).toHaveLength(0)
+    for (const rendu of rendus) expect(rendu.annuler).toHaveBeenCalled()
+    for (const c of canvas) expect([c.width, c.height]).toEqual([0, 0])
+    // De retour à l'écran : rendue de nouveau.
+    observateurs.changerVisibilite(true)
+    expect(liste().querySelectorAll('canvas')).toHaveLength(3)
   })
 })
 
