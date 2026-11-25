@@ -133,7 +133,7 @@ ENVOI ──« Insérer un quiz ici » ou « Insérer »──▶ ignoré (D12)
 
 ## 7. Étapes (un bloc = une session de travail)
 
-- [ ] **B0 Préparation** : état de l'arbre de travail réglé (PDF de l'UC9 supprimé et dossier `Sae Kahoot (3).pdf`
+- [x] **B0 Préparation** : état de l'arbre de travail réglé (PDF de l'UC9 supprimé et dossier `Sae Kahoot (3).pdf`
   non suivi, U7) ; `npm ci`, `npm run lint`, `npm run build` et `npm test` passent ; plan enregistré.
 - [ ] **B1 Socle enseignant** : `shared/http` : CSRF (D4) dans un fichier à part, appliqué par `requete`, rejeu unique
   sur `403`, rien pour `/api/public/**` ; variante binaire `requeteBinaire` (`ArrayBuffer`) qui partage la conversion
