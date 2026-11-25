@@ -152,10 +152,15 @@ ENVOI ──« Insérer un quiz ici » ou « Insérer »──▶ ignoré (D12)
   sélection et « Recharger » possibles) ; état final `CONNEXION` pour les `401` (le hook redirige) ; table des
   erreurs `{message, affichage: BANDEAU | REDIRECTION, action: RECHARGER | AUCUNE, bloquer}` ; `VersionCours` porte
   aussi `nbPages`. Le quiz choisi dans le dialogue est porté par `CONFIRMER` (proposition : `quizParDefaut`).
-- [ ] **B3 API et PDF `cours`** : `lireCours` (dernière version), `lirePagesInserees`, `lireQuizDuCours`,
+- [x] **B3 API et PDF `cours`** : `lireCours` (dernière version), `lirePagesInserees`, `lireQuizDuCours`,
   `lireFichierPdf`, `insererPageQuiz` (corps sans `idQuiz` ni `repereTexte` quand ils sont absents) ; conversion et
   vérification des DTO (§3) ; `extraireRepere(document, numeroPage)` (texte brut par `shared/pdf`, nettoyage par le
   domaine, `undefined` si échec).
+  Fait (`cours/api` : `convertirCours.ts`, une conversion par route ; `coursApi.ts` ; `extraireRepere.ts`). Rendu,
+  ouverture et fermeture du PDF : déjà dans `shared/pdf` (B1), branchés par le hook en B5. Écarts : tests de l'API
+  écrits dès B3 (part « API `cours` » de B6) ; `insererPageQuiz` renvoie `REUSSIE | REFUSEE | ECHEC_RESEAU`
+  (l'appelant relit les pages après `ECHEC_RESEAU`, jamais de renvoi automatique) ; un `201` mal formé est traité
+  comme `ECHEC_RESEAU` (provisoire, `TODO(UC3)`) ; une réponse de lecture mal formée lève une `Error`.
 - [ ] **B4 Présentation E3** : en-tête (élément 1 ; emplacement vide de l'élément 11), liste des pages avec
   miniatures paresseuses, pages insérées (couleur + icône) et boutons « Insérer un quiz ici » (éléments 2 et 3),
   dialogue de choix du quiz, aperçu (élément 4 : page du PDF, page de quiz, « Question à paramétrer », page de
