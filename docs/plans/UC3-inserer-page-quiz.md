@@ -135,11 +135,15 @@ ENVOI ──« Insérer un quiz ici » ou « Insérer »──▶ ignoré (D12)
 
 - [x] **B0 Préparation** : état de l'arbre de travail réglé (PDF de l'UC9 supprimé et dossier `Sae Kahoot (3).pdf`
   non suivi, U7) ; `npm ci`, `npm run lint`, `npm run build` et `npm test` passent ; plan enregistré.
-- [ ] **B1 Socle enseignant** : `shared/http` : CSRF (D4) dans un fichier à part, appliqué par `requete`, rejeu unique
+- [x] **B1 Socle enseignant** : `shared/http` : CSRF (D4) dans un fichier à part, appliqué par `requete`, rejeu unique
   sur `403`, rien pour `/api/public/**` ; variante binaire `requeteBinaire` (`ArrayBuffer`) qui partage la conversion
   des erreurs (retire le `shortcut:`). Installer `pdfjs-dist` ; `shared/pdf` : worker par `?url`, ouverture d'un
   document depuis un `ArrayBuffer`, `nbPages`, rendu d'une page dans un `<canvas>` à une largeur donnée (annulable),
   texte brut d'une page, fermeture. Vérifier que `dist/` contient le worker et aucune adresse externe.
+  Fait (`csrf.ts`, `clientHttp.ts`, `shared/pdf/documentPdf.ts`, `pdfjs-dist` 6.5.438). Écarts : tests de
+  `shared/http` écrits dès B1 (`clientHttp.test.ts`) ; `isEvalSupported` (D7) n'existe plus en version 6, qui
+  n'utilise plus `eval`. `dist/` vérifié avec un import temporaire : worker dans `dist/assets`, PDF.js dans un chunk
+  à part, seules adresses présentes = espaces de noms XML, licence et base factice de `new URL` (rien de chargé).
 - [ ] **B2 Domaine `cours`** : types, numérotation, liste affichée et emplacements des boutons, `nettoyerRepere`,
   table des erreurs (§4), reducer (§6).
 - [ ] **B3 API et PDF `cours`** : `lireCours` (dernière version), `lirePagesInserees`, `lireQuizDuCours`,
