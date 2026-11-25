@@ -54,10 +54,10 @@ motifs, déroulé, image) : **emplacement prévu seulement** ; paramétrage de l
 | Route | Statut | Requête | Réponse utilisée par le front |
 |---|---|---|---|
 | `GET /api/auth/csrf` | À confirmer, absente du back (A3) | — | `{token}` (provisoire) |
-| `GET /api/cours/{idCours}` | À confirmer, absente du back | — | `{idCours, titre, archive, versions: [{idVersion, numero, nbPages}]}` (provisoire) ; dernière version = `numero` le plus grand |
-| `GET /api/cours/{idCours}/versions/{idVersion}/pages` | À confirmer, absente du back | — | `[{idPage, numeroPage, ordre, type}]` (provisoire : même forme que `pages` du `201`) |
-| `GET /api/cours/{idCours}/quiz` | À confirmer, absente du back | — | `[{idQuiz, titre}]` (provisoire, autres champs ignorés) |
-| `GET /api/cours/{idCours}/versions/{idVersion}/fichier` | À confirmer, absente du back | — | `application/pdf` (`ArrayBuffer`) |
+| `GET /api/cours/{idCours}` | Back, branche UC2 | — | `{idCours, titre, idVersion, numeroVersion, nbPages, nbQuiz, dateModification}` ; `archive` pas encore envoyé (absent = non archivé) |
+| `GET /api/cours/{idCours}/versions/{idVersion}/pages` | Back, branche UC3 | — | `[{idPage, numeroPage, ordre, type, idQuestion, idQuiz, titreQuiz}]` |
+| `GET /api/cours/{idCours}/quiz` | Absente du back | — | Remplacée : quiz du cours déduits des pages (`idQuiz`, `titreQuiz`) ; seuls les quiz qui ont une page sont listés |
+| `GET /api/cours/{idCours}/versions/{idVersion}/fichier` | Back, branche UC3 | — | `application/pdf` (`ArrayBuffer`) |
 | `POST /api/cours/{idCours}/pages-quiz` | **Dossier, codée** (branche UC3 du back) | `{idVersion, numeroPage, ordre, idQuiz?, repereTexte?}` ; `idQuiz` absent = nouveau quiz ; `repereTexte` absent si vide ou non extrait ; cookie de session + `X-XSRF-TOKEN` | `201 {idPage, idQuiz, titreQuiz, quizCree, idQuestion, numeroPage, ordre, pages: [{idPage, numeroPage, ordre, type}]}` ; `Location` non lu |
 
 Erreurs : `{error, request_id, champs?, code?}` (`ErreurHttp`).

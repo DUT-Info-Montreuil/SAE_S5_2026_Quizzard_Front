@@ -31,9 +31,13 @@ export function lirePagesInserees(idCours: number, idVersion: number, signal?: A
   return lire(`${cheminVersion(idCours, idVersion)}/pages`, convertirPages, signal)
 }
 
-/** `GET /api/cours/{idCours}/quiz` : quiz du cours. TODO(UC3): route à confirmer (plan UC3, Q1). */
-export function lireQuizDuCours(idCours: number, signal?: AbortSignal): Promise<QuizResume[]> {
-  return lire(`${cheminCours(idCours)}/quiz`, convertirQuiz, signal)
+/**
+ * Quiz du cours, déduits de `GET .../versions/{idVersion}/pages` : le back n'a pas de route de liste des quiz.
+ * shortcut: seuls les quiz qui ont une page dans la version sont listés, et la route des pages est lue deux fois ;
+ * passer à la route de liste des quiz quand le back l'aura.
+ */
+export function lireQuizDuCours(idCours: number, idVersion: number, signal?: AbortSignal): Promise<QuizResume[]> {
+  return lire(`${cheminVersion(idCours, idVersion)}/pages`, convertirQuiz, signal)
 }
 
 /**

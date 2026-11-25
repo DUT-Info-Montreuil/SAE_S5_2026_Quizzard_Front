@@ -84,7 +84,7 @@ export function useEditeurCours(idCours: number, options: OptionsEditeurCours = 
         promessePdf = api.lireFichierPdf(idCours, idVersion, signal).then(ouvrirPdf)
         const [pages, quiz, pdf] = await Promise.all([
           api.lirePagesInserees(idCours, idVersion, signal),
-          api.lireQuizDuCours(idCours, signal),
+          api.lireQuizDuCours(idCours, idVersion, signal),
           promessePdf,
         ])
         if (signal.aborted) {
