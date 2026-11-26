@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import type { PageInseree } from '../domain/cours.ts'
 import type { Selection } from '../domain/machineEditeur.ts'
 import { listeAffichee } from '../domain/numerotation.ts'
@@ -11,13 +12,15 @@ interface Props {
   pages: readonly PageInseree[]
   selection: Selection
   rendrePage: RendrePage
+  /** Aperçu d'une page de quiz fourni par l'assemblage (UC4, éléments 4 et 18) ; sinon l'encadré de l'UC3. */
+  apercuQuiz?: ReactNode
 }
 
 /**
  * Aperçu de la page sélectionnée (élément 4 de E3, lecture seule) : rendu de la page du PDF à la largeur de la zone,
  * ou encadré d'une page insérée (« Question à paramétrer » et titre du quiz pour une page de quiz).
  */
-export function ApercuPage({ nbPages, pages, selection, rendrePage }: Props) {
+export function ApercuPage({ nbPages, pages, selection, rendrePage, apercuQuiz }: Props) {
   const element = listeAffichee(nbPages, pages).find((e) => selection.genre === 'PAGE_PDF'
     ? e.genre === 'PAGE_PDF' && e.numeroPage === selection.numeroPage
     : e.genre === 'PAGE_INSEREE' && e.page.idPage === selection.idPage)
@@ -32,6 +35,8 @@ export function ApercuPage({ nbPages, pages, selection, rendrePage }: Props) {
         libelle={LIBELLES.page(element.position)}
       />
     )
+  } else if (element?.genre === 'PAGE_INSEREE' && element.page.type === 'QUIZ' && apercuQuiz !== undefined) {
+    return <section className="apercu apercu-quiz" aria-label={LIBELLES.apercu}>{apercuQuiz}</section>
   } else if (element?.genre === 'PAGE_INSEREE') {
     const quiz = element.page.type === 'QUIZ'
     contenu = (

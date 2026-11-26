@@ -27,7 +27,8 @@ function lirePage(valeur: unknown): PageInseree | null {
   const { idPage, numeroPage, ordre, type } = valeur
   if (!estEntier(idPage) || !estEntier(numeroPage) || !estEntier(ordre)) return null
   if (!TYPES_PAGE.includes(type as TypePage)) return null
-  return { idPage, numeroPage, ordre, type: type as TypePage }
+  const page: PageInseree = { idPage, numeroPage, ordre, type: type as TypePage }
+  return estEntier(valeur.idQuiz) ? { ...page, idQuiz: valeur.idQuiz } : page
 }
 
 function lireVersion(valeur: unknown): VersionCours | null {

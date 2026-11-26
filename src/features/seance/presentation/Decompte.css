@@ -1,0 +1,37 @@
+/* Décompte partagé par E8 (UC9) et E5 (UC7). Variables de tokens.css uniquement. */
+
+.decompte-barre {
+  height: 12px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--couleur-structure) 12%, var(--couleur-carte));
+  overflow: hidden;
+}
+
+.decompte-remplissage {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--couleur-structure);
+  transition: width var(--duree-animation) linear;
+}
+
+.decompte-ligne {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: var(--espace);
+}
+
+.decompte-position {
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--couleur-structure) 10%, var(--couleur-carte));
+  color: color-mix(in srgb, var(--couleur-structure) 75%, var(--couleur-texte));
+  font-weight: 600;
+}
+
+.decompte-chiffre {
+  margin: 0;
+  font-size: var(--taille-decompte);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}

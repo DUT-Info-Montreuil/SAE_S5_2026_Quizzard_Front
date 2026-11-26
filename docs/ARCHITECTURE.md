@@ -127,7 +127,7 @@ En développement seulement, `/demo/question` affiche E8/E9 et `/demo/editeur` a
 | `/cours` | E2 Mes cours | Enseignant | Page d'accueil de l'enseignant |
 | `/cours/:idCours/editeur` | E3 Éditeur cours + quiz | Enseignant | **En place** (UC3, éléments 1 à 4). Ouvre la dernière version ; sélection de page dans l'état ; hook `useEditeurCours` ; identifiant non entier → « Cours introuvable. » |
 | `/classements` | E4 Classements | Enseignant | |
-| `/seances/:idSession` | E5 Quiz en cours, E6 Classement | Enseignant | Présentation projetée : pages du cours, page de quiz (E5), page de classement (E6) |
+| `/seances/:idSession` | E5 Quiz en cours, E6 Classement | Enseignant | **E5 en place** (UC7), en `lazy` : ouvert par « Lancer la présentation » (E3, élément 11), état relu par `GET /api/sessions/{idSession}` (un rechargement reprend la séance) ; hook `useSeanceEnDirect`. E6 et pages du cours à venir (UC11, UC14) |
 | `/rejoindre/:codeAcces` | E7 Rejoindre | Public | Cible du lien et du QR code ; page vide provisoire en attendant UC8 |
 | `/rejoindre/:codeAcces/question` | E8 Question, E9 Résultat | Étudiant (jeton) | **En place** (UC9). E8 et E9 alternent selon les messages temps réel (E9-4) ; hook `useRepondreQuestion` |
 | `/cours/:idCours/resultats` | E10 Résultats de la séance | Enseignant | Liste des séances du cours, détail de la séance choisie |
@@ -201,8 +201,11 @@ Le serveur **pousse** l'état de la séance ; le front **n'envoie aucune command
 - Authentification : cookie de session pour l'enseignant ; en-tête STOMP `X-Jeton-Participant` dans la trame
   `CONNECT` pour l'étudiant.
 - Abonnements par écran (destinations du back, [API.md](API.md)) :
-  - E5 (enseignant) : `etat`, `question`, `connectes`, `repartition`, `correction`, `ecran`, `classement` sous
-    `/topic/sessions/{codeAcces}/` ;
+  - E5 (enseignant, en place, UC7) : `etat`, `question`, `connectes`, `repartition`, `correction` sous
+    `/topic/sessions/{codeAcces}/` (`seance/api/destinationsAnimation.ts`, seul endroit ; conversion dans
+    `seance/api/lecturesAnimation.ts` ; cycle dans `seance/application/useSeanceEnDirect.ts`, client injectable
+    `creerClient`). Aucun en-tête : l'enseignant est reconnu par son cookie. À venir : `ecran` (UC14), `classement`
+    (UC11) ;
   - E8, E9 (étudiant) : `etat`, `question`, `correction` sous `/topic/sessions/{codeAcces}/`, et
     `/user/queue/resultat`.
 - Un seul client STOMP par onglet, ouvert à l'entrée dans la séance et fermé à la sortie ou à la clôture.

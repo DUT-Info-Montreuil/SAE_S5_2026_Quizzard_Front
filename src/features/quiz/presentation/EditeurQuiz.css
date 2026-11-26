@@ -1,0 +1,552 @@
+/* Édition d'une page de quiz dans E3 (éléments 4 à 8 et 12 à 18), d'après docs/maquettes/Capture d'écran
+   2026-11-26 102631.png et la « Charte Editeur ». Variables de tokens.css uniquement. Rendu dans .editeur-cours. */
+
+/* ---------- Segments (choix unique) ---------- */
+.segments {
+  display: flex;
+  align-items: center;
+  gap: var(--espace-petit);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.segments-legende {
+  float: left;
+  margin-right: var(--espace-petit);
+  padding: 0;
+  color: color-mix(in srgb, var(--couleur-texte) 75%, var(--couleur-fond));
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.segments-options {
+  display: flex;
+  gap: 4px;
+}
+
+.segment {
+  display: inline-flex;
+}
+
+.segment-libelle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 32px;
+  padding: 0 12px;
+  border: var(--bordure);
+  border-radius: 10px;
+  background: var(--couleur-carte);
+  color: var(--couleur-texte);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--duree-animation), color var(--duree-animation);
+}
+
+.segment:has(input:checked) .segment-libelle {
+  border-color: var(--couleur-texte);
+  background: var(--couleur-texte);
+  color: var(--couleur-carte);
+}
+
+.segment:has(input:focus-visible) .segment-libelle {
+  outline: 3px solid var(--couleur-structure);
+  outline-offset: 2px;
+}
+
+.segments:disabled .segment-libelle {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Type de question : trois segments sur toute la largeur */
+.segments-pleins,
+.segments-pleins .segments-options {
+  width: 100%;
+}
+
+.segments-pleins .segment {
+  flex: 1;
+}
+
+.segments-pleins .segment-libelle {
+  min-height: 36px;
+}
+
+/* Durées : pastilles */
+.segments-durees,
+.segments-durees .segments-options {
+  width: 100%;
+}
+
+.segments-durees .segment {
+  flex: 1;
+}
+
+.carte-reglages .segments-durees .segment-libelle {
+  padding: 0 4px;
+}
+
+.segments-durees .segment-libelle {
+  border-radius: 999px;
+}
+
+/* ---------- Barre du quiz (éléments 14 et 17) ---------- */
+.barre-quiz {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px var(--espace);
+}
+
+.barre-quiz-pastille {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--couleur-iut) 12%, var(--couleur-carte));
+  color: color-mix(in srgb, var(--couleur-action) 70%, var(--couleur-texte));
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.barre-quiz-emplacement {
+  margin-right: var(--espace);
+  color: color-mix(in srgb, var(--couleur-texte) 75%, var(--couleur-fond));
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+/* ---------- Aperçu de la question (éléments 4 et 18) ---------- */
+.apercu-question-carte {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--espace) * 1.25);
+  padding: calc(var(--espace) * 1.5);
+  border: var(--bordure);
+  border-radius: calc(var(--rayon) * 2);
+  background: var(--couleur-carte);
+}
+
+.apercu-question-entete {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--espace);
+  color: color-mix(in srgb, var(--couleur-texte) 70%, var(--couleur-fond));
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.apercu-question-duree {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.apercu-question-enonce {
+  max-width: 22ch;
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.apercu-question-vide {
+  color: color-mix(in srgb, var(--couleur-texte) 45%, var(--couleur-fond));
+}
+
+.zone-image {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: min(100%, 300px);
+  padding: calc(var(--espace) * 1.5) var(--espace) var(--espace);
+  border: 2px dashed color-mix(in srgb, var(--couleur-structure) 55%, var(--couleur-carte));
+  border-radius: calc(var(--rayon) * 1.5);
+  background: color-mix(in srgb, var(--couleur-structure) 8%, var(--couleur-carte));
+  text-align: center;
+}
+
+.zone-image p {
+  margin: 0;
+}
+
+.zone-image-icone {
+  color: var(--couleur-structure);
+}
+
+.zone-image-apercu {
+  display: block;
+  max-width: 100%;
+  max-height: 160px;
+  border-radius: var(--espace-petit);
+  object-fit: contain;
+}
+
+.zone-image-titre {
+  color: var(--couleur-structure);
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.zone-image-formats {
+  color: color-mix(in srgb, var(--couleur-texte) 70%, var(--couleur-fond));
+  font-size: 0.8125rem;
+}
+
+.zone-image-formats[role="alert"] {
+  color: color-mix(in srgb, var(--couleur-action) 75%, var(--couleur-texte));
+  font-weight: 700;
+}
+
+.zone-image-actions {
+  display: flex;
+  gap: var(--espace-petit);
+  margin-top: var(--espace-petit);
+}
+
+.apercu-reponses,
+.apercu-libres {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px var(--espace);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.apercu-reponse {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: var(--hauteur-touche-reponse);
+  padding: var(--espace-petit) 12px;
+  border: 2px solid color-mix(in srgb, var(--couleur-texte) 10%, var(--couleur-carte));
+  border-radius: var(--rayon);
+  background: var(--couleur-carte);
+  box-shadow: 0 var(--arete) 0 color-mix(in srgb, var(--couleur-structure) 12%, var(--couleur-carte));
+  font-size: var(--taille-reponse);
+  font-weight: 600;
+}
+
+.apercu-reponse-bonne {
+  border-color: var(--couleur-succes);
+  background: color-mix(in srgb, var(--couleur-succes) 12%, var(--couleur-carte));
+  box-shadow: 0 var(--arete) 0 color-mix(in srgb, var(--couleur-succes) 35%, var(--couleur-carte));
+}
+
+.apercu-reponse-lettre {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  color: var(--couleur-action-texte);
+  font-weight: 800;
+}
+
+.apercu-reponse-libelle {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.apercu-reponse-coche {
+  display: inline-flex;
+  color: var(--couleur-succes);
+}
+
+.apercu-paires {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.apercu-paire {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+}
+
+/* Couleurs des réponses A à D (charte §1) ; texte bleu nuit sur l'orange (contraste) */
+.reponse-0 { background: var(--couleur-reponse-a); }
+.reponse-1 { background: var(--couleur-reponse-b); }
+.reponse-2 { background: var(--couleur-reponse-c); }
+.reponse-3 { background: var(--couleur-reponse-d); color: var(--couleur-texte); }
+
+/* ---------- Panneau de droite (éléments 5 à 8, 12, 15, 16) ---------- */
+.panneau-question {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.carte-reglages {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espace-petit);
+  padding: 12px;
+  border: var(--bordure);
+  border-radius: calc(var(--rayon) * 1.5);
+  background: var(--couleur-carte);
+  font-size: 0.8125rem;
+}
+
+.carte-reglages .segment-libelle {
+  padding: 0 10px;
+  font-size: 0.75rem;
+}
+
+.carte-reglages-titre {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  margin: 0 0 4px;
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+.carte-reglages-titre .icone,
+.carte-reglages-titre svg {
+  color: var(--couleur-structure);
+}
+
+.champ {
+  width: 100%;
+  min-width: 0;
+  min-height: 32px;
+  padding: 4px 10px;
+  border: var(--bordure);
+  border-radius: 10px;
+  background: var(--couleur-carte);
+  color: var(--couleur-texte);
+  font: inherit;
+  font-weight: 600;
+}
+
+.champ::placeholder {
+  color: color-mix(in srgb, var(--couleur-texte) 45%, var(--couleur-fond));
+}
+
+.liste-reponses {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ligne-reponse,
+.ligne-paire {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.lettre-reponse {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  color: var(--couleur-action-texte);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.case-bonne {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 2px solid color-mix(in srgb, var(--couleur-texte) 35%, var(--couleur-carte));
+  border-radius: 50%;
+  background: var(--couleur-carte);
+  color: var(--couleur-carte);
+  cursor: pointer;
+}
+
+.case-bonne[aria-checked="true"] {
+  border-color: var(--couleur-succes);
+  background: var(--couleur-succes);
+}
+
+.case-bonne:disabled {
+  cursor: not-allowed;
+}
+
+.bouton-icone {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: color-mix(in srgb, var(--couleur-texte) 70%, var(--couleur-fond));
+  cursor: pointer;
+}
+
+.bouton-icone:hover {
+  background: color-mix(in srgb, var(--couleur-structure) 10%, var(--couleur-carte));
+}
+
+.bouton-ajout {
+  width: 100%;
+  min-height: 30px;
+  border: 1px dashed var(--couleur-structure);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--couleur-structure);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ligne-reglage {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.champ-points {
+  width: 6ch;
+  padding: 0;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--couleur-texte);
+  font: inherit;
+  font-size: 1.5rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.champ-points:hover,
+.champ-points:focus {
+  border-bottom-color: var(--couleur-structure);
+}
+
+.interrupteur {
+  position: relative;
+  flex: none;
+  width: 40px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--couleur-structure) 25%, var(--couleur-carte));
+  cursor: pointer;
+  transition: background var(--duree-animation);
+}
+
+.interrupteur::after {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--couleur-carte);
+  content: "";
+  transition: transform var(--duree-animation);
+}
+
+.interrupteur[aria-checked="true"] {
+  background: var(--couleur-succes);
+}
+
+.interrupteur[aria-checked="true"]::after {
+  transform: translateX(18px);
+}
+
+.liste-ecrans {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ligne-ecran {
+  display: flex;
+  align-items: center;
+  gap: var(--espace-petit);
+  min-height: 34px;
+  padding: 4px 10px;
+  border: var(--bordure);
+  border-radius: 10px;
+  font-weight: 700;
+}
+
+.ligne-ecran-inactif {
+  border-style: dashed;
+  color: color-mix(in srgb, var(--couleur-texte) 70%, var(--couleur-fond));
+}
+
+.ligne-ecran-poignee {
+  color: color-mix(in srgb, var(--couleur-texte) 45%, var(--couleur-fond));
+}
+
+.ligne-ecran-nom {
+  flex: 1;
+}
+
+.ligne-ecran-detail {
+  color: color-mix(in srgb, var(--couleur-texte) 70%, var(--couleur-fond));
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* ---------- Élément 10 « Enregistrer » ---------- */
+.bouton-enregistrer[data-modifie] {
+  position: relative;
+}
+
+.bouton-enregistrer[data-modifie]::after {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--couleur-carte);
+  border-radius: 50%;
+  background: var(--couleur-alerte);
+  content: "";
+}
+
+@media (max-width: 900px) {
+  .apercu-reponses,
+  .apercu-libres {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.barre-quiz .segment-libelle {
+  padding: 0 10px;
+  font-size: 0.75rem;
+}

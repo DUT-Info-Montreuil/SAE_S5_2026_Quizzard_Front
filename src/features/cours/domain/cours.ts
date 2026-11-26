@@ -12,6 +12,8 @@ export interface PageInseree {
   /** Rang parmi les pages insérées au même endroit (0 : juste après la page du PDF). */
   ordre: number
   type: TypePage
+  /** Quiz de la page, quand le back le donne (pages de quiz) : proposé au lancement de la présentation (UC7). */
+  idQuiz?: number
 }
 
 /** Emplacement d'insertion envoyé au back. */

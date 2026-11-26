@@ -25,4 +25,9 @@ export const LIBELLES = {
   apercuIndisponible: 'Aperçu indisponible.',
   questionAParametrer: 'Question à paramétrer',
   horsPerimetre: (elements: string) => `Éléments ${elements} : hors périmètre UC3`,
+  // Élément 9 (UC6) : libellé de la maquette (docs/maquettes/Capture d'écran 2026-11-26 102631.png).
+  reappliquer: (version: number) => `Réappliquer les quiz de la v${version}`,
+  quizAReappliquer: (nombre: number) => `${nombre} quiz à réappliquer`,
+  // Détail d'une page de classement dans la bande des pages (maquette : « Classement · cumulé »).
+  classement: 'Classement',
 }

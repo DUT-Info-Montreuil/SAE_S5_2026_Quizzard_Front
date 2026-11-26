@@ -15,6 +15,8 @@ const routeur = createBrowserRouter([
   { path: '/rejoindre/:codeAcces/question', Component: RouteQuestion },
   // Éditeur E3 (enseignant) en `lazy` : PDF.js et l'éditeur restent hors du bundle des écrans étudiants.
   { path: '/cours/:idCours/editeur', lazy: async () => ({ Component: (await import('./RouteEditeur.tsx')).RouteEditeur }) },
+  // E5 « Quiz en cours » (enseignant, projeté), en `lazy` comme l'éditeur.
+  { path: '/seances/:idSession', lazy: async () => ({ Component: (await import('./RouteSeance.tsx')).RouteSeance }) },
   { path: '/connexion', Component: ConnexionProvisoire },
   // Démo sans back, en développement seulement : absente du build de production.
   ...(import.meta.env.DEV
