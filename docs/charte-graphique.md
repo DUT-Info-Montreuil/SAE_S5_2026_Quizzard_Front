@@ -38,7 +38,7 @@
 - Boutons à « arête basse » qui s'enfoncent à l'appui (ombre basse qui disparaît en `:active`).
 
 ## 3. Police
-- **Rubik** (licence SIL OFL), **fournie avec l'application** (fichiers `.woff2` dans le projet).
+- **Rubik** (licence SIL OFL), **fournie avec l'application** (fichier variable `.ttf` de Google Fonts dans le projet, `src/shared/styles/polices/`).
   Elle n'est jamais chargée depuis un service externe (pas de Google Fonts en ligne).
 - Repli : police sans empattement du système.
 

@@ -130,3 +130,23 @@ export function lireErreurChargement(erreur: ErreurRecue | null): ErreurChargeme
   const message = coursIntrouvable ? MESSAGE_COURS_INTROUVABLE : erreur?.error ?? MESSAGE_CHARGEMENT_PROVISOIRE
   return { message, affichage: 'BANDEAU', action: 'RECHARGER', bloquer: false, requestId: erreur?.request_id ?? null }
 }
+
+// TODO(UC3): message d'échec de « Retirer » et « Déplacer » absent de la spec (sans réponse du serveur, ou sans
+// `error`). Valeur provisoire, isolée ici.
+export const MESSAGE_MODIFICATION_PROVISOIRE = 'La modification de la page a échoué, réessayez.'
+
+/**
+ * Erreur de `DELETE` ou `PATCH /api/pages/{idPage}` (back, docs/API.md §3.2) : mêmes codes et messages que
+ * l'insertion (COURS_ARCHIVE, VERSION_PERIMEE, QUIZ_EN_SEANCE, EMPLACEMENT_INVALIDE, REQUETE_INVALIDE), sauf le
+ * message d'ERREUR_SERVEUR, propre à l'insertion : `error` du back (dont `PAGE_INTROUVABLE`), sinon texte provisoire.
+ */
+export function lireErreurModification(erreur: ErreurRecue): ErreurEditeur {
+  const lue = lireErreurInsertion(erreur)
+  if (lue.message !== ERREURS_INSERTION.ERREUR_SERVEUR.message) return lue
+  return { ...lue, message: erreur.error ?? MESSAGE_MODIFICATION_PROVISOIRE }
+}
+
+/** Pas de réponse HTTP pendant un retrait ou un déplacement : texte provisoire, avec « Recharger ». */
+export function erreurReseauModification(): ErreurEditeur {
+  return { message: MESSAGE_MODIFICATION_PROVISOIRE, affichage: 'BANDEAU', action: 'RECHARGER', bloquer: false }
+}

@@ -1,7 +1,7 @@
 // Numérotation et emplacements : plan UC3, §5 ; UC3, « Calcul de l'emplacement et de la numérotation ».
 import { describe, expect, it } from 'vitest'
 import type { PageInseree } from './cours.ts'
-import { emplacementsInsertion, listeAffichee } from './numerotation.ts'
+import { emplacementDeplacement, emplacementsInsertion, listeAffichee } from './numerotation.ts'
 
 const quiz = (idPage: number, numeroPage: number, ordre: number): PageInseree => ({
   idPage,
@@ -117,5 +117,25 @@ describe('emplacements : bornes et pages au même endroit (B6)', () => {
 
   it('aucune page insérée : un emplacement par espace, (p, 0) pour p de 0 à nbPages', () => {
     expect(emplacementsInsertion(3, [])).toEqual([0, 1, 2, 3].map((numeroPage) => ({ numeroPage, ordre: 0 })))
+  })
+})
+
+describe('emplacementDeplacement : `ordre` compté parmi les autres pages (PATCH du back)', () => {
+  // Trois pages après la page 4 du PDF : A (4, 0), B (4, 1), C (4, 2). Espaces : (4, 0) à (4, 3).
+  const [a, b, c] = [quiz(1, 4, 0), quiz(2, 4, 1), quiz(3, 4, 2)]
+  const pages = [a, b, c]
+
+  it('vers un autre endroit : emplacement inchangé', () => {
+    expect(emplacementDeplacement(b, { numeroPage: 7, ordre: 0 }, pages)).toEqual({ numeroPage: 7, ordre: 0 })
+  })
+
+  it('les deux espaces autour de la page : elle ne bouge pas (null)', () => {
+    expect(emplacementDeplacement(b, { numeroPage: 4, ordre: 1 }, pages)).toBeNull()
+    expect(emplacementDeplacement(b, { numeroPage: 4, ordre: 2 }, pages)).toBeNull()
+  })
+
+  it('au même endroit, avant la page : rang inchangé ; après : rang - 1', () => {
+    expect(emplacementDeplacement(c, { numeroPage: 4, ordre: 0 }, pages)).toEqual({ numeroPage: 4, ordre: 0 })
+    expect(emplacementDeplacement(a, { numeroPage: 4, ordre: 3 }, pages)).toEqual({ numeroPage: 4, ordre: 2 })
   })
 })

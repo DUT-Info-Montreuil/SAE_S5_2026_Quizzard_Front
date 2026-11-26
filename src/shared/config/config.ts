@@ -22,5 +22,11 @@ export const urlApi = lireUrlApi()
  */
 export const urlWs = (urlApi === '' ? location.origin : urlApi).replace(/^http/, 'ws') + '/ws'
 
+/**
+ * Dossier des polices standard de PDF.js (Helvetica, Times… non embarquées dans le PDF), servi par l'application :
+ * copié depuis `pdfjs-dist/standard_fonts` par le plugin de `vite.config.ts`. Barre finale exigée par PDF.js.
+ */
+export const urlPolicesPdf = `${import.meta.env.BASE_URL}pdfjs/standard_fonts/`
+
 /** Vrai avec `npm run dev`, faux dans le build de production. */
 export const estEnDeveloppement = import.meta.env.DEV

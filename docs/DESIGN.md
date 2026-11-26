@@ -67,9 +67,11 @@ foncée ; le choix final se vérifie avec un outil de contraste avant la validat
 - **Rubik** (licence libre SIL OFL), **fournie avec l'application** : fichiers de police dans le dépôt, déclarés par
   `@font-face` et intégrés au build par Vite. Jamais chargée depuis un service externe (Google Fonts ou autre).
 - Repli sur la police sans empattement du système (`system-ui, sans-serif`).
-- Graisses et formats à embarquer : le strict nécessaire (par exemple `woff2`, deux ou trois graisses), pour rester
-  sobre. Les fichiers ne sont pas encore dans le dépôt ; la licence OFL est jointe aux fichiers.
-- État actuel : `src/index.css` vient du modèle Vite (`system-ui`) et sera remplacé.
+- Fichier embarqué : `src/shared/styles/polices/Rubik-VariableFont_wght.ttf` (Google Fonts, un seul fichier variable
+  pour les graisses 300 à 900, environ 360 Ko), licence OFL jointe (`polices/OFL.txt`), déclaré dans
+  `shared/styles/police.css`. Vite le copie dans `dist/assets/` avec une adresse absolue, valable sur toutes les
+  routes (`/cours/1/editeur`, `/rejoindre/…`).
+- `src/index.css` ne fait que retirer la marge du `body`.
 
 ### 1.4 Logo
 
@@ -157,7 +159,10 @@ Onze écrans : six pour l'enseignant, deux projetés en salle, trois pour l'étu
 ### E3 – Éditeur cours + quiz (enseignant, ordinateur) · UC3, UC4, UC5, UC6, UC13, UC14
 
 En place pour l'UC3 (éléments 1 à 4) sur `/cours/:idCours/editeur` : `EditeurCours` (présentation) branché par le
-hook `useEditeurCours`. Aperçu et zone des éléments 5 à 18 côte à côte, bande des pages en bas (Figure 30). Un `401`
+hook `useEditeurCours`. Aperçu et zone des éléments 5 à 18 côte à côte, bande des pages en bas (Figure 30), toujours
+visible au-delà de 900 px de large (l'éditeur tient dans la fenêtre, l'aperçu défile). Page de quiz sélectionnée :
+« Déplacer » et « Retirer » sous l'aperçu (confirmation avant de retirer ; déplacement par les boutons « Insérer un
+quiz ici », « Annuler » pour sortir). Un `401`
 mène à `/connexion` ; « Recharger » relit cours, pages, quiz et PDF. Démo sans back : `/demo/editeur` (développement).
 
 - Titre et version (lecture seule).

@@ -5,6 +5,7 @@ import {
   erreurReseauInsertion,
   lireErreurChargement,
   lireErreurInsertion,
+  lireErreurModification,
 } from './erreursEditeur.ts'
 
 const CAS_UC3 = [
@@ -133,5 +134,21 @@ describe('erreurs du chargement', () => {
       action: 'RECHARGER',
       requestId: null,
     })
+  })
+})
+
+describe('erreurs du retrait et du déplacement', () => {
+  it('codes de l\'UC3 : même message (QUIZ_EN_SEANCE, VERSION_PERIMEE bloque)', () => {
+    expect(lireErreurModification({ statut: 409, code: 'QUIZ_EN_SEANCE', error: null }).message)
+      .toBe('Ce quiz est en cours de séance : réessayez après sa clôture.')
+    expect(lireErreurModification({ statut: 409, code: 'VERSION_PERIMEE', error: null }).bloquer).toBe(true)
+  })
+
+  it('PAGE_INTROUVABLE et 500 : `error` du back, jamais « L\'insertion a échoué » ; sans `error`, texte provisoire', () => {
+    expect(lireErreurModification({ statut: 404, code: 'PAGE_INTROUVABLE', error: 'Page introuvable.' }).message)
+      .toBe('Page introuvable.')
+    expect(lireErreurModification({ statut: 500, error: 'Erreur interne.' }).message).toBe('Erreur interne.')
+    expect(lireErreurModification({ statut: 500, error: null }).message)
+      .toBe('La modification de la page a échoué, réessayez.')
   })
 })

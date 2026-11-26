@@ -98,3 +98,42 @@ export async function insererPageQuiz(
     return { resultat: 'ECHEC_RESEAU' }
   }
 }
+
+export type ResultatModification =
+  /** `pages` : pages de la version à jour (`PATCH`) ; `null` pour un retrait (`204`, sans corps). */
+  | { resultat: 'REUSSIE', pages: PageInseree[] | null }
+  | { resultat: 'REFUSEE', erreur: ErreurHttp }
+  /** Aucune réponse du serveur : la page a peut-être été retirée ou déplacée, relire les pages. */
+  | { resultat: 'ECHEC_RESEAU' }
+
+/** Réponse ou erreur d'une modification de page ; une annulation (`signal`) est relancée telle quelle. */
+async function modifierPage(
+  idPage: number,
+  options: { methode: 'DELETE' | 'PATCH', corps?: Emplacement },
+  signal?: AbortSignal,
+): Promise<ResultatModification> {
+  try {
+    const { donnees } = await requete<unknown>(`/api/pages/${idPage}`, { ...options, signal })
+    if (options.methode === 'DELETE') return { resultat: 'REUSSIE', pages: null }
+    const pages = convertirPages(donnees)
+    // 200 mal formé : comme une panne réseau, la page a été déplacée mais il faut relire la liste.
+    return pages === null ? { resultat: 'ECHEC_RESEAU' } : { resultat: 'REUSSIE', pages }
+  } catch (erreur) {
+    if (erreur instanceof ErreurHttp) return { resultat: 'REFUSEE', erreur }
+    if (signal?.aborted) throw erreur
+    return { resultat: 'ECHEC_RESEAU' }
+  }
+}
+
+/** `DELETE /api/pages/{idPage}` → `204` : la question et le quiz sont conservés (back, docs/API.md §3.2). */
+export function retirerPage(idPage: number, signal?: AbortSignal): Promise<ResultatModification> {
+  return modifierPage(idPage, { methode: 'DELETE' }, signal)
+}
+
+/**
+ * `PATCH /api/pages/{idPage}` `{numeroPage, ordre}` → `200` pages de la version à jour. `ordre` : rang parmi les
+ * autres pages déjà à cet endroit (`emplacementDeplacement` du domaine).
+ */
+export function deplacerPage(idPage: number, { numeroPage, ordre }: Emplacement, signal?: AbortSignal): Promise<ResultatModification> {
+  return modifierPage(idPage, { methode: 'PATCH', corps: { numeroPage, ordre } }, signal)
+}

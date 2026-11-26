@@ -25,4 +25,10 @@ export const LIBELLES = {
   apercuIndisponible: 'Aperçu indisponible.',
   questionAParametrer: 'Question à paramétrer',
   horsPerimetre: (elements: string) => `Éléments ${elements} : hors périmètre UC3`,
+  // Retrait et déplacement d'une page de quiz : textes fixés par l'équipe (26/11/2026), absents du cahier des charges.
+  retirer: 'Retirer',
+  deplacer: 'Déplacer',
+  actionsPage: 'Actions sur la page de quiz',
+  retraitTitre: 'Retirer cette page de quiz ?',
+  retraitTexte: (titreQuiz: string) => `La question reste enregistrée dans le quiz « ${titreQuiz} ».`,
 }

@@ -1,10 +1,9 @@
-/* Police Rubik (licence SIL OFL), embarquée dans le build : jamais chargée depuis un service externe. */
-/* Un seul fichier variable couvre toutes les graisses (300 à 900). */
-/* TODO(UC9): déposer le fichier Rubik-VariableFont.woff2 dans shared/styles/polices/ (licence OFL jointe).
-   En attendant, le navigateur ne le trouve pas et applique la police de repli de --police (tokens.css). */
+/* Police Rubik (licence SIL OFL 1.1, texte dans polices/OFL.txt), embarquée dans le build : jamais chargée depuis un
+   service externe. Fichier de Google Fonts (github.com/google/fonts, ofl/rubik/Rubik[wght].ttf), renommé sans
+   crochets. Un seul fichier variable couvre toutes les graisses (300 à 900). */
 @font-face {
   font-family: "Rubik";
-  src: url("./polices/Rubik-VariableFont.woff2") format("woff2");
+  src: url("./polices/Rubik-VariableFont_wght.ttf") format("truetype");
   font-weight: 300 900;
   font-style: normal;
   font-display: swap;

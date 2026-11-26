@@ -39,6 +39,8 @@ function apiParDefaut() {
     lireQuizDuCours: vi.fn<ApiEditeurCours['lireQuizDuCours']>(async () => QUIZ),
     lireFichierPdf: vi.fn<ApiEditeurCours['lireFichierPdf']>(async () => new ArrayBuffer(8)),
     insererPageQuiz: vi.fn<ApiEditeurCours['insererPageQuiz']>(async () => ({ resultat: 'REUSSIE', reponse: REPONSE })),
+    retirerPage: vi.fn<ApiEditeurCours['retirerPage']>(async () => ({ resultat: 'REUSSIE', pages: null })),
+    deplacerPage: vi.fn<ApiEditeurCours['deplacerPage']>(async () => ({ resultat: 'REUSSIE', pages: [] })),
   }
 }
 
@@ -73,7 +75,7 @@ beforeEach(() => {
 })
 
 describe('chargement', () => {
-  it('cours, pages, quiz et PDF lus → PRET, page 1 sélectionnée, nombre de pages du PDF ; document fermé au démontage', async () => {
+  it('cours, pages, quiz et PDF lus → PRET, page 1 sélectionnée ; document fermé au démontage', async () => {
     const { api, document, editeur, vue } = monter()
     expect(editeur().etat.nom).toBe('CHARGEMENT')
     await attendrePret(editeur)
@@ -81,6 +83,12 @@ describe('chargement', () => {
     expect(donnees(editeur)).toMatchObject({ nbPages: 12, pages: PAGES, quiz: QUIZ, selection: { genre: 'PAGE_PDF', numeroPage: 1 } })
     vue.unmount()
     expect(document.fermer).toHaveBeenCalledOnce()
+  })
+
+  it('nombre de pages : `nbPages` de la version (validé par le back), pas `numPages` du PDF (D8)', async () => {
+    const { editeur } = monter(fausseApi(), fauxDocumentPdf(13, async () => ''))
+    await attendrePret(editeur)
+    expect(donnees(editeur).nbPages).toBe(12)
   })
 
   it('« Recharger » : relit cours, pages, quiz et PDF, ferme l\'ancien document', async () => {
@@ -204,5 +212,50 @@ describe('parcours dans l\'écran E3', () => {
     expect(api.insererPageQuiz).toHaveBeenCalledOnce()
     expect(screen.getByRole('region', { name: 'Aperçu de la page' })).toHaveTextContent('Question à paramétrer')
     for (const b of screen.getAllByRole('button', { name: /^Insérer un quiz/ })) expect(b).toBeEnabled()
+  })
+})
+
+describe('retrait et déplacement', () => {
+  const choisirPageQuiz = (editeur: () => EditeurCoursConnecte) =>
+    act(() => editeur().onSelectionner({ genre: 'PAGE_INSEREE', idPage: 1, titreQuiz: 'Quiz 1' }))
+
+  it('retrait confirmé : DELETE de la page, pages relues, page du PDF qui précédait sélectionnée', async () => {
+    const { api, editeur } = monter()
+    await attendrePret(editeur)
+    choisirPageQuiz(editeur)
+    act(() => editeur().onDemanderRetrait())
+    api.lirePagesInserees.mockResolvedValueOnce([])
+    act(() => editeur().onConfirmerRetrait())
+    await waitFor(() => expect(donnees(editeur).insertion.nom).toBe('AUCUNE'))
+
+    expect(api.retirerPage).toHaveBeenCalledWith(1, expect.any(AbortSignal))
+    expect(api.lirePagesInserees).toHaveBeenCalledTimes(2) // chargement, puis relecture après le 204
+    expect(donnees(editeur)).toMatchObject({ pages: [], selection: { genre: 'PAGE_PDF', numeroPage: 2 } })
+  })
+
+  it('déplacement vers « après la page 4 » : PATCH (4, 0), pages de la réponse', async () => {
+    const deplacees: PageInseree[] = [{ idPage: 1, numeroPage: 4, ordre: 0, type: 'QUIZ', titreQuiz: 'Quiz 1' }]
+    const api = fausseApi({
+      deplacerPage: vi.fn<ApiEditeurCours['deplacerPage']>(async () => ({ resultat: 'REUSSIE', pages: deplacees })),
+    })
+    const { editeur } = monter(api)
+    await attendrePret(editeur)
+    choisirPageQuiz(editeur)
+    act(() => editeur().onDemanderDeplacement())
+    act(() => editeur().onDeplacerVers({ numeroPage: 4, ordre: 0 }))
+    await waitFor(() => expect(donnees(editeur).insertion.nom).toBe('AUCUNE'))
+
+    expect(api.deplacerPage).toHaveBeenCalledWith(1, { numeroPage: 4, ordre: 0 }, expect.any(AbortSignal))
+    expect(donnees(editeur).pages).toEqual(deplacees)
+  })
+
+  it('espace juste avant ou après la page : aucune requête, sortie du choix', async () => {
+    const { api, editeur } = monter()
+    await attendrePret(editeur)
+    choisirPageQuiz(editeur)
+    act(() => editeur().onDemanderDeplacement())
+    act(() => editeur().onDeplacerVers({ numeroPage: 2, ordre: 1 }))
+    expect(donnees(editeur).insertion.nom).toBe('AUCUNE')
+    expect(api.deplacerPage).not.toHaveBeenCalled()
   })
 })

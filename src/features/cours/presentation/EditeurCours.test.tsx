@@ -40,6 +40,10 @@ function afficher(etat: EtatEditeur) {
     onAnnulerChoix: vi.fn(),
     onConfirmer: vi.fn(),
     onRecharger: vi.fn(),
+    onDemanderRetrait: vi.fn(),
+    onConfirmerRetrait: vi.fn(),
+    onDemanderDeplacement: vi.fn(),
+    onDeplacerVers: vi.fn(),
   }
   const vue = render(<EditeurCours {...props} />)
   return { ...props, vue }
@@ -254,7 +258,7 @@ describe('élément 4 : aperçu', () => {
       idQuestion: 90,
       numeroPage: 3,
       ordre: 0,
-      pages: [{ idPage: 1, numeroPage: 2, ordre: 0, type: 'QUIZ', titreQuiz: 'Quiz 1' }, { idPage: 2, numeroPage: 3, ordre: 0, type: 'QUIZ', titreQuiz: 'Quiz 1' }],
+      pages: [{ idPage: 1, numeroPage: 2, ordre: 0, type: 'QUIZ', titreQuiz: 'Quiz 1' }, { idPage: 2, numeroPage: 3, ordre: 0, type: 'QUIZ', titreQuiz: 'Quiz 3' }],
     }
     afficher(reduireEditeur(envoi(), { type: 'INSERTION_REUSSIE', reponse }))
     const apercu = screen.getByRole('region', { name: 'Aperçu de la page' })
@@ -263,5 +267,53 @@ describe('élément 4 : aperçu', () => {
     expect(apercu).toHaveTextContent('Page 5')
     const miniature = within(liste()).getAllByRole('button', { name: /Page 5/ })[0]
     expect(miniature).toHaveAttribute('aria-current', 'true')
+  })
+})
+
+describe('retrait et déplacement d\'une page de quiz', () => {
+  const SELECTION_QUIZ: ActionEditeur = {
+    type: 'SELECTIONNER',
+    selection: { genre: 'PAGE_INSEREE', idPage: 1, titreQuiz: 'Quiz 1' },
+  }
+  const apercu = () => screen.getByRole('region', { name: 'Aperçu de la page' })
+
+  it('« Retirer » et « Déplacer » sur l\'aperçu d\'une page de quiz seulement', async () => {
+    afficher(pret())
+    expect(within(apercu()).queryByRole('button', { name: 'Retirer' })).toBeNull()
+    const { onDemanderRetrait, onDemanderDeplacement } = afficher(suite(CHARGE, SELECTION_QUIZ))
+    const zone = screen.getAllByRole('region', { name: 'Aperçu de la page' })[1]
+    await userEvent.click(within(zone).getByRole('button', { name: 'Retirer' }))
+    await userEvent.click(within(zone).getByRole('button', { name: 'Déplacer' }))
+    expect(onDemanderRetrait).toHaveBeenCalledOnce()
+    expect(onDemanderDeplacement).toHaveBeenCalledOnce()
+  })
+
+  it('lecture seule : ni « Retirer » ni « Déplacer »', () => {
+    afficher(suite({ ...CHARGE, cours: cours(true) } as ActionEditeur, SELECTION_QUIZ))
+    expect(within(apercu()).queryByRole('button', { name: 'Retirer' })).toBeNull()
+  })
+
+  it('confirmation : textes exacts, « Retirer » → onConfirmerRetrait, « Annuler » → onAnnulerChoix', async () => {
+    const etat = reduireEditeur(suite(CHARGE, SELECTION_QUIZ), { type: 'DEMANDER_RETRAIT' })
+    const { onConfirmerRetrait, onAnnulerChoix } = afficher(etat)
+    const dialogue = screen.getByRole('dialog', { hidden: true })
+    expect(dialogue).toHaveTextContent('Retirer cette page de quiz ?')
+    expect(dialogue).toHaveTextContent('La question reste enregistrée dans le quiz « Quiz 1 ».')
+    await userEvent.click(within(dialogue).getByRole('button', { name: 'Annuler', hidden: true }))
+    await userEvent.click(within(dialogue).getByRole('button', { name: 'Retirer', hidden: true }))
+    expect(onAnnulerChoix).toHaveBeenCalledOnce()
+    expect(onConfirmerRetrait).toHaveBeenCalledOnce()
+  })
+
+  it('déplacement : boutons « Insérer un quiz ici » actifs → onDeplacerVers ; « Annuler » pour sortir', async () => {
+    const etat = reduireEditeur(suite(CHARGE, SELECTION_QUIZ), { type: 'DEMANDER_DEPLACEMENT' })
+    const { onDeplacerVers, onOuvrirChoix, onAnnulerChoix } = afficher(etat)
+    for (const b of boutonsInsertion()) expect(b).toBeEnabled()
+    expect(within(apercu()).getByRole('button', { name: 'Retirer' })).toBeDisabled()
+    await userEvent.click(boutonsInsertion()[4])
+    expect(onDeplacerVers).toHaveBeenCalledWith(EMPLACEMENT)
+    expect(onOuvrirChoix).not.toHaveBeenCalled()
+    await userEvent.click(within(apercu()).getByRole('button', { name: 'Annuler' }))
+    expect(onAnnulerChoix).toHaveBeenCalledOnce()
   })
 })

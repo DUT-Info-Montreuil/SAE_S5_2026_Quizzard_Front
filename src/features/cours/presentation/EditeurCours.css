@@ -172,6 +172,27 @@
   }
 }
 
+/* Ordinateur : l'éditeur tient dans la fenêtre, l'aperçu et le panneau de droite défilent seuls ; la bande des pages
+   reste toujours visible en bas. */
+@media (min-width: 901px) {
+  .editeur-cours {
+    height: 100dvh;
+  }
+
+  .editeur-cours-corps {
+    min-height: 0;
+  }
+
+  .apercu,
+  .editeur-cours-question {
+    overflow-y: auto;
+  }
+
+  .liste-pages {
+    flex: none;
+  }
+}
+
 .apercu {
   display: flex;
   flex-direction: column;
@@ -235,6 +256,14 @@
 .apercu-titre-quiz {
   font-size: var(--taille-reponse);
   overflow-wrap: anywhere;
+}
+
+/* « Déplacer », « Retirer » (page de quiz) et « Annuler » pendant le choix du nouvel emplacement */
+.apercu-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espace-petit);
+  padding-bottom: var(--arete);
 }
 
 /* Rendu d'une page du PDF : largeur du conteneur, hauteur selon la page */

@@ -1,12 +1,14 @@
 // DÉMO de l'écran E3 (plan UC3, B4 et D17), sans back ni PDF : http://localhost:5173/demo/editeur, en développement
 // seulement (route absente du build de production). Faux cours de 12 pages avec une page de quiz en (2, 0) ; les
 // pages sont dessinées sur le canvas (« Diapositive n »). L'état vient du vrai reducer du domaine ; un sélecteur
-// force chaque état (chargement, prêt, insertion, erreurs, lecture seule). L'insertion répond 201 après un délai.
+// force chaque état (chargement, prêt, insertion, retrait, déplacement, erreurs, lecture seule). Le faux back répond
+// après un délai.
 
 import { useReducer, useRef, useState } from 'react'
-import type { Cours, PageInseree, PageQuizInseree, QuizResume } from '../../features/cours/domain/cours.ts'
+import type { Cours, Emplacement, PageInseree, PageQuizInseree, QuizResume } from '../../features/cours/domain/cours.ts'
 import { ETAT_INITIAL, reduireEditeur } from '../../features/cours/domain/machineEditeur.ts'
 import type { ActionEditeur, EtatEditeur } from '../../features/cours/domain/machineEditeur.ts'
+import { emplacementDeplacement } from '../../features/cours/domain/numerotation.ts'
 import { EditeurCours } from '../../features/cours/presentation/EditeurCours.tsx'
 import type { RendrePage } from '../../features/cours/presentation/RenduPdf.tsx'
 
@@ -36,6 +38,28 @@ const refus = (statut: number, code?: string) => reduireEditeur(envoi(), {
   erreur: { statut, code, error: null },
 })
 
+const pageQuizChoisie = (demande: ActionEditeur) => derouler(
+  charge(COURS),
+  { type: 'SELECTIONNER', selection: { genre: 'PAGE_INSEREE', idPage: 1, titreQuiz: 'Quiz 1' } },
+  demande,
+)
+const refusModification = (statut: number, code?: string) => reduireEditeur(
+  reduireEditeur(pageQuizChoisie({ type: 'DEMANDER_RETRAIT' }), { type: 'CONFIRMER_RETRAIT' }),
+  { type: 'MODIFICATION_REFUSEE', erreur: { statut, code, error: code === 'PAGE_INTROUVABLE' ? 'Page introuvable.' : null } },
+)
+
+/** Rangs 0, 1, 2… à chaque endroit, comme le back après un retrait ou un déplacement. */
+function renumeroter(pages: readonly PageInseree[]): PageInseree[] {
+  const rangs = new Map<number, number>()
+  return [...pages]
+    .sort((a, b) => a.numeroPage - b.numeroPage || a.ordre - b.ordre)
+    .map((p) => {
+      const ordre = rangs.get(p.numeroPage) ?? 0
+      rangs.set(p.numeroPage, ordre + 1)
+      return { ...p, ordre }
+    })
+}
+
 const ETATS: Record<string, () => EtatEditeur> = {
   'Chargement': () => ETAT_INITIAL,
   'Prêt': pret,
@@ -55,6 +79,10 @@ const ETATS: Record<string, () => EtatEditeur> = {
     erreur: { statut: 500, error: null, request_id: 'demo-0001' },
   }),
   'Lecture seule (cours archivé)': () => derouler(charge({ ...COURS, archive: true })),
+  'Confirmation de retrait': () => pageQuizChoisie({ type: 'DEMANDER_RETRAIT' }),
+  'Choix du nouvel emplacement': () => pageQuizChoisie({ type: 'DEMANDER_DEPLACEMENT' }),
+  'Retrait : erreur PAGE_INTROUVABLE': () => refusModification(404, 'PAGE_INTROUVABLE'),
+  'Retrait : erreur 500': () => refusModification(500),
 }
 
 /** Fausse page : fond, titre et lignes grisées, couleurs lues dans les variables de la charte. */
@@ -120,6 +148,29 @@ export default function DemoEditeur() {
     window.setTimeout(() => envoyer({ type: 'INSERTION_REUSSIE', reponse }), DELAI_MS)
   }
 
+  function confirmerRetrait() {
+    if (etat.nom !== 'PRET' || etat.insertion.nom !== 'CONFIRMATION_RETRAIT') return
+    const { idPage } = etat.insertion.page
+    envoyer({ type: 'CONFIRMER_RETRAIT' })
+    const s = serveur.current
+    s.pages = renumeroter(s.pages.filter((p) => p.idPage !== idPage))
+    window.setTimeout(() => envoyer({ type: 'RETRAIT_REUSSI', pages: s.pages }), DELAI_MS)
+  }
+
+  function deplacerVers(emplacementChoisi: Emplacement) {
+    if (etat.nom !== 'PRET' || etat.insertion.nom !== 'CHOIX_DEPLACEMENT') return
+    const { page } = etat.insertion
+    const emplacement = emplacementDeplacement(page, emplacementChoisi, etat.pages)
+    if (emplacement === null) return envoyer({ type: 'ANNULER_CHOIX' })
+    envoyer({ type: 'DEPLACER', emplacement })
+    const s = serveur.current
+    const { numeroPage, ordre } = emplacement
+    const autres = renumeroter(s.pages.filter((p) => p.idPage !== page.idPage))
+      .map((p) => p.numeroPage === numeroPage && p.ordre >= ordre ? { ...p, ordre: p.ordre + 1 } : p)
+    s.pages = renumeroter([...autres, { ...page, numeroPage, ordre }])
+    window.setTimeout(() => envoyer({ type: 'DEPLACEMENT_REUSSI', pages: s.pages }), DELAI_MS)
+  }
+
   function recharger() {
     envoyer({ type: 'RECHARGER' })
     window.setTimeout(() => envoyer(charge(COURS, serveur.current.pages, serveur.current.quiz)), DELAI_MS)
@@ -147,6 +198,10 @@ export default function DemoEditeur() {
         onAnnulerChoix={() => envoyer({ type: 'ANNULER_CHOIX' })}
         onConfirmer={confirmer}
         onRecharger={recharger}
+        onDemanderRetrait={() => envoyer({ type: 'DEMANDER_RETRAIT' })}
+        onConfirmerRetrait={confirmerRetrait}
+        onDemanderDeplacement={() => envoyer({ type: 'DEMANDER_DEPLACEMENT' })}
+        onDeplacerVers={deplacerVers}
       />
     </>
   )
