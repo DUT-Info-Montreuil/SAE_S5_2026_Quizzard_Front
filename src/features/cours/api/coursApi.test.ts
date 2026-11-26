@@ -34,7 +34,7 @@ function dernierAppel(faux: ReturnType<typeof fauxFetch>) {
   }
 }
 
-const PAGES = [{ idPage: 7, numeroPage: 2, ordre: 0, type: 'QUIZ' }, { idPage: 8, numeroPage: 4, ordre: 0, type: 'CLASSEMENT' }]
+const PAGES = [{ idPage: 7, numeroPage: 2, ordre: 0, type: 'QUIZ', titreQuiz: 'Quiz 1' }, { idPage: 8, numeroPage: 4, ordre: 0, type: 'CLASSEMENT', titreQuiz: null }]
 
 const REPONSE_201 = {
   idPage: 9,
@@ -44,18 +44,21 @@ const REPONSE_201 = {
   idQuestion: 21,
   numeroPage: 4,
   ordre: 1,
-  pages: [...PAGES, { idPage: 9, numeroPage: 4, ordre: 1, type: 'QUIZ' }],
+  pages: [...PAGES, { idPage: 9, numeroPage: 4, ordre: 1, type: 'QUIZ', titreQuiz: 'Quiz 1' }],
 }
 
 beforeEach(() => oublierJetonCsrf())
 
 describe('lireCours', () => {
-  it('garde la dernière version (numero le plus grand)', async () => {
+  it('lit la réponse du back (dernière version à plat, archive absent = non archivé)', async () => {
     const faux = fauxFetch(() => json({
       idCours: 1,
       titre: 'Algorithmique',
-      archive: false,
-      versions: [{ idVersion: 10, numero: 1, nbPages: 8 }, { idVersion: 12, numero: 3, nbPages: 12 }, { idVersion: 11, numero: 2, nbPages: 10 }],
+      idVersion: 12,
+      numeroVersion: 3,
+      nbPages: 12,
+      nbQuiz: 0,
+      dateModification: '2026-11-25T10:00:00',
     }))
     await expect(lireCours(1)).resolves.toEqual({
       idCours: 1,
@@ -66,10 +69,15 @@ describe('lireCours', () => {
     expect(dernierAppel(faux)).toMatchObject({ chemin: '/api/cours/1', methode: 'GET', credentials: 'include' })
   })
 
+  it('archive vrai → cours archivé', async () => {
+    fauxFetch(() => json({ idCours: 1, titre: 'A', idVersion: 1, numeroVersion: 1, nbPages: 1, archive: true }))
+    await expect(lireCours(1)).resolves.toMatchObject({ archive: true })
+  })
+
   it.each([
-    ['sans version', { idCours: 1, titre: 'A', archive: false, versions: [] }],
-    ['archive absent', { idCours: 1, titre: 'A', versions: [{ idVersion: 1, numero: 1, nbPages: 1 }] }],
-    ['version mal formée', { idCours: 1, titre: 'A', archive: false, versions: [{ idVersion: '1', numero: 1, nbPages: 1 }] }],
+    ['sans version', { idCours: 1, titre: 'A', nbPages: 1 }],
+    ['archive mal formé', { idCours: 1, titre: 'A', idVersion: 1, numeroVersion: 1, nbPages: 1, archive: 'non' }],
+    ['version mal formée', { idCours: 1, titre: 'A', idVersion: '1', numeroVersion: 1, nbPages: 1 }],
     ['pas un objet', [1, 2]],
   ])('%s → Error', async (_cas, corps) => {
     fauxFetch(() => json(corps))
@@ -94,15 +102,20 @@ describe('lirePagesInserees, lireQuizDuCours', () => {
     await expect(lirePagesInserees(1, 12)).rejects.toThrow('Réponse mal formée')
   })
 
-  it('quiz : autres champs ignorés', async () => {
-    const faux = fauxFetch(() => json([{ idQuiz: 3, titre: 'Quiz 1', nbQuestions: 4 }]))
-    await expect(lireQuizDuCours(1)).resolves.toEqual([{ idQuiz: 3, titre: 'Quiz 1' }])
-    expect(dernierAppel(faux).chemin).toBe('/api/cours/1/quiz')
+  it('quiz : déduits des pages de la version, sans doublon ni page de classement', async () => {
+    const faux = fauxFetch(() => json([
+      { idPage: 7, numeroPage: 2, ordre: 0, type: 'QUIZ', idQuestion: 20, idQuiz: 3, titreQuiz: 'Quiz 1' },
+      { idPage: 8, numeroPage: 4, ordre: 0, type: 'QUIZ', idQuestion: 21, idQuiz: 3, titreQuiz: 'Quiz 1' },
+      { idPage: 9, numeroPage: 5, ordre: 0, type: 'CLASSEMENT', idQuestion: null, idQuiz: null, titreQuiz: null },
+      { idPage: 10, numeroPage: 6, ordre: 0, type: 'QUIZ', idQuestion: 22, idQuiz: 4, titreQuiz: 'Quiz 2' },
+    ]))
+    await expect(lireQuizDuCours(1, 12)).resolves.toEqual([{ idQuiz: 3, titre: 'Quiz 1' }, { idQuiz: 4, titre: 'Quiz 2' }])
+    expect(dernierAppel(faux).chemin).toBe('/api/cours/1/versions/12/pages')
   })
 
   it('quiz : titre absent → Error', async () => {
-    fauxFetch(() => json([{ idQuiz: 3 }]))
-    await expect(lireQuizDuCours(1)).rejects.toThrow('Réponse mal formée')
+    fauxFetch(() => json([{ idPage: 7, numeroPage: 2, ordre: 0, type: 'QUIZ', idQuiz: 3 }]))
+    await expect(lireQuizDuCours(1, 12)).rejects.toThrow('Réponse mal formée')
   })
 })
 

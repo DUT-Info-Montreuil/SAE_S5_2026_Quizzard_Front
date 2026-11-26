@@ -125,7 +125,7 @@ En développement seulement, `/demo/question` affiche E8/E9 et `/demo/editeur` a
 |---|---|---|---|
 | `/connexion` | E1 Connexion | Public | Page vide provisoire (UC1 à venir) ; paramètre `retour` : écran à rouvrir après la connexion |
 | `/cours` | E2 Mes cours | Enseignant | Page d'accueil de l'enseignant |
-| `/cours/:idCours/editeur` | E3 Éditeur cours + quiz | Enseignant | **En place** (UC3, éléments 1 à 4). Ouvre la dernière version ; sélection de page dans l'état ; hook `useEditeurCours` ; identifiant non entier → « Cours introuvable. » |
+| `/cours/:idCours/editeur` | E3 Éditeur cours + quiz | Enseignant | **En place** (UC3, éléments 1 à 4). Ouvre la dernière version ; sélection de page dans l'état ; hook `useEditeurCours` ; identifiant non entier → « Cours introuvable. » ; routes de lecture livrées par le back (cours, pages avec titre du quiz, PDF) |
 | `/classements` | E4 Classements | Enseignant | |
 | `/seances/:idSession` | E5 Quiz en cours, E6 Classement | Enseignant | Présentation projetée : pages du cours, page de quiz (E5), page de classement (E6) |
 | `/rejoindre/:codeAcces` | E7 Rejoindre | Public | Cible du lien et du QR code ; page vide provisoire en attendant UC8 |
@@ -243,8 +243,8 @@ Retenu par l'étude de faisabilité (licence Apache 2.0), **installé** : `pdfjs
 texte brut d'une page, fermeture). Les types de PDF.js ne sortent pas de ce fichier. Il n'est importé que par la
 route de l'éditeur (`lazy`) et par un `import()` dynamique du hook `useEditeurCours` : absent du bundle étudiant.
 
-- Le PDF n'est jamais servi en accès direct : PDF.js le charge par la route protégée
-  `GET /api/cours/{idCours}/versions/{idVersion}/fichier`, avec le cookie de session (enseignant) ou l'en-tête
+- Le PDF n'est jamais servi en accès direct : PDF.js le charge par la route protégée (**faite** côté back ;
+  `404` `FICHIER_INTROUVABLE` si le fichier a été supprimé) `GET /api/cours/{idCours}/versions/{idVersion}/fichier`, avec le cookie de session (enseignant) ou l'en-tête
   `X-Jeton-Participant` (étudiant, si le mode d'affichage l'exige).
 - **Tout est embarqué** : le worker de PDF.js est importé par `?url` (Vite le copie dans `dist/assets`) et servi
   par l'application ; aucune adresse de CDN. Ressources annexes (polices standard, tables de caractères) **pas encore

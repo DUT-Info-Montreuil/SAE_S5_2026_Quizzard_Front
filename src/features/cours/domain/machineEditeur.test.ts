@@ -15,7 +15,7 @@ const CHARGE: ActionEditeur = {
   type: 'CHARGE',
   cours: cours(),
   nbPages: 12,
-  pages: [{ idPage: 1, numeroPage: 2, ordre: 0, type: 'QUIZ' }],
+  pages: [{ idPage: 1, numeroPage: 2, ordre: 0, type: 'QUIZ', titreQuiz: 'Quiz 1' }],
   quiz: [{ idQuiz: 40, titre: 'Quiz 1' }, { idQuiz: 41, titre: 'Quiz 2' }],
 }
 
@@ -30,8 +30,8 @@ const REPONSE: PageQuizInseree = {
   numeroPage: 4,
   ordre: 0,
   pages: [
-    { idPage: 1, numeroPage: 2, ordre: 0, type: 'QUIZ' },
-    { idPage: 2, numeroPage: 4, ordre: 0, type: 'QUIZ' },
+    { idPage: 1, numeroPage: 2, ordre: 0, type: 'QUIZ', titreQuiz: 'Quiz 1' },
+    { idPage: 2, numeroPage: 4, ordre: 0, type: 'QUIZ', titreQuiz: 'Quiz 1' },
   ],
 }
 
@@ -53,7 +53,7 @@ describe('chargement', () => {
     expect(etat.insertion).toEqual({ nom: 'AUCUNE' })
     expect(etat.erreur).toBeNull()
     expect(etat.bloquee).toBe(false)
-    expect(etat.pages).toEqual([{ idPage: 1, numeroPage: 2, ordre: 0, type: 'QUIZ' }])
+    expect(etat.pages).toEqual([{ idPage: 1, numeroPage: 2, ordre: 0, type: 'QUIZ', titreQuiz: 'Quiz 1' }])
   })
 
   it('cours archivé : LECTURE_SEULE, aucune insertion possible', () => {
@@ -194,7 +194,7 @@ describe('insertion', () => {
   })
 
   it('ENVOI ──panne réseau, pages relues──▶ liste remplacée par les pages relues', () => {
-    const pages = [{ idPage: 77, numeroPage: 4, ordre: 0, type: 'QUIZ' as const }]
+    const pages = [{ idPage: 77, numeroPage: 4, ordre: 0, type: 'QUIZ' as const, titreQuiz: 'Quiz 1' }]
     const etat = enPret(reduireEditeur(envoi(), { type: 'ECHEC_RESEAU_INSERTION', pages }))
     expect(etat.pages).toBe(pages)
     expect(etat.erreur).toMatchObject({ action: 'RECHARGER' })

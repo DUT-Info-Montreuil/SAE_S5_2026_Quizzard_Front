@@ -11,7 +11,7 @@ import { useEditeurCours } from './useEditeurCours.ts'
 import type { ApiEditeurCours, EditeurCoursConnecte } from './useEditeurCours.ts'
 
 const COURS: Cours = { idCours: 7, titre: 'Réseaux', archive: false, version: { idVersion: 3, numero: 2, nbPages: 12 } }
-const PAGES: PageInseree[] = [{ idPage: 1, numeroPage: 2, ordre: 0, type: 'QUIZ' }]
+const PAGES: PageInseree[] = [{ idPage: 1, numeroPage: 2, ordre: 0, type: 'QUIZ', titreQuiz: 'Quiz 1' }]
 const QUIZ = [{ idQuiz: 40, titre: 'Quiz 1' }]
 const EMPLACEMENT = { numeroPage: 4, ordre: 0 }
 
@@ -23,7 +23,7 @@ const REPONSE: PageQuizInseree = {
   idQuestion: 90,
   numeroPage: 4,
   ordre: 0,
-  pages: [...PAGES, { idPage: 2, numeroPage: 4, ordre: 0, type: 'QUIZ' }],
+  pages: [...PAGES, { idPage: 2, numeroPage: 4, ordre: 0, type: 'QUIZ', titreQuiz: 'Quiz 2' }],
 }
 
 function fausseApi(surcharge: Partial<FausseApi> = {}): FausseApi {
@@ -107,7 +107,6 @@ describe('insertion', () => {
     expect(etat.pages).toEqual(REPONSE.pages)
     expect(etat.selection).toEqual({ genre: 'PAGE_INSEREE', idPage: 2, titreQuiz: 'Quiz 2' })
     expect(etat.quiz).toEqual([...QUIZ, { idQuiz: 42, titre: 'Quiz 2' }])
-    expect(editeur().titresQuiz.get(2)).toBe('Quiz 2')
   })
 
   it('201 sans quizCree : liste des quiz inchangée', async () => {

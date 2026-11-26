@@ -15,12 +15,6 @@ import type { RendrePage } from './RenduPdf.tsx'
 interface Props {
   etat: EtatEditeur
   rendrePage: RendrePage
-  /**
-   * Titre du quiz de chaque page de quiz connue, par `idPage`.
-   * TODO(UC3): la liste des pages du back ne donne pas le quiz d'une page (plan UC3, Q5). Valeur provisoire : titres
-   * fournis par l'appelant (pages insérées dans l'éditeur) ; sans titre, la page affiche seulement « Page de quiz ».
-   */
-  titresQuiz?: ReadonlyMap<number, string>
   onSelectionner(selection: Selection): void
   onOuvrirChoix(emplacement: Emplacement): void
   onAnnulerChoix(): void
@@ -29,14 +23,12 @@ interface Props {
   onRecharger(): void
 }
 
-const AUCUN_TITRE: ReadonlyMap<number, string> = new Map()
-
 /**
  * Écran E3 « Éditeur cours + quiz », périmètre UC3 (éléments 1 à 4) : composant de présentation, l'état vient du
  * reducer du domaine (`reduireEditeur`) et chaque action remonte par une prop. Éléments 5 à 18 : emplacement vide.
  */
 export function EditeurCours(props: Props) {
-  const { etat, rendrePage, titresQuiz = AUCUN_TITRE } = props
+  const { etat, rendrePage } = props
   // Bouton « Insérer un quiz ici » cliqué : il reprend le focus quand l'insertion se termine (annulée, réussie ou
   // refusée), une fois les boutons réactivés ; pendant l'envoi il est désactivé et ne peut pas le recevoir.
   const [boutonOuvrant, setBoutonOuvrant] = useState<HTMLElement | null>(null)
@@ -77,7 +69,6 @@ export function EditeurCours(props: Props) {
         nbPages={etat.nbPages}
         pages={etat.pages}
         selection={etat.selection}
-        titresQuiz={titresQuiz}
         rendrePage={rendrePage}
         insertionAffichee={pret !== null}
         insertionDesactivee={!insertionPossible(etat)}
