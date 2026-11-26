@@ -58,10 +58,14 @@ Autres commandes :
 
 ## 3. Tests et vérifications
 
-Aucun outil de test n'est encore installé : le choix (tests unitaires, tests de composants, tests de bout en bout)
-est à faire par l'équipe et à reporter ici, dans `package.json` (script `test`) et dans [CLAUDE.md](CLAUDE.md).
+Tests unitaires et de composants : Vitest (environnement `jsdom`) et React Testing Library, fichiers `*.test.ts(x)`
+à côté du code testé. Aucun test de bout en bout pour l'instant.
 
-En attendant, avant d'ouvrir une pull request :
+Avant d'ouvrir une pull request :
+
+```bash
+npm test
+```
 
 ```bash
 npm run lint
@@ -71,10 +75,10 @@ npm run lint
 npm run build
 ```
 
-Les deux commandes doivent passer sans erreur. Vérifier aussi à la main le parcours modifié, sur ordinateur et sur
+Les trois commandes doivent passer sans erreur. Vérifier aussi à la main le parcours modifié, sur ordinateur et sur
 smartphone (ou dans le mode appareil mobile du navigateur) pour les écrans étudiants E7 à E9.
 
-Attendu dès qu'un outil de test sera en place :
+Attendu :
 
 - tests unitaires de la logique pure (`domain/`) : décompte synchronisé sur le serveur, validation d'une question,
   traitement des erreurs de l'API ;

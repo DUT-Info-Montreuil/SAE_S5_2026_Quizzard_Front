@@ -1,0 +1,57 @@
+N°
+Élément
+Type et contenu
+Règles et comportement
+1
+Titre et version
+Texte
+Lecture seule
+2
+Pages du cours
+Miniatures des pages du cours et des pages de quiz
+Les pages de quiz sont distinguées par la couleur et par une icône ; cliquer sélectionne la page et l'affiche en 4
+3
+Insérer un quiz ici
+Bouton entre deux pages
+Crée une page de quiz (une question) à cet emplacement (UC3)
+4
+Aperçu de la page
+Rendu de la page sélectionnée
+Lecture seule
+5
+Type de question
+Liste : QCM, Points à relier, Réponse libre
+Obligatoire (UC4) ; modifie la zone 7
+6
+Énoncé
+Zone de texte
+Obligatoire
+7
+Réponses
+QCM : propositions et cases « bonne réponse » ; points à relier : paires ; réponse libre : réponses acceptées
+QCM : 2 propositions et 1 bonne réponse au moins ; relier : 2 paires au moins
+8
+Durée maximale
+Valeur en secondes
+Bornes à fixer (par exemple 10 s à 10 min) (UC5)
+9
+Réappliquer les quiz
+Bouton
+Visible après l'import d'une nouvelle version ; propose un aperçu avant validation (UC6)
+10
+Enregistrer
+Bouton
+Alerte en cas de modifications non enregistrées
+
+Charte graphique
+
+Le client n'impose pas de charte graphique : seul le logo officiel de l'IUT est demandé (« Points à clarifier », point 17). Les choix ci-dessous sont une proposition de l'équipe, illustrée par les maquettes des figures 28 à 40.
+Couleurs : rouge de l'IUT (#F5403D) pour le logo et les pages de quiz, rouge plus foncé (#DD2E2B) pour le bouton d'action principale (texte blanc), violet (#6C4DF0) pour la structure et les actions secondaires, vert d'eau (#0E9F8E) pour les validations et la bonne réponse, ambre (#FFB020) pour les alertes et les classements, fond lavande très clair (#F4F2FB) et texte bleu nuit (#231F3A) ;
+Réponses : quatre couleurs pour les réponses A à D (rose #E8478C, violet #6C4DF0, vert d'eau #0E9F8E, orange #E58A00) ; la lettre de la réponse est toujours affichée, la couleur ne porte jamais seule le sens ;
+Forme : coins arrondis, cartes blanches à fine bordure, boutons à arête basse qui s'enfoncent à l'appui ;
+Police : Rubik (licence libre SIL OFL), fournie avec l'application et non chargée depuis un service externe, avec repli sur la police sans empattement du système ;
+Logo : logo officiel de l'IUT en en-tête de toutes les pages publiques de l'application ;
+Écran projeté : texte d'au moins 24 px (28 px et plus pour les réponses), fort contraste (au moins 4,5 : 1 pour le texte courant), lisible depuis le fond de la salle ;
+Smartphone : touches de réponse d'au moins 44 px de haut (environ 62 px dans les maquettes), une seule action principale par écran ;
+Couleur et sens : vert et rouge pour les évolutions du classement, toujours doublés d'un symbole ;
+Animations : montée et descente du podium en moins d'une seconde, réduites pour les utilisateurs qui le demandent.

@@ -1,0 +1,524 @@
+/* Écran E3 « Éditeur cours + quiz » (Figure 30 du dossier ; maquette docs/maquettes/Capture d'écran 2026-11-26
+   102631.png et « Charte Editeur »). En-tête, colonne centrale (barre du quiz, aperçu), panneau de droite sur fond
+   lavande, bande des pages en bas.
+   Variables de tokens.css uniquement. Pensé pour un ordinateur ; sous 900 px, le panneau de droite passe sous
+   l'aperçu et la bande des pages défile horizontalement.
+   Contrastes vérifiés : texte des pages de quiz (mélange action/texte) sur fond rouge clair 6:1 ; « + » et version
+   violets sur blanc 5,3:1 ; bordures rouge IUT et orange foncé sur blanc ≥ 3:1 (éléments graphiques). */
+
+body:has(.editeur-cours) {
+  margin: 0;
+  background: var(--couleur-fond);
+}
+
+/* Sélecteur d'état de la démo /demo/editeur (développement seulement) */
+.demo-barre {
+  position: fixed;
+  z-index: 1;
+  right: var(--espace-petit);
+  bottom: var(--espace-petit);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espace);
+  max-width: calc(100% - 2 * var(--espace));
+  padding: var(--espace-petit) var(--espace);
+  border: var(--bordure);
+  border-radius: var(--rayon);
+  background: var(--couleur-carte);
+  box-shadow: 0 var(--arete) var(--espace) color-mix(in srgb, var(--couleur-texte) 15%, transparent);
+  color: var(--couleur-texte);
+  font-family: var(--police);
+  font-size: 0.875rem;
+}
+
+.editeur-cours {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  /* Tout l'éditeur tient dans l'écran (maquette) : la colonne centrale et le panneau défilent seuls. */
+  height: 100dvh;
+  background: var(--couleur-fond);
+  color: var(--couleur-texte);
+  font-family: var(--police);
+  font-size: var(--taille-texte);
+}
+
+.editeur-cours *,
+.editeur-cours *::before,
+.editeur-cours *::after {
+  box-sizing: border-box;
+}
+
+.editeur-cours-attente {
+  height: auto;
+  min-height: 100dvh;
+  justify-content: center;
+  align-items: center;
+}
+
+.editeur-cours :focus-visible {
+  outline: 3px solid var(--couleur-structure);
+  outline-offset: 2px;
+}
+
+.editeur-cours .visuellement-cache {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Boutons : arête basse qui s'enfonce à l'appui (charte §2) */
+.editeur-cours .bouton-action,
+.editeur-cours .bouton-secondaire {
+  min-height: var(--hauteur-touche-min);
+  padding: 0 var(--espace);
+  border-radius: var(--rayon);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform var(--duree-animation), box-shadow var(--duree-animation);
+}
+
+.editeur-cours .bouton-action {
+  border: 0;
+  background: var(--couleur-action);
+  color: var(--couleur-action-texte);
+  box-shadow: 0 var(--arete) 0 color-mix(in srgb, var(--couleur-action) 60%, var(--couleur-texte));
+}
+
+.editeur-cours .bouton-secondaire {
+  border: var(--bordure);
+  background: var(--couleur-carte);
+  color: var(--couleur-texte);
+  box-shadow: 0 var(--arete) 0 color-mix(in srgb, var(--couleur-structure) 15%, var(--couleur-carte));
+}
+
+.editeur-cours .bouton-secondaire {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espace-petit);
+}
+
+.editeur-cours .bouton-action:active:not(:disabled),
+.editeur-cours .bouton-secondaire:active:not(:disabled) {
+  transform: translateY(var(--arete));
+  box-shadow: none;
+}
+
+.editeur-cours .bouton-secondaire:disabled {
+  color: color-mix(in srgb, var(--couleur-texte) 60%, var(--couleur-fond));
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.editeur-cours .bouton-petit {
+  min-height: 32px;
+  padding: 0 12px;
+  font-size: 0.875rem;
+}
+
+/* Élément 9 : nombre de quiz à réappliquer */
+.pastille-nombre {
+  min-width: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--couleur-iut) 14%, var(--couleur-carte));
+  color: color-mix(in srgb, var(--couleur-action) 75%, var(--couleur-texte));
+  font-size: 0.8125rem;
+  text-align: center;
+}
+
+/* Emplacements des éléments hors périmètre UC3 */
+.hors-perimetre {
+  display: grid;
+  place-items: center;
+  padding: var(--espace);
+  border: 2px dashed color-mix(in srgb, var(--couleur-texte) 25%, var(--couleur-fond));
+  border-radius: var(--rayon);
+  color: color-mix(in srgb, var(--couleur-texte) 75%, var(--couleur-fond));
+  text-align: center;
+}
+
+/* Élément 1 : titre et version */
+.entete-editeur {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px var(--espace);
+  padding: 12px calc(var(--espace) * 1.5);
+}
+
+.entete-editeur-titre {
+  margin: 0;
+  font-size: var(--taille-reponse);
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.entete-editeur-version {
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--couleur-structure) 10%, var(--couleur-carte));
+  color: var(--couleur-structure);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.entete-editeur-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--espace-petit);
+  margin-left: auto;
+}
+
+.entete-editeur-actions.hors-perimetre {
+  padding: var(--espace-petit) var(--espace);
+}
+
+/* Bandeaux */
+.bandeau-erreur,
+.bandeau-lecture-seule {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espace);
+  margin: 0;
+  padding: 12px var(--espace);
+  margin: 0 calc(var(--espace) * 1.5) var(--espace-petit);
+  border-radius: var(--rayon);
+  font-weight: 600;
+}
+
+.bandeau-erreur {
+  border-left: var(--arete) solid var(--couleur-action);
+  background: color-mix(in srgb, var(--couleur-action) 10%, var(--couleur-carte));
+}
+
+.bandeau-erreur-message {
+  flex: 1;
+  margin: 0;
+}
+
+.bandeau-erreur-requete {
+  font-weight: 400;
+}
+
+.bandeau-lecture-seule {
+  border-left: var(--arete) solid var(--couleur-alerte);
+  background: color-mix(in srgb, var(--couleur-alerte) 22%, var(--couleur-carte));
+}
+
+.statut-insertion {
+  margin: 0 calc(var(--espace) * 1.5);
+  font-weight: 600;
+}
+
+.statut-insertion:empty {
+  display: none;
+}
+
+/* Corps : aperçu (élément 4) et emplacement des éléments 5 à 18 */
+.editeur-cours-corps {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) calc(var(--espace) * 20);
+  min-height: 0;
+  border-top: var(--bordure);
+}
+
+.editeur-cours-centre {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  min-height: 0;
+  padding: var(--espace) calc(var(--espace) * 1.5);
+  overflow-y: auto;
+}
+
+.editeur-cours-panneau {
+  min-height: 0;
+  overflow-y: auto;
+  padding: 12px;
+  border-left: var(--bordure);
+  background: color-mix(in srgb, var(--couleur-structure) 5%, var(--couleur-fond));
+}
+
+.editeur-cours-question {
+  margin: var(--espace);
+}
+
+@media (max-width: 900px) {
+  .editeur-cours {
+    height: auto;
+    min-height: 100dvh;
+  }
+
+  .editeur-cours-corps {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .editeur-cours-panneau {
+    border-top: var(--bordure);
+    border-left: 0;
+  }
+}
+
+.apercu {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espace-petit);
+  min-width: 0;
+}
+
+.apercu-position {
+  margin: 0;
+  font-weight: 700;
+}
+
+.apercu-carte {
+  /* Largeur bornée : sur un grand écran, une page entière reste visible sans défilement. */
+  max-width: calc(var(--espace) * 60);
+  padding: var(--espace);
+  border: var(--bordure);
+  border-radius: calc(var(--rayon) * 2);
+  background: var(--couleur-carte);
+}
+
+.apercu-encadre {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espace-petit);
+  padding: calc(var(--espace) * 2);
+  border: 2px solid;
+  border-radius: var(--rayon);
+}
+
+.apercu-encadre p {
+  margin: 0;
+}
+
+.apercu-encadre-quiz {
+  border-color: var(--couleur-iut);
+  background: color-mix(in srgb, var(--couleur-iut) 12%, var(--couleur-carte));
+}
+
+.apercu-encadre-classement {
+  border-color: color-mix(in srgb, var(--couleur-alerte) 60%, var(--couleur-texte));
+  background: color-mix(in srgb, var(--couleur-alerte) 22%, var(--couleur-carte));
+}
+
+.apercu-type {
+  display: flex;
+  align-items: center;
+  gap: var(--espace-petit);
+  font-weight: 700;
+}
+
+.apercu-encadre-quiz .apercu-type {
+  color: color-mix(in srgb, var(--couleur-action) 70%, var(--couleur-texte));
+}
+
+.apercu-question {
+  font-size: var(--taille-enonce);
+  font-weight: 800;
+}
+
+.apercu-titre-quiz {
+  font-size: var(--taille-reponse);
+  overflow-wrap: anywhere;
+}
+
+/* Rendu d'une page du PDF : largeur du conteneur, hauteur selon la page */
+.rendu-pdf {
+  width: 100%;
+}
+
+.rendu-pdf-canvas {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.rendu-pdf-echec {
+  margin: 0;
+}
+
+/* Éléments 2 et 3 : bande des pages et boutons « Insérer un quiz ici » */
+.liste-pages {
+  display: flex;
+  align-items: center;
+  gap: var(--espace-petit);
+  padding: 12px calc(var(--espace) * 1.5);
+  border-top: var(--bordure);
+  background: color-mix(in srgb, var(--couleur-structure) 8%, var(--couleur-fond));
+  overflow-x: auto;
+}
+
+.liste-pages-elements {
+  display: flex;
+  align-items: center;
+  gap: var(--espace-petit);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.liste-pages-element {
+  display: flex;
+  align-items: center;
+  gap: var(--espace-petit);
+}
+
+.miniature {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--espace-petit);
+  width: calc(var(--espace) * 7);
+  min-height: calc(var(--espace) * 4.5);
+  font-size: 0.8125rem;
+  padding: var(--espace-petit);
+  border: var(--bordure);
+  border-radius: var(--rayon);
+  background: var(--couleur-carte);
+  color: var(--couleur-texte);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.miniature[aria-current="true"] {
+  outline: var(--arete) solid var(--couleur-structure);
+  outline-offset: 0;
+}
+
+.miniature:hover {
+  box-shadow: 0 var(--arete) 0 color-mix(in srgb, var(--couleur-structure) 15%, var(--couleur-carte));
+}
+
+.miniature-quiz {
+  border: 2px solid var(--couleur-iut);
+  background: color-mix(in srgb, var(--couleur-iut) 12%, var(--couleur-carte));
+  color: color-mix(in srgb, var(--couleur-action) 70%, var(--couleur-texte));
+}
+
+.miniature-classement {
+  border: 2px solid color-mix(in srgb, var(--couleur-alerte) 60%, var(--couleur-texte));
+  background: color-mix(in srgb, var(--couleur-alerte) 22%, var(--couleur-carte));
+}
+
+.miniature-type {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.miniature-titre {
+  overflow: hidden;
+  font-size: 0.75rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.miniature-position {
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.icone-page {
+  flex: none;
+}
+
+/* Petit « + » en pointillés de la maquette : l'éditeur est pensé pour la souris (docs/DESIGN.md §2.3). */
+.bouton-inserer {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 2px dashed var(--couleur-structure);
+  border-radius: 50%;
+  background: var(--couleur-carte);
+  color: var(--couleur-structure);
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.bouton-inserer:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--couleur-structure) 10%, var(--couleur-carte));
+}
+
+.bouton-inserer:disabled {
+  border-color: color-mix(in srgb, var(--couleur-texte) 30%, var(--couleur-fond));
+  color: color-mix(in srgb, var(--couleur-texte) 60%, var(--couleur-fond));
+  cursor: not-allowed;
+}
+
+/* Dialogue de choix du quiz */
+.dialogue-quiz {
+  width: min(100% - 2 * var(--espace), calc(var(--espace) * 28));
+  padding: calc(var(--espace) * 1.5);
+  border: var(--bordure);
+  border-radius: calc(var(--rayon) * 2);
+  background: var(--couleur-carte);
+  color: var(--couleur-texte);
+}
+
+.dialogue-quiz::backdrop {
+  background: color-mix(in srgb, var(--couleur-texte) 40%, transparent);
+}
+
+.dialogue-quiz-titre {
+  margin: 0 0 var(--espace);
+  font-size: var(--taille-reponse);
+}
+
+.dialogue-quiz-choix {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espace-petit);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.dialogue-quiz-option {
+  display: flex;
+  align-items: center;
+  gap: var(--espace-petit);
+  min-height: var(--hauteur-touche-min);
+  padding: 0 var(--espace-petit);
+  border: var(--bordure);
+  border-radius: var(--rayon);
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.dialogue-quiz-option:has(input:checked) {
+  border-color: var(--couleur-structure);
+  background: color-mix(in srgb, var(--couleur-structure) 10%, var(--couleur-carte));
+}
+
+.dialogue-quiz-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--espace-petit);
+  margin-top: var(--espace);
+  padding-bottom: var(--arete);
+}

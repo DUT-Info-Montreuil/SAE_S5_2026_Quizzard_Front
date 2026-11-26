@@ -156,6 +156,24 @@ Onze écrans : six pour l'enseignant, deux projetés en salle, trois pour l'étu
 
 ### E3 – Éditeur cours + quiz (enseignant, ordinateur) · UC3, UC4, UC5, UC6, UC13, UC14
 
+En place pour l'UC3 (éléments 1 à 4) sur `/cours/:idCours/editeur` : `EditeurCours` (présentation) branché par le
+hook `useEditeurCours`. Aperçu et zone des éléments 5 à 18 côte à côte, bande des pages en bas (Figure 30). Un `401`
+mène à `/connexion` ; « Recharger » relit cours, pages, quiz et PDF. Démo sans back : `/demo/editeur` (développement).
+
+Maquette : `docs/maquettes/Capture d'écran 2026-11-26 102631.png` (éléments 1 à 18) et règles de la « Charte Editeur »
+(`docs/maquettes/Charte Editeur+ cours`). Mise en page : en-tête (titre, version, puis 9 « Réappliquer les quiz de la
+vN », 10 « Enregistrer », 11 « Lancer »), colonne centrale (barre de la page de quiz : emplacement, 14 « Mode »
+Non noté / Noté, 17 « Cours en séance » Mon écran / Aussi sur téléphones ; aperçu de la question avec 18 « Image de la
+question »), panneau de droite sur fond lavande (5 type QCM / Relier / Libre, 6 énoncé, 7 réponses ; 12 « Barème » et 8
+durées ; 15 « Après la question » Manuel / Auto et 16 écrans intermédiaires), bande des pages en bas (« Quiz 1 ·
+QCM • 30 s », « Classement · cumulé »). L'éditeur tient dans l'écran ; la colonne centrale et le panneau défilent.
+Les éléments 5 à 10 et 12 à 18 sont des composants de la feature `quiz` (`PanneauQuestion`, `ApercuQuestion`,
+`BarreQuiz`, `BoutonEnregistrer`) et `BoutonReappliquer` (`cours`), assemblés dans `app` ; ils ne sont branchés
+que dans la démo (état local, aucune route du back) en attendant UC4, UC5, UC6, UC13 et UC14. Sur la route réelle,
+seul l'élément 11 est branché. Libellés absents de la maquette : marqués « provisoire » dans
+`quiz/presentation/libellesQuiz.ts`. Écart avec la maquette : la bande numérote les pages par position dans le cours
+(formule de l'UC3), la maquette par numéro de page du PDF **(à trancher)**.
+
 - Titre et version (lecture seule).
 - Colonne des pages : miniatures des pages du PDF et des pages de quiz, distinguées par la couleur **et** une icône ;
   bouton « Insérer un quiz ici » entre deux pages ; un clic affiche la page dans l'aperçu.
@@ -170,7 +188,10 @@ Onze écrans : six pour l'enseignant, deux projetés en salle, trois pour l'étu
 - « Réappliquer les quiz » visible après l'import d'une nouvelle version : aperçu des positions proposées, ajustement,
   validation (UC6).
 - « Enregistrer » avec alerte en cas de modifications non enregistrées ; « Lancer la présentation » désactivé si une
-  question est incomplète (avec l'alerte correspondante).
+  question est incomplète (avec l'alerte correspondante). **En place (UC7)** : bouton dans l'en-tête, liste « Quiz à
+  lancer » si le cours a plusieurs quiz (quiz de la page sélectionnée proposé) ; erreurs affichées sans quitter
+  l'éditeur. Tant que l'UC4 n'est pas là, l'éditeur ne sait pas si une question est incomplète : le `422` du back
+  fait foi.
 - Suppression d'un quiz : confirmation demandée.
 
 ### E4 – Classements (enseignant, ordinateur) · UC10, UC11
@@ -182,6 +203,13 @@ Onze écrans : six pour l'enseignant, deux projetés en salle, trois pour l'étu
   de classement animée.
 
 ### E5 – Quiz en cours (écran projeté) · UC7, UC9, UC14
+
+En place pour l'UC7 sur `/seances/:idSession` : `EcranQuizEnCours` branché par le hook `useSeanceEnDirect`. Aucune
+maquette E5 dans le dépôt : mise en page d'après ce paragraphe et le §2.1. Avant la première question, QR code et
+lien en grand avec « Démarrer » ; pendant une question, décompte (`Decompte` de l'UC9), énoncé, histogramme et accès en
+colonne ; en bas « Clore », « Suivant » (« Terminer » après la dernière question) et « Clore le quiz » (avec
+confirmation). Libellés absents de la spec : `seance/presentation/libellesAnimation.ts` **(à valider)**. Écrans
+intermédiaires (UC14) et image de la question (UC4) à venir.
 
 - Énoncé en grand, dès l'ouverture de la question ; propositions avec leur lettre.
 - QR code (image générée par le back) et lien d'accès ; invalides après la clôture.
@@ -212,6 +240,10 @@ Onze écrans : six pour l'enseignant, deux projetés en salle, trois pour l'étu
 
 ### E8 – Question (étudiant) · UC8, UC9
 
+Route `/rejoindre/:codeAcces/question`, partagée avec E9 (composant `seance/presentation/PageQuestion.tsx`) ;
+sans jeton de participant, retour à E7. Écran de chargement (libellé provisoire « Chargement… ») tant que l'état
+n'est pas relu par REST. Démo sans back en développement : `/demo/question`.
+
 - Barre et décompte du temps restant, synchronisés sur le serveur ; « Valider » désactivé à 0.
 - Énoncé en lecture seule.
 - Zone de réponse selon le type : QCM, boutons avec lettre et couleur ; points à relier, deux colonnes ; réponse
@@ -224,7 +256,8 @@ Onze écrans : six pour l'enseignant, deux projetés en salle, trois pour l'étu
 - Confirmation après la validation ou à l'expiration du temps.
 - Points de la question et score total.
 - Rang sur le nombre de participants, avec l'évolution ; l'étudiant ne voit que son propre rang.
-- Message d'attente ; retour automatique sur E8 à la question suivante.
+- Message d'attente ; retour automatique sur E8, saisie remise à zéro, à la question suivante.
+- Session expirée : le bouton « Rejoindre » ramène à E7 (`/rejoindre/:codeAcces`), le jeton étant supprimé.
 
 ### E10 – Résultats de la séance (enseignant, ordinateur) · UC17, UC18
 
@@ -285,5 +318,5 @@ un état vide (« Aucun cours pour l'instant », etc.).
 
 ### Tests
 
-Outil **à choisir**. Attendu ensuite : tests unitaires de `domain`, tests de composants des écrans (états chargement,
+Vitest et React Testing Library (`npm test`), fichiers `*.test.ts(x)` à côté du code testé. Attendu : tests unitaires de `domain`, tests de composants des écrans (états chargement,
 erreur, vide, nominal), noms de tests en français qui décrivent le comportement.

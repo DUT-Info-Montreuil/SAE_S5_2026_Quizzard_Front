@@ -47,12 +47,12 @@ Contraintes du cahier des charges qui pèsent sur le front :
 | TypeScript | En place | 6.0, mode `bundler`, `noUnusedLocals`, `noUnusedParameters`, `verbatimModuleSyntax` |
 | Vite | En place | 8, extension `@vitejs/plugin-react` ; serveur de développement sur le port 5173 |
 | ESLint | En place | 10, `typescript-eslint`, `eslint-plugin-react-hooks`, `eslint-plugin-react-refresh` |
-| Routeur | **À choisir** | Aucun installé (§4) |
+| Routeur | En place | `react-router` 7, mode données (`createBrowserRouter`) dans `app/main.tsx` (§4) |
 | Gestion de l'état | Rien d'installé | Proposition : outils de React seuls, bibliothèque seulement si le besoin apparaît (§5) |
 | Client HTTP | Rien d'installé | Proposition : `fetch` du navigateur, enveloppé dans `shared/http` (§6) |
-| Client STOMP | **À choisir** | Aucun installé (§7) |
-| PDF.js | **Retenu, pas installé** | Choix de l'étude de faisabilité (§8) |
-| Tests | **À choisir** | Aucun outil installé |
+| Client STOMP | En place | `@stomp/stompjs` 7, WebSocket natif, sans SockJS (§7) |
+| PDF.js | En place | `pdfjs-dist` 6, dans `shared/pdf` ; chargé seulement par la route de l'éditeur (§8) |
+| Tests | En place | Vitest (`jsdom`), React Testing Library, `user-event`, `jest-dom` ; `npm test` |
 | Image Docker du front | **À écrire** | Serveur de fichiers statiques à choisir (§11) |
 
 ## 3. Organisation du code
@@ -63,7 +63,7 @@ feature suit les mêmes couches. L'arborescence ci-dessous est celle du dépôt 
 ```text
 src/
 ├── app/
-│   └── main.tsx            Point d'entrée ; à venir : routeur, fournisseurs de contexte, mise en page commune
+│   └── main.tsx            Point d'entrée et routes ; à venir : fournisseurs de contexte, mise en page commune
 ├── features/
 │   ├── compte/             E1 : connexion et déconnexion de l'enseignant, profil connecté
 │   ├── cours/              E2, E3 (pages) : liste des cours, import, versions, pages insérées, aperçu PDF
@@ -76,6 +76,7 @@ src/
     ├── config/             Lecture de la configuration (import.meta.env)
     ├── http/               Client HTTP commun : session, CSRF, jeton de participant, erreurs
     ├── lib/                Utilitaires sans lien avec une feature (dates, heure du serveur…)
+    ├── styles/             Variables de la charte (tokens.css, seul fichier avec des couleurs en dur), police Rubik
     └── ui/                 Composants communs de la charte (bouton, carte, champ, en-tête avec logo…)
 ```
 
@@ -113,27 +114,34 @@ flowchart LR
 
 ## 4. Routage des écrans E1 à E11
 
-Le routeur n'est pas encore choisi. Les chemins ci-dessous sont une **proposition** de l'équipe, à confirmer au
-premier ticket qui installe le routeur ; une fois fixés, ils sont reportés ici et dans [DESIGN.md](DESIGN.md).
+Routeur : `react-router` 7, routes déclarées dans `src/app/main.tsx`. Routes en place : E7 (page vide provisoire,
+`app/RejoindreProvisoire.tsx`) et E8/E9 (`app/RouteQuestion.tsx`) pour l'UC9 ; E3 (`app/RouteEditeur.tsx`, chargée
+en `lazy`) et E1 (page vide provisoire `app/ConnexionProvisoire.tsx`, `TODO(UC1)`) pour l'UC3. Les autres chemins
+restent une **proposition**, fixée au ticket de l'écran. Toute autre URL affiche encore le modèle Vite.
+En développement seulement, `/demo/question` affiche E8/E9 et `/demo/editeur` affiche E3 sans back (fausses API,
+`app/demo/`) ; ces routes sont absentes du build de production.
 
 | Chemin proposé | Écran | Accès | Remarque |
 |---|---|---|---|
-| `/connexion` | E1 Connexion | Public | Redirige vers `/cours` si déjà connecté |
+| `/connexion` | E1 Connexion | Public | Page vide provisoire (UC1 à venir) ; paramètre `retour` : écran à rouvrir après la connexion |
 | `/cours` | E2 Mes cours | Enseignant | Page d'accueil de l'enseignant |
-| `/cours/:idCours` | E3 Éditeur cours + quiz | Enseignant | Ouvre la dernière version ; sélection de page dans l'URL ou l'état, à choisir |
+| `/cours/:idCours/editeur` | E3 Éditeur cours + quiz | Enseignant | **En place** (UC3, éléments 1 à 4). Ouvre la dernière version ; sélection de page dans l'état ; hook `useEditeurCours` ; identifiant non entier → « Cours introuvable. » |
 | `/classements` | E4 Classements | Enseignant | |
-| `/seances/:idSession` | E5 Quiz en cours, E6 Classement | Enseignant | Présentation projetée : pages du cours, page de quiz (E5), page de classement (E6) |
-| `/rejoindre/:codeAcces` | E7 Rejoindre | Public | Cible du lien et du QR code |
-| `/rejoindre/:codeAcces/question` | E8 Question, E9 Résultat | Étudiant (jeton) | E8 et E9 alternent selon les messages temps réel (E9-4) |
+| `/seances/:idSession` | E5 Quiz en cours, E6 Classement | Enseignant | **E5 en place** (UC7), en `lazy` : ouvert par « Lancer la présentation » (E3, élément 11), état relu par `GET /api/sessions/{idSession}` (un rechargement reprend la séance) ; hook `useSeanceEnDirect`. E6 et pages du cours à venir (UC11, UC14) |
+| `/rejoindre/:codeAcces` | E7 Rejoindre | Public | Cible du lien et du QR code ; page vide provisoire en attendant UC8 |
+| `/rejoindre/:codeAcces/question` | E8 Question, E9 Résultat | Étudiant (jeton) | **En place** (UC9). E8 et E9 alternent selon les messages temps réel (E9-4) ; hook `useRepondreQuestion` |
 | `/cours/:idCours/resultats` | E10 Résultats de la séance | Enseignant | Liste des séances du cours, détail de la séance choisie |
 | `/seances/:idSession/questions/:idQuestion/correction` | E11 Correction | Enseignant | Ouvert depuis E10 |
 
 Règles :
 
 - **Garde enseignant** : au chargement d'un écran enseignant, le front appelle `GET /api/auth/moi` ; un `401`
-  renvoie vers `/connexion`, puis vers l'écran demandé après la connexion.
+  renvoie vers `/connexion`, puis vers l'écran demandé après la connexion. En attendant l'UC1, chaque écran gère le
+  `401` de ses propres requêtes : l'éditeur E3 passe à l'état `CONNEXION` et redirige vers
+  `/connexion?retour=/cours/{idCours}/editeur`.
 - **Garde étudiant** : sans jeton de participant pour ce `codeAcces`, `/rejoindre/:codeAcces/question` renvoie vers
-  E7.
+  E7 (`app/RouteQuestion.tsx`). Le jeton est supprimé quand la session expire (`JETON_INVALIDE`) ou que la séance est
+  close ; le bouton « Rejoindre » de E9 ramène alors à E7.
 - **Lien de séance** : le back renvoie `lien` au lancement (`POST /api/quiz/{idQuiz}/sessions`). Ce lien doit pointer
   vers la route de E7 : le format est à aligner avec l'équipe back.
 - **Liens profonds** : le serveur de fichiers statiques doit renvoyer `index.html` pour tout chemin qui n'est pas un
@@ -149,8 +157,8 @@ Proposition, sans bibliothèque tant que le besoin ne se présente pas :
 |---|---|---|
 | Données du serveur (cours, quiz, classements, résultats) | Hook de la couche `application` de la feature | Chargement à l'ouverture de l'écran, rechargement après une action ; états chargement, erreur, vide |
 | Enseignant connecté | Contexte React fourni dans `app` | Rempli par `GET /api/auth/moi`, vidé à la déconnexion ou sur un `401` |
-| Participant (jeton, pseudonyme) | Feature `seance` | Conservé par `codeAcces` pour survivre à un rechargement de la page ; emplacement proposé : `sessionStorage` (à valider) |
-| Séance en direct (question, échéance, répartition, classement) | Feature `seance` | Réducteur (`useReducer`) alimenté par les messages STOMP et par les resynchronisations REST |
+| Participant (jeton, pseudonyme) | Feature `seance` | Conservé par `codeAcces` pour survivre à un rechargement de la page : `sessionStorage`, clé `quizzard.jeton.<codeAcces>` (`seance/application/jetonParticipant.ts`, provisoire, à valider) |
+| Séance en direct (question, échéance, répartition, classement) | Feature `seance` | Réducteur (`useReducer`) alimenté par les messages STOMP et par les resynchronisations REST ; côté étudiant, assemblé par `useRepondreQuestion` (envoi REST, temps réel, décompte) |
 | Formulaire de l'éditeur (E3) | Composant de l'écran | Alerte en cas de modifications non enregistrées (E3-10) |
 
 Si un cache partagé entre écrans ou une invalidation fine devient nécessaire, le choix d'une bibliothèque se fait
@@ -162,11 +170,14 @@ Un seul client, dans `src/shared/http`, construit sur `fetch`. Toutes les featur
 
 - **Adresse** : `VITE_API_URL` (§10) + chemin du back (`/api/...`, `/api/public/...`).
 - **Cookies** : `credentials: "include"` sur toutes les requêtes, pour la session de l'enseignant.
-- **CSRF** : sur `POST`, `PUT`, `PATCH`, `DELETE`, en-tête `X-XSRF-TOKEN` avec le jeton obtenu par
-  `GET /api/auth/csrf` (détail dans [API.md](API.md)).
+- **CSRF** (`shared/http/csrf.ts`) : sur `POST`, `PUT`, `PATCH`, `DELETE` hors `/api/public/**`, en-tête
+  `X-XSRF-TOKEN` avec le jeton obtenu par `GET /api/auth/csrf` au premier besoin et gardé en mémoire. Route absente
+  ou en échec (`SECURITE_OUVERTE`) : envoi sans en-tête. Sur un `403`, nouveau jeton puis **un seul** rejeu. Rien
+  pour `/api/public/**` (détail dans [API.md](API.md)).
 - **Étudiant** : en-tête `X-Jeton-Participant` sur les routes `/api/public/**` qui l'exigent.
 - **JSON** par défaut ; `multipart/form-data` pour l'import d'un PDF (ne pas fixer `Content-Type`, le navigateur ajoute
-  la frontière) ; réponse binaire pour le PDF, le QR code et l'export CSV.
+  la frontière) ; réponse binaire (`requeteBinaire`, `ArrayBuffer`, mêmes erreurs typées que `requete`) pour le PDF,
+  le QR code et l'export CSV.
 - **Erreurs** : toute réponse non 2xx est convertie en une erreur typée qui garde `status`, `error`, `request_id` et,
   pour un `422`, `champs`. Les écrans affichent `error` et, pour un incident, le `request_id` à transmettre à
   l'équipe. Comportement par statut : [API.md](API.md).
@@ -178,14 +189,23 @@ Un seul client, dans `src/shared/http`, construit sur `fetch`. Toutes les featur
 
 Le serveur **pousse** l'état de la séance ; le front **n'envoie aucune commande par STOMP** (commandes en REST).
 
-- Connexion : `/ws` sur la même origine que l'API (`wss://` en production), protocole STOMP. La bibliothèque cliente
-  est **à choisir** ; critères : WebSocket natif, reconnexion automatique, battements de cœur (heartbeats),
-  en-têtes personnalisés dans la trame `CONNECT`, taille raisonnable du bundle.
+- Connexion : `/ws` sur la même origine que l'API (`wss://` en production), protocole STOMP. Bibliothèque :
+  `@stomp/stompjs`, en WebSocket natif (pas de SockJS). Adresse `urlWs` de `shared/config`, déduite de
+  `VITE_API_URL`.
+- Code : interface `ClientTempsReel` (`connecter`, `sAbonner`, `deconnecter`) dans `shared/tempsReel`, avec
+  `creerClientStomp` (réel) et `creerClientFactice` (rejoue un scénario, pour les tests et les démos). Pour
+  l'étudiant : destinations dans `seance/api/destinationsSeance.ts` (seul endroit), conversion des messages en
+  actions du reducer dans `seance/api/messagesSeance.ts` (message mal formé ignoré), cycle de connexion dans le hook
+  `seance/application/useTempsReelSeance.ts`, utilisé par `useRepondreQuestion`, qui reçoit le client par injection
+  (`creerClient`). Démo sans back : `http://localhost:5173/demo/question` (développement seulement).
 - Authentification : cookie de session pour l'enseignant ; en-tête STOMP `X-Jeton-Participant` dans la trame
   `CONNECT` pour l'étudiant.
 - Abonnements par écran (destinations du back, [API.md](API.md)) :
-  - E5 (enseignant) : `etat`, `question`, `connectes`, `repartition`, `correction`, `ecran`, `classement` sous
-    `/topic/sessions/{codeAcces}/` ;
+  - E5 (enseignant, en place, UC7) : `etat`, `question`, `connectes`, `repartition`, `correction` sous
+    `/topic/sessions/{codeAcces}/` (`seance/api/destinationsAnimation.ts`, seul endroit ; conversion dans
+    `seance/api/lecturesAnimation.ts` ; cycle dans `seance/application/useSeanceEnDirect.ts`, client injectable
+    `creerClient`). Aucun en-tête : l'enseignant est reconnu par son cookie. À venir : `ecran` (UC14), `classement`
+    (UC11) ;
   - E8, E9 (étudiant) : `etat`, `question`, `correction` sous `/topic/sessions/{codeAcces}/`, et
     `/user/queue/resultat`.
 - Un seul client STOMP par onglet, ouvert à l'entrée dans la séance et fermé à la sortie ou à la clôture.
@@ -194,15 +214,24 @@ Le serveur **pousse** l'état de la séance ; le front **n'envoie aucune command
 
 Le broker du back est en mémoire et ne rejoue pas les messages manqués. Après une coupure :
 
-1. le client STOMP retente la connexion avec un délai croissant et borné ;
+1. le client STOMP retente la connexion avec un délai croissant et borné (1 s, doublé à chaque échec, 30 s au
+   plus) ; un jeton refusé (`JETON_INVALIDE`) ou la clôture de la séance arrête le client, sans reconnexion ;
 2. une fois reconnecté, il se réabonne aux mêmes destinations ;
-3. le front **resynchronise l'état par REST** : `POST /api/public/sessions/{codeAcces}/reconnexion` pour l'étudiant
-   (état courant et score), `GET /api/sessions/{idSession}` pour l'enseignant ;
-4. pendant la coupure, un bandeau indique la perte de connexion ; une réponse déjà confirmée reste affichée comme
-   confirmée.
+3. le front **resynchronise l'état par REST** : `GET /api/public/sessions/{codeAcces}/etat` (forme provisoire,
+   plan UC9 question B7) ou `POST /api/public/sessions/{codeAcces}/reconnexion` pour l'étudiant (état courant et
+   score), `GET /api/sessions/{idSession}` pour l'enseignant ;
+4. pendant la coupure, un bandeau indique la perte de connexion ; à la reconnexion, l'écran est gardé puis corrigé par
+   l'état relu : une réponse confirmée reste confirmée, un résultat affiché reste affiché, un envoi en cours attend sa
+   réponse HTTP.
 
-Un rechargement de la page suit le même chemin : le jeton de participant conservé (§5) permet d'appeler
-`reconnexion`.
+Un rechargement de la page suit le même chemin : le jeton de participant conservé (§5) permet de relire l'état
+(`GET .../etat` pour l'instant) ; l'écran reste en chargement jusque-là, puis affiche E8 ou E9.
+
+Renvoi d'une réponse après une panne réseau (plan UC9, D14, précisé le 23/11/2026) : **un seul** renvoi automatique
+du même corps, tout de suite si STOMP est resté connecté, sinon à la reconnexion. `DEJA_REPONDU` au renvoi mène à
+« Réponse enregistrée ». Si le renvoi échoue aussi, ou s'il n'a plus le temps de partir, l'écran repasse par le
+chargement et relit l'état : tout de suite si STOMP est connecté, sinon à la reconnexion. Un résultat reçu entre-temps
+s'affiche.
 
 ### Décompte
 
@@ -212,13 +241,17 @@ mesuré au §6). Le bouton Valider se désactive à 0 (E8-1), mais c'est le serv
 
 ## 8. Rendu du PDF avec PDF.js
 
-Retenu par l'étude de faisabilité (licence Apache 2.0), **pas encore installé**.
+Retenu par l'étude de faisabilité (licence Apache 2.0), **installé** : `pdfjs-dist` 6, enveloppé dans
+`src/shared/pdf/documentPdf.ts` (ouverture depuis un `ArrayBuffer`, rendu d'une page dans un `<canvas>` annulable,
+texte brut d'une page, fermeture). Les types de PDF.js ne sortent pas de ce fichier. Il n'est importé que par la
+route de l'éditeur (`lazy`) et par un `import()` dynamique du hook `useEditeurCours` : absent du bundle étudiant.
 
 - Le PDF n'est jamais servi en accès direct : PDF.js le charge par la route protégée
   `GET /api/cours/{idCours}/versions/{idVersion}/fichier`, avec le cookie de session (enseignant) ou l'en-tête
   `X-Jeton-Participant` (étudiant, si le mode d'affichage l'exige).
-- **Tout est embarqué** : le worker de PDF.js et ses ressources annexes (polices standard, tables de caractères)
-  sont copiés dans le build et servis par l'application ; aucune adresse de CDN.
+- **Tout est embarqué** : le worker de PDF.js est importé par `?url` (Vite le copie dans `dist/assets`) et servi
+  par l'application ; aucune adresse de CDN. Ressources annexes (polices standard, tables de caractères) **pas encore
+  copiées** (question U6 du plan UC3) : un PDF à polices non embarquées peut mal s'afficher.
 - Usages :
   - E3 : miniatures des pages du cours et aperçu de la page sélectionnée ;
   - présentation projetée (`/seances/:idSession`) : page courante en grand, pages de quiz (E5) et de classement (E6)
@@ -227,7 +260,9 @@ Retenu par l'étude de faisabilité (licence Apache 2.0), **pas encore installé
     (**point ouvert** du cahier des charges, §2.7 point 8).
 - Les pages de quiz et de classement ne sont pas dans le PDF : ce sont des composants React placés entre deux pages,
   à partir de `GET /api/cours/{idCours}/versions/{idVersion}/pages`.
-- Performance : rendu des miniatures à la demande (pages visibles seulement), une instance du document par écran.
+- Performance : rendu des miniatures à la demande (pages proches de l'écran seulement, `IntersectionObserver` ; canvas
+  retiré et vidé quand la miniature s'en éloigne), données de chaque page libérées après rendu (`page.cleanup()`
+  dans `shared/pdf`), une instance du document par écran, fermée au rechargement et quand on quitte l'écran (E3 : `useEditeurCours`).
 - Solution de repli en séance (cahier des charges §4.8) : le PDF d'origine reste téléchargeable et projetable sans
   quiz.
 
@@ -283,7 +318,7 @@ Vite lit `.env` (non commité) ; seules les variables préfixées par `VITE_` so
 | F2 | Découpage par feature, mêmes noms que le back ; couches `api`, `application`, `domain`, `presentation` | En place (dossiers) |
 | F3 | Commandes en REST, diffusion en STOMP, resynchronisation REST après reconnexion | Retenu (aligné sur le back) |
 | F4 | Décompte calé sur l'échéance et l'heure du serveur | Retenu |
-| F5 | PDF.js embarqué, PDF chargé par route protégée | Retenu, à installer |
-| F6 | Routeur, client STOMP, outil de test | À choisir |
+| F5 | PDF.js embarqué, PDF chargé par route protégée | En place (`pdfjs-dist`, `shared/pdf`, E3) ; ressources annexes à copier (U6) |
+| F6 | Routeur, client STOMP, outil de test | Retenu et installé : React Router (`react-router`), `@stomp/stompjs`, Vitest + RTL |
 | F7 | Chemins des écrans (§4) et format du `lien` de séance | Proposition, à confirmer avec le back |
 | F8 | Mode d'affichage du cours sur les appareils étudiants | Point ouvert du cahier des charges, à redemander au client |

@@ -1,0 +1,208 @@
+/* Écran E8 « Question » (maquette docs/maquettes/E7.png, téléphone de gauche). Variables de tokens.css uniquement. */
+
+/* Bandeau d'arrivée en cours de route */
+.bandeau-arrivee {
+  margin: 0;
+  padding: 12px var(--espace);
+  border-radius: var(--rayon);
+  background: color-mix(in srgb, var(--couleur-alerte) 22%, var(--couleur-carte));
+  font-weight: 600;
+}
+
+/* E8-2 énoncé */
+.ecran-question-enonce {
+  margin: 0;
+  font-size: var(--taille-enonce);
+  font-weight: 800;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+/* E8-5 image, réduite à la largeur de l'écran */
+.ecran-question-image {
+  margin: 0;
+  padding: var(--espace-petit);
+  border-radius: var(--rayon);
+  background: color-mix(in srgb, var(--couleur-structure) 10%, var(--couleur-carte));
+}
+
+.ecran-question-image img {
+  display: block;
+  max-width: 100%;
+  max-height: 40dvh;
+  height: auto;
+  margin: 0 auto;
+  border-radius: var(--espace-petit);
+  object-fit: contain;
+}
+
+/* E8-3 cartes de réponse : blanches, fine bordure, arête basse qui s'enfonce à l'appui */
+.zone-qcm {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.carte-reponse {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: var(--hauteur-touche-reponse);
+  padding: var(--espace-petit) 12px;
+  border: var(--bordure);
+  border-radius: var(--rayon);
+  background: var(--couleur-carte);
+  color: var(--couleur-texte);
+  font: inherit;
+  font-size: var(--taille-reponse);
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 var(--arete) 0 color-mix(in srgb, var(--couleur-structure) 15%, var(--couleur-carte));
+  transition: transform var(--duree-animation), box-shadow var(--duree-animation);
+}
+
+.carte-reponse:active:not(:disabled, :has(input:disabled)) {
+  transform: translateY(var(--arete));
+  box-shadow: none;
+}
+
+.carte-reponse[data-coche="true"] {
+  border: 2px solid var(--couleur-structure);
+  background: color-mix(in srgb, var(--couleur-structure) 8%, var(--couleur-carte));
+  box-shadow: 0 var(--arete) 0 var(--couleur-structure);
+}
+
+.carte-reponse:has(input:focus-visible),
+.carte-reponse:focus-visible {
+  outline: 3px solid var(--couleur-structure);
+  outline-offset: 2px;
+}
+
+.carte-reponse:disabled,
+.carte-reponse:has(input:disabled) {
+  cursor: default;
+}
+
+.carte-reponse-libelle {
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+
+.carte-reponse-lettre {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  color: var(--couleur-carte);
+  font-size: var(--taille-reponse);
+  font-weight: 800;
+}
+
+/* Blanc sur A, B, C : grand texte gras (contraste ≥ 3:1) ; texte foncé sur D (blanc à 2,6:1 seulement). */
+.lettre-0 { background: var(--couleur-reponse-a); }
+.lettre-1 { background: var(--couleur-reponse-b); }
+.lettre-2 { background: var(--couleur-reponse-c); }
+.lettre-3 { background: var(--couleur-reponse-d); color: var(--couleur-texte); }
+
+/* Rond en choix unique, carré en choix multiple */
+.indicateur {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 2px solid color-mix(in srgb, var(--couleur-texte) 40%, var(--couleur-carte));
+  border-radius: 50%;
+  color: var(--couleur-carte);
+  font-size: 1rem;
+}
+
+.indicateur-case {
+  border-radius: 6px;
+}
+
+.carte-reponse[data-coche="true"] .indicateur {
+  border-color: var(--couleur-structure);
+  background: var(--couleur-structure);
+}
+
+/* Points à relier : deux colonnes, utilisables à 360 px */
+.zone-relier-consigne {
+  margin: 0 0 var(--espace-petit);
+}
+
+.zone-relier-colonnes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--espace-petit);
+}
+
+.zone-relier-colonne {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.carte-relier {
+  height: 100%;
+  gap: var(--espace-petit);
+  padding: var(--espace-petit);
+  font-size: var(--taille-texte);
+}
+
+.carte-relier .carte-reponse-lettre {
+  width: 32px;
+  height: 32px;
+  font-size: var(--taille-texte);
+}
+
+.carte-relier:disabled:not([data-coche="true"]) {
+  color: color-mix(in srgb, var(--couleur-texte) 75%, var(--couleur-carte));
+}
+
+/* Réponse libre */
+.zone-libre {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espace-petit);
+}
+
+.zone-libre-libelle {
+  font-weight: 600;
+}
+
+.zone-libre-texte {
+  width: 100%;
+  padding: 12px;
+  border: var(--bordure);
+  border-radius: var(--rayon);
+  background: var(--couleur-carte);
+  color: var(--couleur-texte);
+  font: inherit;
+  resize: vertical;
+}
+
+.zone-libre-texte:focus-visible {
+  outline: 3px solid var(--couleur-structure);
+  outline-offset: 2px;
+}
+
+.zone-libre-compteur {
+  margin: 0;
+  align-self: flex-end;
+  color: color-mix(in srgb, var(--couleur-texte) 75%, var(--couleur-fond));
+  font-variant-numeric: tabular-nums;
+}

@@ -77,8 +77,9 @@ Les messages `error` sont en français et sans donnée personnelle : ils s'affic
   de l'application et par la garde des écrans enseignant.
 - **Déconnexion** : `POST /api/auth/deconnexion` → `204`, puis retour à E1.
 - **CSRF** : le front obtient le jeton par `GET /api/auth/csrf` et le renvoie dans l'en-tête `X-XSRF-TOKEN` sur toute
-  requête `POST`, `PUT`, `PATCH`, `DELETE`. Le jeton est demandé au démarrage et de nouveau après une connexion ou une
-  déconnexion. La forme exacte du corps de la réponse de `/api/auth/csrf` est à préciser dans la documentation du back.
+  requête `POST`, `PUT`, `PATCH`, `DELETE` hors `/api/public/**`. En place (`shared/http/csrf.ts`) : jeton demandé au
+  premier besoin et gardé en mémoire ; route en échec → envoi sans en-tête ; `403` → nouveau jeton et un seul rejeu.
+  À venir avec l'UC1 : nouveau jeton après une connexion ou une déconnexion. La forme exacte du corps de la réponse de `/api/auth/csrf` est à préciser dans la documentation du back.
 - **Développement** : tant que la connexion n'existe pas, le back tourne avec `SECURITE_OUVERTE=true` (routes ouvertes,
   CSRF coupé) ; le front doit fonctionner dans les deux cas.
 
@@ -106,24 +107,25 @@ sont celles du back.
 |---|---|
 | E1 Connexion | `GET /api/auth/csrf`, `POST /api/auth/connexion`, `GET /api/auth/moi` |
 | E2 Mes cours | `GET /api/cours`, `POST /api/cours` (import), `POST /api/cours/{idCours}/versions`, `PATCH /api/cours/{idCours}`, `POST /api/auth/deconnexion` |
-| E3 Éditeur | `GET /api/cours/{idCours}`, `GET .../versions/{idVersion}/fichier` (PDF.js), `GET` / `POST .../versions/{idVersion}/pages`, `PATCH` / `DELETE /api/pages/{idPage}`, `POST .../pages/validation` (UC6), `GET` / `POST /api/cours/{idCours}/quiz`, `GET` / `PATCH` / `DELETE /api/quiz/{idQuiz}`, `POST /api/quiz/{idQuiz}/questions`, `PUT` / `DELETE /api/questions/{idQuestion}`, `POST /api/questions/{idQuestion}/motifs/test`, `PUT` / `DELETE /api/questions/{idQuestion}/image`, `POST /api/quiz/{idQuiz}/sessions` (lancer) |
+| E3 Éditeur | **En place (UC3)** : `GET /api/cours/{idCours}` (back UC2), `GET .../versions/{idVersion}/pages` (dont les quiz du cours sont déduits, faute de `GET /api/cours/{idCours}/quiz`), `GET .../versions/{idVersion}/fichier` (back UC3), `POST /api/cours/{idCours}/pages-quiz` (insertion d'une page de quiz, avec CSRF ; panne réseau → relecture des pages, jamais de renvoi). **À venir** : `GET /api/cours/{idCours}`, `GET .../versions/{idVersion}/fichier` (PDF.js), `GET` / `POST .../versions/{idVersion}/pages`, `PATCH` / `DELETE /api/pages/{idPage}`, `POST .../pages/validation` (UC6), `GET` / `POST /api/cours/{idCours}/quiz`, `GET` / `PATCH` / `DELETE /api/quiz/{idQuiz}`, `POST /api/quiz/{idQuiz}/questions`, `PUT` / `DELETE /api/questions/{idQuestion}`, `POST /api/questions/{idQuestion}/motifs/test`, `PUT` / `DELETE /api/questions/{idQuestion}/image`. **En place (UC7, élément 11)** : `POST /api/quiz/{idQuiz}/sessions` (lancer, corps `{autoriserIdentiteNonVerifiee}`, avec CSRF), `GET /api/sessions/ouverte` et `POST /api/sessions/{idSession}/cloture` (409 `SESSION_DEJA_OUVERTE` : reprendre ou terminer) |
 | E4 Classements | `GET` / `POST /api/classements`, `GET` / `PUT` / `DELETE /api/classements/{idClassement}`, `POST .../versions/{idVersion}/pages` (intégrer au cours) |
-| E5 Quiz en cours | `GET /api/sessions/{idSession}`, `GET /api/sessions/{idSession}/qrcode`, `POST .../question-suivante`, `POST .../cloture-question`, `POST .../cloture`, `POST .../identites-non-verifiees` |
+| E5 Quiz en cours | **En place (UC7)** : `GET /api/sessions/{idSession}` (ouverture, reprise après rechargement, après chaque reconnexion STOMP, toutes les 2 s sans STOMP), `POST .../questions/suivante`, `POST .../questions/courante/cloture`, `POST .../cloture` (chaque commande renvoie l'état à jour). QR code et lien : champs `qrCode` et `lienAcces` de l'état, pas de route séparée. **À venir** : `POST .../identites-non-verifiees` (UC15) |
 | E6 Classement | `GET /api/sessions/{idSession}/classement` ; pour une page de classement cumulé : `GET /api/classements/{idClassement}` |
 | E7 Rejoindre | `GET /api/public/sessions/{codeAcces}`, `POST .../participants`, `POST .../participants/ldap` |
-| E8 Question | `GET /api/public/sessions/{codeAcces}/etat`, `POST .../reponses`, `POST .../reconnexion` |
+| E8 Question | `GET /api/public/sessions/{codeAcces}/etat` (au chargement, après chaque reconnexion STOMP et après l'échec du renvoi), `POST .../reponses` (un seul renvoi automatique après une panne réseau), `POST .../reconnexion` (pas encore appelé : forme inconnue) |
 | E9 Résultat | Message `/user/queue/resultat` ; `GET /api/public/sessions/{codeAcces}/etat` après une reconnexion |
 | E10 Résultats | `GET /api/cours/{idCours}/sessions`, `GET /api/sessions/{idSession}/resultats`, `GET /api/sessions/{idSession}/export.csv` |
 | E11 Correction | `GET .../questions/{idQuestion}/reponses-libres`, `PUT .../corrections`, `POST .../motifs`, `POST /api/sessions/{idSession}/recalcul` |
 
 Les chemins abrégés par `...` reprennent le préfixe de la ligne (par exemple
-`/api/cours/{idCours}/versions/{idVersion}/pages`, `/api/sessions/{idSession}/question-suivante`).
+`/api/cours/{idCours}/versions/{idVersion}/pages`, `/api/sessions/{idSession}/questions/suivante`).
 
 Fichiers :
 
 - **Import d'un PDF** : `FormData` avec le champ `fichier` (et `titre` facultatif) ; ne pas fixer `Content-Type`.
 - **PDF** : chargé par PDF.js depuis la route protégée, jamais par un lien direct.
-- **QR code** : image `image/png` générée par le back, affichée telle quelle sur E5.
+- **QR code** : image PNG générée par le back, reçue en base64 dans le champ `qrCode` de la séance (brut ou
+  `data:image/png;base64,…`, les deux acceptés) et affichée telle quelle sur E5 ; absente une fois la séance close.
 - **Export CSV** : téléchargé par le navigateur (réponse `text/csv` transformée en fichier) ; action journalisée par
   le back.
 
@@ -143,8 +145,8 @@ Destinations du back et usage par le front :
 | `/topic/sessions/{codeAcces}/connectes` | `{nombre}` | E5 | Compteur de connectés |
 | `/topic/sessions/{codeAcces}/repartition` | Nombre de réponses par proposition, total | E5 | Histogramme en direct (au plus un message toutes les 300 ms) |
 | `/topic/sessions/{codeAcces}/correction` | Bonnes réponses, répartition finale | E5, E8 | Révèle la bonne réponse ; côté étudiant, passage à E9 |
-| `/topic/sessions/{codeAcces}/ecran` | Écran intermédiaire à afficher | E5 | Enchaîne bonne réponse, répartition, classement |
-| `/topic/sessions/{codeAcces}/classement` | Classement complet (pseudonymes, scores, évolution) | E5, E6 | Classement projeté et podium animé |
+| `/topic/sessions/{codeAcces}/ecran` | Écran intermédiaire à afficher | E5 (à venir, UC14) | Enchaîne bonne réponse, répartition, classement |
+| `/topic/sessions/{codeAcces}/classement` | Classement complet (pseudonymes, scores, évolution) | E5, E6 (à venir, UC11) | Classement projeté et podium animé |
 | `/user/queue/resultat` | `{points, scoreTotal, rang, nombreParticipants, evolution}` | E9 | Points, score total, rang de l'étudiant |
 
 D'après la documentation du back, `connectes`, `repartition`, `ecran` et `classement` sont destinés à l'enseignant :
