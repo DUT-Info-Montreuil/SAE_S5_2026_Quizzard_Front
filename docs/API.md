@@ -77,8 +77,9 @@ Les messages `error` sont en français et sans donnée personnelle : ils s'affic
   de l'application et par la garde des écrans enseignant.
 - **Déconnexion** : `POST /api/auth/deconnexion` → `204`, puis retour à E1.
 - **CSRF** : le front obtient le jeton par `GET /api/auth/csrf` et le renvoie dans l'en-tête `X-XSRF-TOKEN` sur toute
-  requête `POST`, `PUT`, `PATCH`, `DELETE`. Le jeton est demandé au démarrage et de nouveau après une connexion ou une
-  déconnexion. La forme exacte du corps de la réponse de `/api/auth/csrf` est à préciser dans la documentation du back.
+  requête `POST`, `PUT`, `PATCH`, `DELETE` hors `/api/public/**`. En place (`shared/http/csrf.ts`) : jeton demandé au
+  premier besoin et gardé en mémoire ; route en échec → envoi sans en-tête ; `403` → nouveau jeton et un seul rejeu.
+  À venir avec l'UC1 : nouveau jeton après une connexion ou une déconnexion. La forme exacte du corps de la réponse de `/api/auth/csrf` est à préciser dans la documentation du back.
 - **Développement** : tant que la connexion n'existe pas, le back tourne avec `SECURITE_OUVERTE=true` (routes ouvertes,
   CSRF coupé) ; le front doit fonctionner dans les deux cas.
 
@@ -106,12 +107,12 @@ sont celles du back.
 |---|---|
 | E1 Connexion | `GET /api/auth/csrf`, `POST /api/auth/connexion`, `GET /api/auth/moi` |
 | E2 Mes cours | `GET /api/cours`, `POST /api/cours` (import), `POST /api/cours/{idCours}/versions`, `PATCH /api/cours/{idCours}`, `POST /api/auth/deconnexion` |
-| E3 Éditeur | `GET /api/cours/{idCours}`, `GET .../versions/{idVersion}/fichier` (PDF.js), `GET` / `POST .../versions/{idVersion}/pages`, `PATCH` / `DELETE /api/pages/{idPage}`, `POST .../pages/validation` (UC6), `GET` / `POST /api/cours/{idCours}/quiz`, `GET` / `PATCH` / `DELETE /api/quiz/{idQuiz}`, `POST /api/quiz/{idQuiz}/questions`, `PUT` / `DELETE /api/questions/{idQuestion}`, `POST /api/questions/{idQuestion}/motifs/test`, `PUT` / `DELETE /api/questions/{idQuestion}/image`, `POST /api/quiz/{idQuiz}/sessions` (lancer) |
+| E3 Éditeur | **En place (UC3)** : `GET /api/cours/{idCours}`, `GET .../versions/{idVersion}/pages`, `GET /api/cours/{idCours}/quiz`, `GET .../versions/{idVersion}/fichier` (formes provisoires, routes absentes du back, plan UC3 Q1), `POST /api/cours/{idCours}/pages-quiz` (insertion d'une page de quiz, avec CSRF ; panne réseau → relecture des pages, jamais de renvoi). **À venir** : `GET /api/cours/{idCours}`, `GET .../versions/{idVersion}/fichier` (PDF.js), `GET` / `POST .../versions/{idVersion}/pages`, `PATCH` / `DELETE /api/pages/{idPage}`, `POST .../pages/validation` (UC6), `GET` / `POST /api/cours/{idCours}/quiz`, `GET` / `PATCH` / `DELETE /api/quiz/{idQuiz}`, `POST /api/quiz/{idQuiz}/questions`, `PUT` / `DELETE /api/questions/{idQuestion}`, `POST /api/questions/{idQuestion}/motifs/test`, `PUT` / `DELETE /api/questions/{idQuestion}/image`, `POST /api/quiz/{idQuiz}/sessions` (lancer) |
 | E4 Classements | `GET` / `POST /api/classements`, `GET` / `PUT` / `DELETE /api/classements/{idClassement}`, `POST .../versions/{idVersion}/pages` (intégrer au cours) |
 | E5 Quiz en cours | `GET /api/sessions/{idSession}`, `GET /api/sessions/{idSession}/qrcode`, `POST .../question-suivante`, `POST .../cloture-question`, `POST .../cloture`, `POST .../identites-non-verifiees` |
 | E6 Classement | `GET /api/sessions/{idSession}/classement` ; pour une page de classement cumulé : `GET /api/classements/{idClassement}` |
 | E7 Rejoindre | `GET /api/public/sessions/{codeAcces}`, `POST .../participants`, `POST .../participants/ldap` |
-| E8 Question | `GET /api/public/sessions/{codeAcces}/etat`, `POST .../reponses`, `POST .../reconnexion` |
+| E8 Question | `GET /api/public/sessions/{codeAcces}/etat` (au chargement, après chaque reconnexion STOMP et après l'échec du renvoi), `POST .../reponses` (un seul renvoi automatique après une panne réseau), `POST .../reconnexion` (pas encore appelé : forme inconnue) |
 | E9 Résultat | Message `/user/queue/resultat` ; `GET /api/public/sessions/{codeAcces}/etat` après une reconnexion |
 | E10 Résultats | `GET /api/cours/{idCours}/sessions`, `GET /api/sessions/{idSession}/resultats`, `GET /api/sessions/{idSession}/export.csv` |
 | E11 Correction | `GET .../questions/{idQuestion}/reponses-libres`, `PUT .../corrections`, `POST .../motifs`, `POST /api/sessions/{idSession}/recalcul` |

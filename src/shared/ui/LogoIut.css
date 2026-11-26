@@ -1,0 +1,22 @@
+/* Reproduction provisoire du logo (voir LogoIut.tsx). */
+.logo-iut {
+  display: inline-flex;
+  flex-direction: column;
+  padding: 4px 12px;
+  border-radius: var(--espace-petit);
+  background: var(--couleur-iut);
+  color: var(--couleur-texte);
+  font-family: var(--police);
+  line-height: 1;
+}
+
+.logo-iut-sigle {
+  font-size: 1.25rem;
+  font-weight: 900;
+}
+
+.logo-iut-ville {
+  font-size: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+}
