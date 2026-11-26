@@ -1,0 +1,10 @@
+/* Police Rubik (licence SIL OFL 1.1, texte dans polices/OFL.txt), embarquée dans le build : jamais chargée depuis un
+   service externe. Fichier de Google Fonts (github.com/google/fonts, ofl/rubik/Rubik[wght].ttf), renommé sans
+   crochets. Un seul fichier variable couvre toutes les graisses (300 à 900). */
+@font-face {
+  font-family: "Rubik";
+  src: url("./polices/Rubik-VariableFont_wght.ttf") format("truetype");
+  font-weight: 300 900;
+  font-style: normal;
+  font-display: swap;
+}

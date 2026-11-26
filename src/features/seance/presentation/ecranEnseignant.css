@@ -1,0 +1,378 @@
+/* Élément 11 de E3 (lancement) et écran projeté E5 (UC7). Variables de tokens.css uniquement (docs/DESIGN.md). */
+
+/* ---------- E3, élément 11 « Lancer la présentation » ---------- */
+.lancement {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--espace-petit);
+  max-width: 560px;
+}
+
+.lancement-ligne {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--espace-petit);
+}
+
+.lancement-etiquette { font-weight: 600; }
+
+.lancement-liste {
+  min-height: var(--hauteur-touche-min);
+  padding: 0 var(--espace-petit);
+  border: var(--bordure);
+  border-radius: var(--rayon);
+  background: var(--couleur-carte);
+  color: var(--couleur-texte);
+  font: inherit;
+}
+
+.lancement-aide { margin: 0; color: color-mix(in srgb, var(--couleur-texte) 75%, var(--couleur-fond)); }
+
+.bouton-lancer,
+.bouton-lancer-secondaire,
+.bouton-projete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--espace-petit);
+  min-height: var(--hauteur-touche-min);
+  margin-bottom: var(--arete);
+  padding: 0 var(--espace);
+  border: 0;
+  border-radius: var(--rayon);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform var(--duree-animation), box-shadow var(--duree-animation);
+}
+
+.bouton-lancer {
+  background: var(--couleur-action);
+  color: var(--couleur-action-texte);
+  box-shadow: 0 var(--arete) 0 color-mix(in srgb, var(--couleur-action) 60%, var(--couleur-texte));
+}
+
+.bouton-lancer-secondaire {
+  border: var(--bordure);
+  background: var(--couleur-carte);
+  color: var(--couleur-texte);
+  box-shadow: 0 var(--arete) 0 color-mix(in srgb, var(--couleur-structure) 15%, var(--couleur-carte));
+}
+
+.bouton-lancer:active:not(:disabled),
+.bouton-lancer-secondaire:active:not(:disabled),
+.bouton-projete:active:not(:disabled) {
+  transform: translateY(var(--arete));
+  box-shadow: none;
+}
+
+.bouton-lancer:focus-visible,
+.bouton-lancer-secondaire:focus-visible,
+.bouton-projete:focus-visible,
+.lancement-liste:focus-visible {
+  outline: 3px solid var(--couleur-texte);
+  outline-offset: 2px;
+}
+
+.bouton-lancer:disabled,
+.bouton-lancer-secondaire:disabled,
+.bouton-projete:disabled {
+  background: color-mix(in srgb, var(--couleur-structure) 20%, var(--couleur-fond));
+  color: color-mix(in srgb, var(--couleur-texte) 75%, var(--couleur-fond));
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.alerte-lancement,
+.alerte-projetee {
+  padding: 12px var(--espace);
+  border-left: var(--arete) solid var(--couleur-action);
+  border-radius: var(--rayon);
+  background: color-mix(in srgb, var(--couleur-action) 10%, var(--couleur-carte));
+  font-weight: 600;
+}
+
+.alerte-lancement p,
+.alerte-projetee p { margin: 0 0 var(--espace-petit); }
+.alerte-lancement > :last-child,
+.alerte-projetee > :last-child { margin-bottom: 0; }
+.alerte-reference { font-weight: 400; }
+
+/* ---------- E5 « Quiz en cours », projeté (docs/DESIGN.md §2.1 : 24 px au moins, 28 px pour les réponses) ---------- */
+body:has(.ecran-projete) {
+  margin: 0;
+  background: var(--couleur-fond);
+}
+
+.ecran-projete {
+  --taille-projetee: 1.5rem;
+  --taille-reponse-projetee: 1.75rem;
+  --taille-enonce-projete: 2.5rem;
+
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: var(--espace);
+  height: 100dvh;
+  padding: 24px 32px;
+  overflow: hidden;
+  background: var(--couleur-fond);
+  color: var(--couleur-texte);
+  font-family: var(--police);
+  font-size: var(--taille-projetee);
+}
+
+.ecran-projete *,
+.ecran-projete *::before,
+.ecran-projete *::after { box-sizing: border-box; }
+
+.ecran-projete p { margin: 0; }
+
+.ecran-projete-message {
+  align-items: flex-start;
+  justify-content: center;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.ecran-projete .visuellement-cache {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.ecran-projete-entete {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.ecran-projete-titre {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.ecran-projete-connectes {
+  padding: var(--espace-petit) var(--espace);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--couleur-structure) 10%, var(--couleur-carte));
+  color: color-mix(in srgb, var(--couleur-structure) 75%, var(--couleur-texte));
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.ecran-projete-connectes strong { font-variant-numeric: tabular-nums; }
+
+.ecran-projete-corps {
+  display: grid;
+  flex: 1;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 32px;
+  min-height: 0;
+  align-items: start;
+}
+
+/* Avant la première question : l'accès occupe l'écran */
+.ecran-projete[data-attente='true'] .ecran-projete-corps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ecran-projete-question {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espace);
+  min-height: 0;
+}
+
+.ecran-projete-acces {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espace);
+}
+
+.ecran-projete[data-attente='true'] .ecran-projete-acces { align-items: center; max-width: 1100px; }
+
+.ecran-projete-attente { text-align: center; }
+
+/* Décompte de l'UC9, agrandi pour la salle */
+.ecran-projete .decompte-barre { height: 16px; }
+.ecran-projete .decompte-chiffre { font-size: 3rem; }
+.ecran-projete .decompte-position { align-self: flex-start; }
+
+/* QR code et lien */
+.zone-acces {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espace);
+  padding: var(--espace);
+  border: var(--bordure);
+  border-radius: var(--rayon);
+  background: var(--couleur-carte);
+}
+
+.zone-acces-qr {
+  display: block;
+  width: 100%;
+  height: auto;
+  image-rendering: pixelated;
+}
+
+.ecran-projete[data-attente='true'] .zone-acces { flex-direction: row; align-items: center; gap: 32px; }
+.ecran-projete[data-attente='true'] .zone-acces-qr { width: 50dvh; flex: none; }
+.ecran-projete[data-attente='true'] .zone-acces-titre { font-size: 2rem; }
+
+.zone-acces-texte { display: flex; flex-direction: column; gap: var(--espace-petit); min-width: 0; }
+.zone-acces-titre { font-weight: 800; }
+.zone-acces-lien { overflow-wrap: anywhere; color: var(--couleur-structure); font-weight: 600; }
+
+/* Question et histogramme */
+.question-projetee { display: flex; flex-direction: column; gap: var(--espace); min-height: 0; }
+
+.question-projetee-enonce {
+  margin: 0;
+  font-size: var(--taille-enonce-projete);
+  font-weight: 800;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.histogramme { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+
+.histogramme-ligne {
+  display: flex;
+  align-items: center;
+  gap: var(--espace);
+  padding: var(--espace-petit) var(--espace);
+  border: 3px solid transparent;
+  border-radius: var(--rayon);
+  background: var(--couleur-carte);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--couleur-texte) 12%, transparent);
+  font-size: var(--taille-reponse-projetee);
+}
+
+.histogramme-bonne { border-color: var(--couleur-succes); }
+
+.histogramme-lettre {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--rayon);
+  color: var(--couleur-action-texte);
+  font-weight: 800;
+}
+
+.couleur-reponse-0 { background: var(--couleur-reponse-a); }
+.couleur-reponse-1 { background: var(--couleur-reponse-b); }
+.couleur-reponse-2 { background: var(--couleur-reponse-c); }
+/* Blanc sur orange : contraste insuffisant (charte), texte bleu nuit */
+.couleur-reponse-3 { background: var(--couleur-reponse-d); color: var(--couleur-texte); }
+
+.histogramme-corps { flex: 1; min-width: 0; }
+.histogramme-libelle { font-weight: 600; overflow-wrap: anywhere; }
+
+.histogramme-marque {
+  margin-left: 12px;
+  color: color-mix(in srgb, var(--couleur-succes) 70%, var(--couleur-texte));
+  font-size: var(--taille-projetee);
+  font-weight: 800;
+}
+
+.histogramme-piste {
+  display: block;
+  height: 14px;
+  margin-top: 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--couleur-structure) 8%, var(--couleur-carte));
+  overflow: hidden;
+}
+
+.histogramme-barre {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  transition: width var(--duree-animation);
+}
+
+.histogramme-nombre {
+  min-width: 2ch;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.relier-projete { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+.relier-projete ul { display: grid; align-content: start; gap: 12px; margin: 0; padding: 0; list-style: none; }
+
+.relier-projete li,
+.correction-projetee {
+  padding: 12px var(--espace);
+  border: var(--bordure);
+  border-radius: var(--rayon);
+  background: var(--couleur-carte);
+  font-size: var(--taille-reponse-projetee);
+}
+
+.correction-projetee { border: 3px solid var(--couleur-succes); }
+.correction-projetee ul { margin: var(--espace-petit) 0 0; }
+.correction-projetee-titre { font-weight: 800; }
+
+.question-projetee-recues strong { font-variant-numeric: tabular-nums; }
+.question-projetee-close { font-weight: 600; }
+
+/* Commandes de l'enseignant */
+.boutons-projetes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espace);
+}
+
+.bouton-projete {
+  min-width: 160px;
+  background: var(--couleur-structure);
+  color: var(--couleur-action-texte);
+  box-shadow: 0 var(--arete) 0 color-mix(in srgb, var(--couleur-structure) 60%, var(--couleur-texte));
+}
+
+.bouton-projete-action {
+  background: var(--couleur-action);
+  box-shadow: 0 var(--arete) 0 color-mix(in srgb, var(--couleur-action) 60%, var(--couleur-texte));
+}
+
+.bouton-projete-discret {
+  border: var(--bordure);
+  background: var(--couleur-carte);
+  color: var(--couleur-texte);
+  box-shadow: 0 var(--arete) 0 color-mix(in srgb, var(--couleur-structure) 15%, var(--couleur-carte));
+}
+
+.bouton-projete-fin { margin-left: auto; }
+
+.bandeau-projete {
+  padding: 12px var(--espace);
+  border-radius: var(--rayon);
+  background: color-mix(in srgb, var(--couleur-alerte) 22%, var(--couleur-carte));
+  font-weight: 600;
+}
+
+@media (max-width: 900px) {
+  .ecran-projete { height: auto; min-height: 100dvh; overflow: visible; }
+  .ecran-projete-corps { grid-template-columns: 1fr; }
+  .ecran-projete[data-attente='true'] .zone-acces { flex-direction: column; }
+}

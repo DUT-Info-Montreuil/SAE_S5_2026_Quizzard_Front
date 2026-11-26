@@ -67,9 +67,11 @@ foncée ; le choix final se vérifie avec un outil de contraste avant la validat
 - **Rubik** (licence libre SIL OFL), **fournie avec l'application** : fichiers de police dans le dépôt, déclarés par
   `@font-face` et intégrés au build par Vite. Jamais chargée depuis un service externe (Google Fonts ou autre).
 - Repli sur la police sans empattement du système (`system-ui, sans-serif`).
-- Graisses et formats à embarquer : le strict nécessaire (par exemple `woff2`, deux ou trois graisses), pour rester
-  sobre. Les fichiers ne sont pas encore dans le dépôt ; la licence OFL est jointe aux fichiers.
-- État actuel : `src/index.css` vient du modèle Vite (`system-ui`) et sera remplacé.
+- Fichier embarqué : `src/shared/styles/polices/Rubik-VariableFont_wght.ttf` (Google Fonts, un seul fichier variable
+  pour les graisses 300 à 900, environ 360 Ko), licence OFL jointe (`polices/OFL.txt`), déclaré dans
+  `shared/styles/police.css`. Vite le copie dans `dist/assets/` avec une adresse absolue, valable sur toutes les
+  routes (`/cours/1/editeur`, `/rejoindre/…`).
+- `src/index.css` ne fait que retirer la marge du `body`.
 
 ### 1.4 Logo
 
@@ -153,10 +155,43 @@ Onze écrans : six pour l'enseignant, deux projetés en salle, trois pour l'étu
 - Par cours : « Ouvrir » (E3 sur la dernière version), « Nouvelle version » (UC6), « Résultats » (E10).
 - « Mes classements » : E4.
 - Erreurs d'import affichées clairement : fichier non PDF, trop lourd, déjà importé.
+- **Réalisé (UC2)** : `features/cours`, route `/cours`. Type et taille contrôlés avant l'envoi ; erreurs du fichier et
+  du titre sous leur champ ; PDF déjà importé : « Importer quand même » ou « Ne pas importer ». « Nouvelle version »
+  est désactivé (UC6) ; les écrans E4 et E10 sont à venir.
+- **Visuel (d'après la maquette E2)** : barre d'en-tête blanche (logo, « Mes cours », « Mes classements », nom
+  « A. Nom » en pastille violette, « Se déconnecter ») ; sous le titre, nombre de cours et de quiz ; zone d'import
+  toujours visible (bordure violette en pointillés, bouton rouge « Choisir un fichier ») qui déplie le titre et
+  « Importer » une fois le fichier choisi ; un cours par carte : pastille colorée avec le sigle (« CM1 »), titre,
+  « v3 · 6 pages · 2 quiz », état « Prêt » (vert) ou « Sans quiz » (ambre), « Modifié hier » / « Importé le 8 oct. »
+  (date complète en infobulle), boutons « Nouvelle version », « Résultats », « Ouvrir ». Les cartes restent un
+  tableau HTML pour les lecteurs d'écran ; elles passent sur plusieurs lignes sous 860 px.
 
 ### E3 – Éditeur cours + quiz (enseignant, ordinateur) · UC3, UC4, UC5, UC6, UC13, UC14
 
+En place pour l'UC3 (éléments 1 à 4) sur `/cours/:idCours/editeur` : `EditeurCours` (présentation) branché par le
+hook `useEditeurCours`. Aperçu et zone des éléments 5 à 18 côte à côte, bande des pages en bas (Figure 30), toujours
+visible au-delà de 900 px de large (l'éditeur tient dans la fenêtre, l'aperçu défile). Page de quiz sélectionnée :
+« Déplacer » et « Retirer » sous l'aperçu (confirmation avant de retirer ; déplacement par les boutons « Insérer un
+quiz ici », « Annuler » pour sortir). Un `401`
+mène à `/connexion` ; « Recharger » relit cours, pages, quiz et PDF. Démo sans back : `/demo/editeur` (développement).
+
+Maquette : `docs/maquettes/Capture d'écran 2026-11-26 102631.png` (éléments 1 à 18) et règles de la « Charte Editeur »
+(`docs/maquettes/Charte Editeur+ cours`). Mise en page : en-tête (titre, version, puis 9 « Réappliquer les quiz de la
+vN », 10 « Enregistrer », 11 « Lancer »), colonne centrale (barre de la page de quiz : emplacement, 14 « Mode »
+Non noté / Noté, 17 « Cours en séance » Mon écran / Aussi sur téléphones ; aperçu de la question avec 18 « Image de la
+question »), panneau de droite sur fond lavande (5 type QCM / Relier / Libre, 6 énoncé, 7 réponses ; 12 « Barème » et 8
+durées ; 15 « Après la question » Manuel / Auto et 16 écrans intermédiaires), bande des pages en bas (« Quiz 1 ·
+QCM • 30 s », « Classement · cumulé »). L'éditeur tient dans l'écran ; la colonne centrale et le panneau défilent.
+Les éléments 5 à 10 et 12 à 18 sont des composants de la feature `quiz` (`PanneauQuestion`, `ApercuQuestion`,
+`BarreQuiz`, `BoutonEnregistrer`) et `BoutonReappliquer` (`cours`), assemblés dans `app` ; ils ne sont branchés
+que dans la démo (état local, aucune route du back) en attendant UC4, UC5, UC6, UC13 et UC14. Sur la route réelle,
+seul l'élément 11 est branché. Libellés absents de la maquette : marqués « provisoire » dans
+`quiz/presentation/libellesQuiz.ts`. Écart avec la maquette : la bande numérote les pages par position dans le cours
+(formule de l'UC3), la maquette par numéro de page du PDF **(à trancher)**.
+
 - Titre et version (lecture seule).
+  **Réalisé** : en-tête `EnteteCours` (`GET /api/cours/{idCours}`) : retour « ← Mes cours », pastille, titre,
+  « v2 · 12 pages · 3 quiz » ; cours introuvable ou erreur avec « Réessayer ». Le reste de l'éditeur est provisoire.
 - Colonne des pages : miniatures des pages du PDF et des pages de quiz, distinguées par la couleur **et** une icône ;
   bouton « Insérer un quiz ici » entre deux pages ; un clic affiche la page dans l'aperçu.
 - Aperçu de la page sélectionnée (rendu PDF.js, lecture seule).
@@ -170,7 +205,10 @@ Onze écrans : six pour l'enseignant, deux projetés en salle, trois pour l'étu
 - « Réappliquer les quiz » visible après l'import d'une nouvelle version : aperçu des positions proposées, ajustement,
   validation (UC6).
 - « Enregistrer » avec alerte en cas de modifications non enregistrées ; « Lancer la présentation » désactivé si une
-  question est incomplète (avec l'alerte correspondante).
+  question est incomplète (avec l'alerte correspondante). **En place (UC7)** : bouton dans l'en-tête, liste « Quiz à
+  lancer » si le cours a plusieurs quiz (quiz de la page sélectionnée proposé) ; erreurs affichées sans quitter
+  l'éditeur. Tant que l'UC4 n'est pas là, l'éditeur ne sait pas si une question est incomplète : le `422` du back
+  fait foi.
 - Suppression d'un quiz : confirmation demandée.
 
 ### E4 – Classements (enseignant, ordinateur) · UC10, UC11
@@ -182,6 +220,13 @@ Onze écrans : six pour l'enseignant, deux projetés en salle, trois pour l'étu
   de classement animée.
 
 ### E5 – Quiz en cours (écran projeté) · UC7, UC9, UC14
+
+En place pour l'UC7 sur `/seances/:idSession` : `EcranQuizEnCours` branché par le hook `useSeanceEnDirect`. Aucune
+maquette E5 dans le dépôt : mise en page d'après ce paragraphe et le §2.1. Avant la première question, QR code et
+lien en grand avec « Démarrer » ; pendant une question, décompte (`Decompte` de l'UC9), énoncé, histogramme et accès en
+colonne ; en bas « Clore », « Suivant » (« Terminer » après la dernière question) et « Clore le quiz » (avec
+confirmation). Libellés absents de la spec : `seance/presentation/libellesAnimation.ts` **(à valider)**. Écrans
+intermédiaires (UC14) et image de la question (UC4) à venir.
 
 - Énoncé en grand, dès l'ouverture de la question ; propositions avec leur lettre.
 - QR code (image générée par le back) et lien d'accès ; invalides après la clôture.
@@ -210,7 +255,27 @@ Onze écrans : six pour l'enseignant, deux projetés en salle, trois pour l'étu
 - « Entrer dans le quiz » : refusé si la séance est close ; sinon E8, sur la question en cours si le quiz a commencé.
 - Mention d'information RGPD : finalité, base légale, durée de conservation, contact **(textes à valider)**.
 
+En place pour le quiz non noté (UC8) : route `/rejoindre/:codeAcces`, composants `seance/presentation/PageRejoindre.tsx`
+et `EcranRejoindre.tsx` ; démo `/demo/rejoindre?cas=…` en développement.
+
+- E7-1 : « titreCours • titreQuiz », puis le titre **provisoire** « Choisis ton pseudo pour rejoindre » (maquette,
+  absent de la spec).
+- E7-2 : champ au libellé « Pseudonyme » caché à l'écran (lu par les lecteurs d'écran), compteur `x/20` sur le
+  pseudonyme nettoyé, message d'erreur sous le champ relié par `aria-describedby` ; `autocomplete="nickname"`, sans
+  majuscule forcée ni correction automatique, sans `maxLength`.
+- E7-3 : « Entrer dans le quiz » (rouge `--couleur-action`), désactivé si le pseudonyme nettoyé est invalide ou
+  pendant l'envoi ; Entrée valide le formulaire.
+- Pseudonyme pris avec proposition : message, puis bouton secondaire portant le pseudonyme proposé ; un clic remplit
+  le champ.
+- E7-4 (quiz noté, UC15) **non fait** : titres et « Ce quiz est noté : connecte-toi avec ton compte IUT. » seulement.
+- E7-5 : texte **provisoire** de la maquette, dans `seance/presentation/mentionInformation.ts` seulement.
+- Sans formulaire : « Chargement… », quiz inexistant, quiz terminé, échec du chargement (message et « Recharger »).
+
 ### E8 – Question (étudiant) · UC8, UC9
+
+Route `/rejoindre/:codeAcces/question`, partagée avec E9 (composant `seance/presentation/PageQuestion.tsx`) ;
+sans jeton de participant, retour à E7. Écran de chargement (libellé provisoire « Chargement… ») tant que l'état
+n'est pas relu par REST. Démo sans back en développement : `/demo/question`.
 
 - Barre et décompte du temps restant, synchronisés sur le serveur ; « Valider » désactivé à 0.
 - Énoncé en lecture seule.
@@ -224,7 +289,8 @@ Onze écrans : six pour l'enseignant, deux projetés en salle, trois pour l'étu
 - Confirmation après la validation ou à l'expiration du temps.
 - Points de la question et score total.
 - Rang sur le nombre de participants, avec l'évolution ; l'étudiant ne voit que son propre rang.
-- Message d'attente ; retour automatique sur E8 à la question suivante.
+- Message d'attente ; retour automatique sur E8, saisie remise à zéro, à la question suivante.
+- Session expirée : le bouton « Rejoindre » ramène à E7 (`/rejoindre/:codeAcces`), le jeton étant supprimé.
 
 ### E10 – Résultats de la séance (enseignant, ordinateur) · UC17, UC18
 
@@ -285,5 +351,5 @@ un état vide (« Aucun cours pour l'instant », etc.).
 
 ### Tests
 
-Outil **à choisir**. Attendu ensuite : tests unitaires de `domain`, tests de composants des écrans (états chargement,
+Vitest et React Testing Library (`npm test`), fichiers `*.test.ts(x)` à côté du code testé. Attendu : tests unitaires de `domain`, tests de composants des écrans (états chargement,
 erreur, vide, nominal), noms de tests en français qui décrivent le comportement.

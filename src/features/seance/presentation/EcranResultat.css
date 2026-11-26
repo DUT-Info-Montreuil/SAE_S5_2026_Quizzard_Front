@@ -1,0 +1,104 @@
+/* Écran E9 « Résultat et classement » (maquette docs/maquettes/E7.png, téléphone de droite). Variables de tokens.css
+   uniquement. Le texte blanc sur vert d'eau n'atteint que 3,3:1 : grand texte gras seulement (docs/DESIGN.md). */
+
+/* E9-1 confirmation et messages d'état */
+.message-e9 {
+  margin: 0;
+  padding: var(--espace);
+  border: var(--bordure);
+  border-radius: var(--rayon);
+  background: var(--couleur-carte);
+  font-size: var(--taille-reponse);
+  font-weight: 700;
+}
+
+.message-e9-succes {
+  border: 0;
+  background: var(--couleur-succes);
+  color: var(--couleur-action-texte);
+}
+
+/* E9-2 points et score total */
+.carte-score {
+  padding: var(--espace);
+  border-radius: calc(var(--rayon) * 2);
+  background: var(--couleur-succes);
+  color: var(--couleur-action-texte);
+  font-size: var(--taille-reponse);
+  font-weight: 700;
+}
+
+.carte-score p {
+  margin: 0;
+}
+
+.carte-score-points {
+  font-size: calc(var(--taille-decompte) * 2);
+  font-weight: 900;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.carte-score-bonne-reponse {
+  margin-top: var(--espace-petit);
+  padding-top: var(--espace-petit);
+  border-top: 2px solid color-mix(in srgb, var(--couleur-action-texte) 40%, var(--couleur-succes));
+}
+
+.carte-score-bonne-reponse ul {
+  margin: 0;
+  padding-left: 1.25em;
+  overflow-wrap: anywhere;
+}
+
+/* E9-3 rang de l'étudiant seul */
+.carte-rang {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  padding: var(--espace);
+  border: 2px solid color-mix(in srgb, var(--couleur-structure) 15%, var(--couleur-carte));
+  border-radius: calc(var(--rayon) * 2);
+  background: var(--couleur-carte);
+}
+
+.carte-rang-titre {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: var(--taille-texte);
+  font-weight: 500;
+}
+
+.carte-rang-valeur,
+.carte-rang-evolution {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.carte-rang-rang {
+  font-size: calc(var(--taille-decompte) * 1.5);
+  font-weight: 900;
+}
+
+.carte-rang-total {
+  font-size: var(--taille-reponse);
+  font-weight: 600;
+}
+
+/* Symbole et nombre en grand texte gras ; la couleur ne fait que doubler le symbole (charte §1). */
+.carte-rang-evolution {
+  font-size: var(--taille-decompte);
+  font-weight: 800;
+}
+
+.carte-rang-evolution[data-sens="hausse"] { color: var(--couleur-succes); }
+.carte-rang-evolution[data-sens="baisse"] { color: var(--couleur-action); }
+
+/* E9-4 attente */
+.ecran-resultat-attente {
+  margin: auto 0 0;
+  padding: var(--espace) 0;
+  color: color-mix(in srgb, var(--couleur-texte) 75%, var(--couleur-fond));
+  font-weight: 600;
+  text-align: center;
+}

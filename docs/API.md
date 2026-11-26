@@ -77,8 +77,9 @@ Les messages `error` sont en français et sans donnée personnelle : ils s'affic
   de l'application et par la garde des écrans enseignant.
 - **Déconnexion** : `POST /api/auth/deconnexion` → `204`, puis retour à E1.
 - **CSRF** : le front obtient le jeton par `GET /api/auth/csrf` et le renvoie dans l'en-tête `X-XSRF-TOKEN` sur toute
-  requête `POST`, `PUT`, `PATCH`, `DELETE`. Le jeton est demandé au démarrage et de nouveau après une connexion ou une
-  déconnexion. La forme exacte du corps de la réponse de `/api/auth/csrf` est à préciser dans la documentation du back.
+  requête `POST`, `PUT`, `PATCH`, `DELETE` hors `/api/public/**`. En place (`shared/http/csrf.ts`) : jeton demandé au
+  premier besoin et gardé en mémoire ; route en échec → envoi sans en-tête ; `403` → nouveau jeton et un seul rejeu.
+  À venir avec l'UC1 : nouveau jeton après une connexion ou une déconnexion. La forme exacte du corps de la réponse de `/api/auth/csrf` est à préciser dans la documentation du back.
 - **Développement** : tant que la connexion n'existe pas, le back tourne avec `SECURITE_OUVERTE=true` (routes ouvertes,
   CSRF coupé) ; le front doit fonctionner dans les deux cas.
 
@@ -92,6 +93,12 @@ Les messages `error` sont en français et sans donnée personnelle : ils s'affic
   STOMP `CONNECT` (§6). Il n'est valable que pour cette séance et devient invalide à sa clôture.
 - Le front conserve le jeton par `codeAcces` pour la durée de la séance (emplacement proposé dans
   [ARCHITECTURE.md](ARCHITECTURE.md) §5, à valider) et le supprime à la clôture ou sur un `401`.
+- **E7 (UC8, en place pour le quiz non noté)** : `GET /api/public/sessions/{codeAcces}` →
+  `{titreCours, titreQuiz, estNotee, etat}` (un `etat` `CLOTUREE` est traité comme un `409`), puis
+  `POST .../participants` avec le pseudonyme **nettoyé** (espaces retirés et réduits, NFC). Seul `jeton` est lu dans
+  le `201`. Le `409` « pseudonyme pris » ajoute `suggestion` (chaîne) au corps d'erreur ; le client HTTP la lit dans
+  `ErreurHttp.suggestion`, jamais dans le message. Fonctions : `seance/api/rejoindreApi.ts`. Messages affichés : ceux
+  du tableau de l'UC8, par `code`, avec repli par statut (plan UC8, §4).
 - **Reprise** après une coupure ou un rechargement : `POST /api/public/sessions/{codeAcces}/reconnexion` → état courant
   et score.
 - **Répondre** : `POST /api/public/sessions/{codeAcces}/reponses` ; le corps dépend du type de question (voir le back).
@@ -106,24 +113,31 @@ sont celles du back.
 |---|---|
 | E1 Connexion | `GET /api/auth/csrf`, `POST /api/auth/connexion`, `GET /api/auth/moi` |
 | E2 Mes cours | `GET /api/cours`, `POST /api/cours` (import), `POST /api/cours/{idCours}/versions`, `PATCH /api/cours/{idCours}`, `POST /api/auth/deconnexion` |
-| E3 Éditeur | `GET /api/cours/{idCours}`, `GET .../versions/{idVersion}/fichier` (PDF.js), `GET` / `POST .../versions/{idVersion}/pages`, `PATCH` / `DELETE /api/pages/{idPage}`, `POST .../pages/validation` (UC6), `GET` / `POST /api/cours/{idCours}/quiz`, `GET` / `PATCH` / `DELETE /api/quiz/{idQuiz}`, `POST /api/quiz/{idQuiz}/questions`, `PUT` / `DELETE /api/questions/{idQuestion}`, `POST /api/questions/{idQuestion}/motifs/test`, `PUT` / `DELETE /api/questions/{idQuestion}/image`, `POST /api/quiz/{idQuiz}/sessions` (lancer) |
+| E3 Éditeur | **Fait (UC3, routes livrées par le back)** : `GET /api/cours/{idCours}` (back UC2), `GET .../versions/{idVersion}/pages` (`{idPage, numeroPage, ordre, type, idQuestion, idQuiz, titreQuiz}` : titre du quiz de chaque page ; quiz du cours déduits, faute de `GET /api/cours/{idCours}/quiz`), `GET .../versions/{idVersion}/fichier` (PDF.js), `POST /api/cours/{idCours}/pages-quiz` (insertion d'une page de quiz, avec CSRF ; panne réseau → relecture des pages, jamais de renvoi). Erreurs de lecture : `404` `COURS_INTROUVABLE` (ou sans code) → « Cours introuvable. » ; `404` `VERSION_INTROUVABLE` ou `FICHIER_INTROUVABLE` (PDF supprimé) → `error` du back. Retirer et déplacer une page de quiz (boutons de l'aperçu) : `DELETE /api/pages/{idPage}` (`204`, puis relecture des pages) et `PATCH /api/pages/{idPage}` `{numeroPage, ordre}` (`200`, pages à jour ; `ordre` = rang parmi les autres pages) ; `PAGE_INTROUVABLE` et `500` → `error` du back. **À venir** : `POST .../versions/{idVersion}/pages` (UC11), `POST .../pages/validation` (UC6), `GET` / `POST /api/cours/{idCours}/quiz`, `GET` / `PATCH` / `DELETE /api/quiz/{idQuiz}`, `POST /api/quiz/{idQuiz}/questions`, `PUT` / `DELETE /api/questions/{idQuestion}`, `POST /api/questions/{idQuestion}/motifs/test`, `PUT` / `DELETE /api/questions/{idQuestion}/image`, `POST /api/quiz/{idQuiz}/sessions` (lancer) |
 | E4 Classements | `GET` / `POST /api/classements`, `GET` / `PUT` / `DELETE /api/classements/{idClassement}`, `POST .../versions/{idVersion}/pages` (intégrer au cours) |
-| E5 Quiz en cours | `GET /api/sessions/{idSession}`, `GET /api/sessions/{idSession}/qrcode`, `POST .../question-suivante`, `POST .../cloture-question`, `POST .../cloture`, `POST .../identites-non-verifiees` |
+| E5 Quiz en cours | **En place (UC7)** : `GET /api/sessions/{idSession}` (ouverture, reprise après rechargement, après chaque reconnexion STOMP, toutes les 2 s sans STOMP), `POST .../questions/suivante`, `POST .../questions/courante/cloture`, `POST .../cloture` (chaque commande renvoie l'état à jour). QR code et lien : champs `qrCode` et `lienAcces` de l'état, pas de route séparée. **À venir** : `POST .../identites-non-verifiees` (UC15) |
 | E6 Classement | `GET /api/sessions/{idSession}/classement` ; pour une page de classement cumulé : `GET /api/classements/{idClassement}` |
 | E7 Rejoindre | `GET /api/public/sessions/{codeAcces}`, `POST .../participants`, `POST .../participants/ldap` |
-| E8 Question | `GET /api/public/sessions/{codeAcces}/etat`, `POST .../reponses`, `POST .../reconnexion` |
+| E8 Question | `GET /api/public/sessions/{codeAcces}/etat` (au chargement, après chaque reconnexion STOMP et après l'échec du renvoi), `POST .../reponses` (un seul renvoi automatique après une panne réseau), `POST .../reconnexion` (pas encore appelé : forme inconnue) |
 | E9 Résultat | Message `/user/queue/resultat` ; `GET /api/public/sessions/{codeAcces}/etat` après une reconnexion |
 | E10 Résultats | `GET /api/cours/{idCours}/sessions`, `GET /api/sessions/{idSession}/resultats`, `GET /api/sessions/{idSession}/export.csv` |
 | E11 Correction | `GET .../questions/{idQuestion}/reponses-libres`, `PUT .../corrections`, `POST .../motifs`, `POST /api/sessions/{idSession}/recalcul` |
 
 Les chemins abrégés par `...` reprennent le préfixe de la ligne (par exemple
-`/api/cours/{idCours}/versions/{idVersion}/pages`, `/api/sessions/{idSession}/question-suivante`).
+`/api/cours/{idCours}/versions/{idVersion}/pages`, `/api/sessions/{idSession}/questions/suivante`).
 
 Fichiers :
 
-- **Import d'un PDF** : `FormData` avec le champ `fichier` (et `titre` facultatif) ; ne pas fixer `Content-Type`.
+- **Import d'un PDF** (`POST /api/cours`) : `FormData` avec `fichier`, `titre` (obligatoire, 200 caractères au plus) et
+  `confirmerDoublon` ; ne pas fixer `Content-Type`. Sur `409 DOUBLON_COURS`, le même fichier est renvoyé avec
+  `confirmerDoublon=true` si l'enseignant confirme. La taille (50 Mo) est contrôlée avant l'envoi.
+- **Liste et ouverture d'un cours** : `GET /api/cours` (tableau sans enveloppe, champs de la réponse de l'import) sur
+  E2 ; `GET /api/cours/{idCours}` (mêmes champs plus `idVersion`, la dernière version) à l'ouverture de E3 ; un `404`
+  (`COURS_INTROUVABLE` : inexistant, archivé ou d'un autre enseignant) ou un identifiant illisible affiche « Ce cours
+  n'existe pas ou n'est plus disponible. » (`features/cours`, `useCours`).
 - **PDF** : chargé par PDF.js depuis la route protégée, jamais par un lien direct.
-- **QR code** : image `image/png` générée par le back, affichée telle quelle sur E5.
+- **QR code** : image PNG générée par le back, reçue en base64 dans le champ `qrCode` de la séance (brut ou
+  `data:image/png;base64,…`, les deux acceptés) et affichée telle quelle sur E5 ; absente une fois la séance close.
 - **Export CSV** : téléchargé par le navigateur (réponse `text/csv` transformée en fichier) ; action journalisée par
   le back.
 
@@ -143,8 +157,8 @@ Destinations du back et usage par le front :
 | `/topic/sessions/{codeAcces}/connectes` | `{nombre}` | E5 | Compteur de connectés |
 | `/topic/sessions/{codeAcces}/repartition` | Nombre de réponses par proposition, total | E5 | Histogramme en direct (au plus un message toutes les 300 ms) |
 | `/topic/sessions/{codeAcces}/correction` | Bonnes réponses, répartition finale | E5, E8 | Révèle la bonne réponse ; côté étudiant, passage à E9 |
-| `/topic/sessions/{codeAcces}/ecran` | Écran intermédiaire à afficher | E5 | Enchaîne bonne réponse, répartition, classement |
-| `/topic/sessions/{codeAcces}/classement` | Classement complet (pseudonymes, scores, évolution) | E5, E6 | Classement projeté et podium animé |
+| `/topic/sessions/{codeAcces}/ecran` | Écran intermédiaire à afficher | E5 (à venir, UC14) | Enchaîne bonne réponse, répartition, classement |
+| `/topic/sessions/{codeAcces}/classement` | Classement complet (pseudonymes, scores, évolution) | E5, E6 (à venir, UC11) | Classement projeté et podium animé |
 | `/user/queue/resultat` | `{points, scoreTotal, rang, nombreParticipants, evolution}` | E9 | Points, score total, rang de l'étudiant |
 
 D'après la documentation du back, `connectes`, `repartition`, `ecran` et `classement` sont destinés à l'enseignant :
@@ -178,3 +192,6 @@ la seconde. Le serveur reste seul juge : une réponse hors délai reçoit un `40
 | A3 | Forme du corps de `GET /api/auth/csrf` | Le front doit savoir où lire le jeton à renvoyer dans `X-XSRF-TOKEN`. |
 | A4 | Format du `lien` renvoyé au lancement d'une séance | Il doit pointer vers la route de E7 du front ([ARCHITECTURE.md](ARCHITECTURE.md) §4). |
 | A5 | Accès étudiant au PDF (`.../fichier` avec `X-Jeton-Participant`) | Utile seulement si le mode « cours visible sur les appareils étudiants » est retenu (point ouvert du cahier des charges). |
+| A6 | Codes d'erreur de l'UC8 dans `ReponseErreur` : `SESSION_INTROUVABLE`, `SESSION_CLOSE`, `CONNEXION_IUT_REQUISE`, `PSEUDONYME_INVALIDE`, `PSEUDONYME_DEJA_PRIS`, `ERREUR_SERVEUR`, `REQUETE_INVALIDE` (noms proposés), et champ `suggestion` | Sans `code`, un `409` sans `suggestion` est ambigu (séance close, quiz noté, doublon) : le front affiche alors le message `error` du back (plan UC8, questions K1, K2, K5). |
+| A7 | Façon de compter les 2 à 20 caractères du pseudonyme et espaces retirés | Le front compte en points de code et nettoie avec `trim()` et `\s+` (plan UC8, question K3) ; il doit suivre le back. |
+| A8 | ~~Écrire `GET /api/cours` et fixer sa forme~~ **Réglé** : écrite côté back (branche `feature/uc2-importer-un-cours`) avec la forme supposée, ainsi que `GET /api/cours/{idCours}` (mêmes champs plus `idVersion`, 404 `COURS_INTROUVABLE`). Reste à fusionner dans `develop` du back | Tant que le back déployé n'a pas la route (404 ou 405), E2 l'indique et ne montre que les cours importés depuis l'ouverture de l'écran. |
