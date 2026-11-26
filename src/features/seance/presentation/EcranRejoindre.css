@@ -1,0 +1,90 @@
+/* Écran E7 « Rejoindre » (maquette docs/maquettes/E7.png, téléphone de gauche). Variables de tokens.css uniquement. */
+
+/* E7-1 nom du cours et du quiz */
+.ecran-rejoindre-quiz {
+  margin: 0;
+  color: color-mix(in srgb, var(--couleur-texte) 75%, var(--couleur-fond));
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.ecran-rejoindre-titre {
+  margin: 0;
+  font-size: var(--taille-enonce);
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.ecran-rejoindre-formulaire {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espace-petit);
+}
+
+/* E7-2 pseudonyme : carte blanche à fine bordure. Taille de texte ≥ 16 px : pas de zoom automatique sur iOS. */
+.ecran-rejoindre-champ {
+  width: 100%;
+  min-height: var(--hauteur-touche-reponse);
+  padding: 0 var(--espace);
+  border: var(--bordure);
+  border-radius: var(--rayon);
+  background: var(--couleur-carte);
+  color: var(--couleur-texte);
+  font: inherit;
+  font-size: var(--taille-reponse);
+  font-weight: 600;
+}
+
+.ecran-rejoindre-champ:focus-visible {
+  outline: 3px solid var(--couleur-structure);
+  outline-offset: 2px;
+}
+
+.ecran-rejoindre-champ[aria-invalid="true"] {
+  border-color: var(--couleur-action);
+}
+
+.ecran-rejoindre-compteur {
+  margin: 0;
+  color: color-mix(in srgb, var(--couleur-texte) 75%, var(--couleur-fond));
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+/* Pseudonyme proposé : action secondaire (violet de structure), touche d'au moins 44 px */
+.ecran-rejoindre-suggestion {
+  align-self: flex-start;
+  min-height: var(--hauteur-touche-min);
+  padding: 0 var(--espace);
+  border: 2px solid var(--couleur-structure);
+  border-radius: var(--rayon);
+  background: var(--couleur-carte);
+  color: var(--couleur-structure);
+  font: inherit;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.ecran-rejoindre-suggestion:focus-visible {
+  outline: 3px solid var(--couleur-texte);
+  outline-offset: 2px;
+}
+
+/* E7-3 : rouge d'action de la maquette E7 (plan UC8, B3) au lieu du violet de E8 */
+.bouton-principal-action {
+  margin-top: var(--espace-petit);
+  background: var(--couleur-action);
+  box-shadow: 0 var(--arete) 0 color-mix(in srgb, var(--couleur-action) 60%, var(--couleur-texte));
+}
+
+.bouton-principal-action:disabled {
+  background: color-mix(in srgb, var(--couleur-action) 20%, var(--couleur-fond));
+}
+
+/* E7-5 mention d'information, en bas de l'écran */
+.ecran-rejoindre-mention {
+  margin: auto 0 0;
+  color: color-mix(in srgb, var(--couleur-texte) 75%, var(--couleur-fond));
+  line-height: 1.5;
+}

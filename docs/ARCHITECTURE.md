@@ -114,11 +114,12 @@ flowchart LR
 
 ## 4. Routage des écrans E1 à E11
 
-Routeur : `react-router` 7, routes déclarées dans `src/app/main.tsx`. Seules les routes de E7 (page vide provisoire,
-`app/RejoindreProvisoire.tsx`) et de E8/E9 (`app/RouteQuestion.tsx`) existent (UC9, B7) ; les autres chemins
+Routeur : `react-router` 7, routes déclarées dans `src/app/main.tsx`. Seules les routes de E7 (`app/RouteRejoindre.tsx`, UC8) et de E8/E9 (`app/RouteQuestion.tsx`, UC9) existent ; les
+autres chemins
 restent une **proposition**, fixée au ticket de l'écran. Toute autre URL affiche encore le modèle Vite.
 En développement seulement, `/demo/question` affiche E8/E9 sans back (faux client temps réel et fausse API,
-`app/demo/DemoQuestion.tsx`) ; cette route est absente du build de production.
+`app/demo/DemoQuestion.tsx`), et `/demo/rejoindre?cas=…` affiche E7 avec un sélecteur de cas (fausse API,
+`app/demo/DemoRejoindre.tsx`) ; ces routes sont absentes du build de production.
 
 | Chemin proposé | Écran | Accès | Remarque |
 |---|---|---|---|
@@ -127,7 +128,7 @@ En développement seulement, `/demo/question` affiche E8/E9 sans back (faux clie
 | `/cours/:idCours` | E3 Éditeur cours + quiz | Enseignant | Ouvre la dernière version ; sélection de page dans l'URL ou l'état, à choisir |
 | `/classements` | E4 Classements | Enseignant | |
 | `/seances/:idSession` | E5 Quiz en cours, E6 Classement | Enseignant | Présentation projetée : pages du cours, page de quiz (E5), page de classement (E6) |
-| `/rejoindre/:codeAcces` | E7 Rejoindre | Public | Cible du lien et du QR code ; page vide provisoire en attendant UC8 |
+| `/rejoindre/:codeAcces` | E7 Rejoindre | Public | **En place** (UC8). Cible du lien et du QR code ; hook `useRejoindreQuiz`, écran `EcranRejoindre` |
 | `/rejoindre/:codeAcces/question` | E8 Question, E9 Résultat | Étudiant (jeton) | **En place** (UC9). E8 et E9 alternent selon les messages temps réel (E9-4) ; hook `useRepondreQuestion` |
 | `/cours/:idCours/resultats` | E10 Résultats de la séance | Enseignant | Liste des séances du cours, détail de la séance choisie |
 | `/seances/:idSession/questions/:idQuestion/correction` | E11 Correction | Enseignant | Ouvert depuis E10 |
@@ -139,6 +140,10 @@ Règles :
 - **Garde étudiant** : sans jeton de participant pour ce `codeAcces`, `/rejoindre/:codeAcces/question` renvoie vers
   E7 (`app/RouteQuestion.tsx`). Le jeton est supprimé quand la session expire (`JETON_INVALIDE`) ou que la séance est
   close ; le bouton « Rejoindre » de E9 ramène alors à E7.
+- **Garde inverse** (UC8) : si un jeton existe déjà pour ce `codeAcces`, `/rejoindre/:codeAcces` renvoie vers
+  `/rejoindre/:codeAcces/question` sans nouvelle entrée dans la séance (`app/RouteRejoindre.tsx`). Un jeton périmé
+  étant supprimé par E8/E9, les deux gardes ne bouclent pas. Après une entrée réussie, le jeton est enregistré puis
+  la navigation remplace E7 dans l'historique : le bouton Retour ne ramène pas au formulaire.
 - **Lien de séance** : le back renvoie `lien` au lancement (`POST /api/quiz/{idQuiz}/sessions`). Ce lien doit pointer
   vers la route de E7 : le format est à aligner avec l'équipe back.
 - **Liens profonds** : le serveur de fichiers statiques doit renvoyer `index.html` pour tout chemin qui n'est pas un
@@ -154,7 +159,8 @@ Proposition, sans bibliothèque tant que le besoin ne se présente pas :
 |---|---|---|
 | Données du serveur (cours, quiz, classements, résultats) | Hook de la couche `application` de la feature | Chargement à l'ouverture de l'écran, rechargement après une action ; états chargement, erreur, vide |
 | Enseignant connecté | Contexte React fourni dans `app` | Rempli par `GET /api/auth/moi`, vidé à la déconnexion ou sur un `401` |
-| Participant (jeton, pseudonyme) | Feature `seance` | Conservé par `codeAcces` pour survivre à un rechargement de la page : `sessionStorage`, clé `quizzard.jeton.<codeAcces>` (`seance/application/jetonParticipant.ts`, provisoire, à valider) |
+| Participant (jeton, pseudonyme) | Feature `seance` | Conservé par `codeAcces` pour survivre à un rechargement de la page : `sessionStorage`, clé `quizzard.jeton.<codeAcces>` (`seance/application/jetonParticipant.ts` : `lireJeton`, `enregistrerJeton`, `supprimerJeton`, chacune protégée contre un stockage indisponible). Écrit par E7 (UC8), lu par les deux gardes. Seul le jeton est gardé : ni pseudonyme ni `idParticipant` |
+| Entrée dans le quiz (E7) | Feature `seance` | Réducteur pur `seance/domain/ecranRejoindre.ts`, assemblé par `useRejoindreQuiz` (consultation du quiz, envoi du pseudonyme nettoyé, enregistrement du jeton) |
 | Séance en direct (question, échéance, répartition, classement) | Feature `seance` | Réducteur (`useReducer`) alimenté par les messages STOMP et par les resynchronisations REST ; côté étudiant, assemblé par `useRepondreQuestion` (envoi REST, temps réel, décompte) |
 | Formulaire de l'éditeur (E3) | Composant de l'écran | Alerte en cas de modifications non enregistrées (E3-10) |
 
