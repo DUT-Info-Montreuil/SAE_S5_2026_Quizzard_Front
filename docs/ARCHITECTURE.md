@@ -51,7 +51,7 @@ Contraintes du cahier des charges qui pèsent sur le front :
 | Gestion de l'état | Rien d'installé | Proposition : outils de React seuls, bibliothèque seulement si le besoin apparaît (§5) |
 | Client HTTP | Rien d'installé | Proposition : `fetch` du navigateur, enveloppé dans `shared/http` (§6) |
 | Client STOMP | En place | `@stomp/stompjs` 7, WebSocket natif, sans SockJS (§7) |
-| PDF.js | **Retenu, pas installé** | Choix de l'étude de faisabilité (§8) |
+| PDF.js | En place | `pdfjs-dist` 6, dans `shared/pdf` ; chargé seulement par la route de l'éditeur (§8) |
 | Tests | En place | Vitest (`jsdom`), React Testing Library, `user-event`, `jest-dom` ; `npm test` |
 | Image Docker du front | **À écrire** | Serveur de fichiers statiques à choisir (§11) |
 
@@ -114,18 +114,20 @@ flowchart LR
 
 ## 4. Routage des écrans E1 à E11
 
-Routeur : `react-router` 7, routes déclarées dans `src/app/main.tsx`. Seules les routes de E7 (`app/RouteRejoindre.tsx`, UC8) et de E8/E9 (`app/RouteQuestion.tsx`, UC9) existent ; les
-autres chemins
-restent une **proposition**, fixée au ticket de l'écran. Toute autre URL affiche encore le modèle Vite.
+Routeur : `react-router` 7, routes déclarées dans `src/app/main.tsx`. Routes en place : E7 (`app/RouteRejoindre.tsx`,
+UC8), E8/E9 (`app/RouteQuestion.tsx`, UC9), E3 (`app/RouteEditeur.tsx`, chargée en `lazy`, UC3) et E1 (page vide
+provisoire `app/ConnexionProvisoire.tsx`, `TODO(UC1)`). Les autres chemins restent une **proposition**, fixée au
+ticket de l'écran. Toute autre URL affiche encore le modèle Vite.
 En développement seulement, `/demo/question` affiche E8/E9 sans back (faux client temps réel et fausse API,
-`app/demo/DemoQuestion.tsx`), et `/demo/rejoindre?cas=…` affiche E7 avec un sélecteur de cas (fausse API,
-`app/demo/DemoRejoindre.tsx`) ; ces routes sont absentes du build de production.
+`app/demo/DemoQuestion.tsx`), `/demo/rejoindre?cas=…` affiche E7 avec un sélecteur de cas (fausse API,
+`app/demo/DemoRejoindre.tsx`) et `/demo/editeur` affiche E3 sans back (`app/demo/DemoEditeur.tsx`) ; ces routes sont
+absentes du build de production.
 
 | Chemin proposé | Écran | Accès | Remarque |
 |---|---|---|---|
-| `/connexion` | E1 Connexion | Public | Redirige vers `/cours` si déjà connecté |
+| `/connexion` | E1 Connexion | Public | Page vide provisoire (UC1 à venir) ; paramètre `retour` : écran à rouvrir après la connexion |
 | `/cours` | E2 Mes cours | Enseignant | Page d'accueil de l'enseignant |
-| `/cours/:idCours` | E3 Éditeur cours + quiz | Enseignant | Ouvre la dernière version ; sélection de page dans l'URL ou l'état, à choisir |
+| `/cours/:idCours/editeur` | E3 Éditeur cours + quiz | Enseignant | **En place** (UC3, éléments 1 à 4). Ouvre la dernière version ; sélection de page dans l'état ; hook `useEditeurCours` ; identifiant non entier → « Cours introuvable. » ; routes de lecture livrées par le back (cours, pages avec titre du quiz, PDF) ; retirer et déplacer une page de quiz (`DELETE` / `PATCH /api/pages/{idPage}`) |
 | `/classements` | E4 Classements | Enseignant | |
 | `/seances/:idSession` | E5 Quiz en cours, E6 Classement | Enseignant | Présentation projetée : pages du cours, page de quiz (E5), page de classement (E6) |
 | `/rejoindre/:codeAcces` | E7 Rejoindre | Public | **En place** (UC8). Cible du lien et du QR code ; hook `useRejoindreQuiz`, écran `EcranRejoindre` |
@@ -136,7 +138,9 @@ En développement seulement, `/demo/question` affiche E8/E9 sans back (faux clie
 Règles :
 
 - **Garde enseignant** : au chargement d'un écran enseignant, le front appelle `GET /api/auth/moi` ; un `401`
-  renvoie vers `/connexion`, puis vers l'écran demandé après la connexion.
+  renvoie vers `/connexion`, puis vers l'écran demandé après la connexion. En attendant l'UC1, chaque écran gère le
+  `401` de ses propres requêtes : l'éditeur E3 passe à l'état `CONNEXION` et redirige vers
+  `/connexion?retour=/cours/{idCours}/editeur`.
 - **Garde étudiant** : sans jeton de participant pour ce `codeAcces`, `/rejoindre/:codeAcces/question` renvoie vers
   E7 (`app/RouteQuestion.tsx`). Le jeton est supprimé quand la session expire (`JETON_INVALIDE`) ou que la séance est
   close ; le bouton « Rejoindre » de E9 ramène alors à E7.
@@ -173,11 +177,14 @@ Un seul client, dans `src/shared/http`, construit sur `fetch`. Toutes les featur
 
 - **Adresse** : `VITE_API_URL` (§10) + chemin du back (`/api/...`, `/api/public/...`).
 - **Cookies** : `credentials: "include"` sur toutes les requêtes, pour la session de l'enseignant.
-- **CSRF** : sur `POST`, `PUT`, `PATCH`, `DELETE`, en-tête `X-XSRF-TOKEN` avec le jeton obtenu par
-  `GET /api/auth/csrf` (détail dans [API.md](API.md)).
+- **CSRF** (`shared/http/csrf.ts`) : sur `POST`, `PUT`, `PATCH`, `DELETE` hors `/api/public/**`, en-tête
+  `X-XSRF-TOKEN` avec le jeton obtenu par `GET /api/auth/csrf` au premier besoin et gardé en mémoire. Route absente
+  ou en échec (`SECURITE_OUVERTE`) : envoi sans en-tête. Sur un `403`, nouveau jeton puis **un seul** rejeu. Rien
+  pour `/api/public/**` (détail dans [API.md](API.md)).
 - **Étudiant** : en-tête `X-Jeton-Participant` sur les routes `/api/public/**` qui l'exigent.
 - **JSON** par défaut ; `multipart/form-data` pour l'import d'un PDF (ne pas fixer `Content-Type`, le navigateur ajoute
-  la frontière) ; réponse binaire pour le PDF, le QR code et l'export CSV.
+  la frontière) ; réponse binaire (`requeteBinaire`, `ArrayBuffer`, mêmes erreurs typées que `requete`) pour le PDF,
+  le QR code et l'export CSV.
 - **Erreurs** : toute réponse non 2xx est convertie en une erreur typée qui garde `status`, `error`, `request_id` et,
   pour un `422`, `champs`. Les écrans affichent `error` et, pour un incident, le `request_id` à transmettre à
   l'équipe. Comportement par statut : [API.md](API.md).
@@ -238,13 +245,19 @@ mesuré au §6). Le bouton Valider se désactive à 0 (E8-1), mais c'est le serv
 
 ## 8. Rendu du PDF avec PDF.js
 
-Retenu par l'étude de faisabilité (licence Apache 2.0), **pas encore installé**.
+Retenu par l'étude de faisabilité (licence Apache 2.0), **installé** : `pdfjs-dist` 6, enveloppé dans
+`src/shared/pdf/documentPdf.ts` (ouverture depuis un `ArrayBuffer`, rendu d'une page dans un `<canvas>` annulable,
+texte brut d'une page, fermeture). Les types de PDF.js ne sortent pas de ce fichier. Il n'est importé que par la
+route de l'éditeur (`lazy`) et par un `import()` dynamique du hook `useEditeurCours` : absent du bundle étudiant.
 
-- Le PDF n'est jamais servi en accès direct : PDF.js le charge par la route protégée
-  `GET /api/cours/{idCours}/versions/{idVersion}/fichier`, avec le cookie de session (enseignant) ou l'en-tête
+- Le PDF n'est jamais servi en accès direct : PDF.js le charge par la route protégée (**faite** côté back ;
+  `404` `FICHIER_INTROUVABLE` si le fichier a été supprimé) `GET /api/cours/{idCours}/versions/{idVersion}/fichier`, avec le cookie de session (enseignant) ou l'en-tête
   `X-Jeton-Participant` (étudiant, si le mode d'affichage l'exige).
-- **Tout est embarqué** : le worker de PDF.js et ses ressources annexes (polices standard, tables de caractères)
-  sont copiés dans le build et servis par l'application ; aucune adresse de CDN.
+- **Tout est embarqué** : le worker de PDF.js est importé par `?url` (Vite le copie dans `dist/assets`) et servi
+  par l'application ; aucune adresse de CDN. Polices standard (`pdfjs-dist/standard_fonts`) copiées
+  sous `pdfjs/standard_fonts/` par un plugin de `vite.config.ts` (servies aussi par `npm run dev`) et passées à
+  `getDocument()` (`standardFontDataUrl`, `shared/config`). Tables de caractères (`cmaps/`) **pas encore copiées**
+  (question U6 du plan UC3) : un PDF en écriture asiatique peut mal s'afficher.
 - Usages :
   - E3 : miniatures des pages du cours et aperçu de la page sélectionnée ;
   - présentation projetée (`/seances/:idSession`) : page courante en grand, pages de quiz (E5) et de classement (E6)
@@ -253,7 +266,9 @@ Retenu par l'étude de faisabilité (licence Apache 2.0), **pas encore installé
     (**point ouvert** du cahier des charges, §2.7 point 8).
 - Les pages de quiz et de classement ne sont pas dans le PDF : ce sont des composants React placés entre deux pages,
   à partir de `GET /api/cours/{idCours}/versions/{idVersion}/pages`.
-- Performance : rendu des miniatures à la demande (pages visibles seulement), une instance du document par écran.
+- Performance : rendu des miniatures à la demande (pages proches de l'écran seulement, `IntersectionObserver` ; canvas
+  retiré et vidé quand la miniature s'en éloigne), données de chaque page libérées après rendu (`page.cleanup()`
+  dans `shared/pdf`), une instance du document par écran, fermée au rechargement et quand on quitte l'écran (E3 : `useEditeurCours`).
 - Solution de repli en séance (cahier des charges §4.8) : le PDF d'origine reste téléchargeable et projetable sans
   quiz.
 
@@ -309,7 +324,7 @@ Vite lit `.env` (non commité) ; seules les variables préfixées par `VITE_` so
 | F2 | Découpage par feature, mêmes noms que le back ; couches `api`, `application`, `domain`, `presentation` | En place (dossiers) |
 | F3 | Commandes en REST, diffusion en STOMP, resynchronisation REST après reconnexion | Retenu (aligné sur le back) |
 | F4 | Décompte calé sur l'échéance et l'heure du serveur | Retenu |
-| F5 | PDF.js embarqué, PDF chargé par route protégée | Retenu, à installer |
+| F5 | PDF.js embarqué, PDF chargé par route protégée | En place (`pdfjs-dist`, `shared/pdf`, E3) ; polices standard embarquées ; cmaps à copier (U6) |
 | F6 | Routeur, client STOMP, outil de test | Retenu et installé : React Router (`react-router`), `@stomp/stompjs`, Vitest + RTL |
 | F7 | Chemins des écrans (§4) et format du `lien` de séance | Proposition, à confirmer avec le back |
 | F8 | Mode d'affichage du cours sur les appareils étudiants | Point ouvert du cahier des charges, à redemander au client |

@@ -1,0 +1,356 @@
+// Reducer de l'éditeur : plan UC3, §6, D11, D12 et D15.
+import { describe, expect, it } from 'vitest'
+import type { Cours, PageQuizInseree } from './cours.ts'
+import { ETAT_INITIAL, emplacementsActifs, insertionPossible, quizParDefaut, reduireEditeur } from './machineEditeur.ts'
+import type { ActionEditeur, EtatEditeur } from './machineEditeur.ts'
+
+const cours = (archive = false): Cours => ({
+  idCours: 7,
+  titre: 'Réseaux',
+  archive,
+  version: { idVersion: 3, numero: 2, nbPages: 12 },
+})
+
+const CHARGE: ActionEditeur = {
+  type: 'CHARGE',
+  cours: cours(),
+  nbPages: 12,
+  pages: [{ idPage: 1, numeroPage: 2, ordre: 0, type: 'QUIZ', titreQuiz: 'Quiz 1' }],
+  quiz: [{ idQuiz: 40, titre: 'Quiz 1' }, { idQuiz: 41, titre: 'Quiz 2' }],
+}
+
+const EMPLACEMENT = { numeroPage: 4, ordre: 0 }
+
+const REPONSE: PageQuizInseree = {
+  idPage: 2,
+  idQuiz: 42,
+  titreQuiz: 'Quiz 3',
+  quizCree: true,
+  idQuestion: 90,
+  numeroPage: 4,
+  ordre: 0,
+  pages: [
+    { idPage: 1, numeroPage: 2, ordre: 0, type: 'QUIZ', titreQuiz: 'Quiz 1' },
+    { idPage: 2, numeroPage: 4, ordre: 0, type: 'QUIZ', titreQuiz: 'Quiz 1' },
+  ],
+}
+
+const suite = (...actions: ActionEditeur[]): EtatEditeur => actions.reduce(reduireEditeur, ETAT_INITIAL)
+
+const pret = () => suite(CHARGE)
+const choix = () => suite(CHARGE, { type: 'OUVRIR_CHOIX', emplacement: EMPLACEMENT })
+const envoi = (idQuiz: number | null = 40) => reduireEditeur(choix(), { type: 'CONFIRMER', idQuiz })
+const PAGE_QUIZ = { idPage: 1, numeroPage: 2, ordre: 0, type: 'QUIZ', titreQuiz: 'Quiz 1' } as const
+const quizChoisi = () => suite(CHARGE, { type: 'SELECTIONNER', selection: { genre: 'PAGE_INSEREE', idPage: 1, titreQuiz: 'Quiz 1' } })
+const confirmationRetrait = () => reduireEditeur(quizChoisi(), { type: 'DEMANDER_RETRAIT' })
+const retrait = () => reduireEditeur(confirmationRetrait(), { type: 'CONFIRMER_RETRAIT' })
+const choixDeplacement = () => reduireEditeur(quizChoisi(), { type: 'DEMANDER_DEPLACEMENT' })
+const deplacement = () => reduireEditeur(choixDeplacement(), { type: 'DEPLACER', emplacement: EMPLACEMENT })
+
+function enPret(etat: EtatEditeur) {
+  if (etat.nom !== 'PRET') throw new Error(`état PRET attendu, obtenu ${etat.nom}`)
+  return etat
+}
+
+describe('chargement', () => {
+  it('CHARGEMENT ──CHARGE──▶ PRET, page 1 du PDF sélectionnée, aucune insertion', () => {
+    const etat = enPret(pret())
+    expect(etat.selection).toEqual({ genre: 'PAGE_PDF', numeroPage: 1 })
+    expect(etat.insertion).toEqual({ nom: 'AUCUNE' })
+    expect(etat.erreur).toBeNull()
+    expect(etat.bloquee).toBe(false)
+    expect(etat.pages).toEqual([{ idPage: 1, numeroPage: 2, ordre: 0, type: 'QUIZ', titreQuiz: 'Quiz 1' }])
+  })
+
+  it('cours archivé : LECTURE_SEULE, aucune insertion possible', () => {
+    const etat = suite({ ...CHARGE, cours: cours(true) } as ActionEditeur)
+    expect(etat.nom).toBe('LECTURE_SEULE')
+    expect(insertionPossible(etat)).toBe(false)
+    expect(reduireEditeur(etat, { type: 'OUVRIR_CHOIX', emplacement: EMPLACEMENT })).toBe(etat)
+  })
+
+  it('LECTURE_SEULE : sélection possible, « Recharger » → CHARGEMENT', () => {
+    const etat = suite({ ...CHARGE, cours: cours(true) } as ActionEditeur)
+    const selection = { genre: 'PAGE_PDF', numeroPage: 3 } as const
+    expect(reduireEditeur(etat, { type: 'SELECTIONNER', selection })).toMatchObject({ nom: 'LECTURE_SEULE', selection })
+    expect(reduireEditeur(etat, { type: 'RECHARGER' })).toEqual(ETAT_INITIAL)
+  })
+
+  it('401 → CONNEXION', () => {
+    expect(suite({ type: 'ECHEC_CHARGEMENT', erreur: { statut: 401, error: null } })).toEqual({ nom: 'CONNEXION' })
+  })
+
+  it('autre échec ou réseau → ERREUR_CHARGEMENT avec « Recharger »', () => {
+    const etat = suite({ type: 'ECHEC_CHARGEMENT', erreur: { statut: 404, error: null } })
+    expect(etat).toMatchObject({ nom: 'ERREUR_CHARGEMENT', erreur: { message: 'Cours introuvable.', action: 'RECHARGER' } })
+    expect(suite({ type: 'ECHEC_CHARGEMENT', erreur: null }).nom).toBe('ERREUR_CHARGEMENT')
+  })
+
+  it('ERREUR_CHARGEMENT | PRET ──RECHARGER──▶ CHARGEMENT', () => {
+    expect(suite({ type: 'ECHEC_CHARGEMENT', erreur: null }, { type: 'RECHARGER' })).toEqual(ETAT_INITIAL)
+    expect(reduireEditeur(pret(), { type: 'RECHARGER' })).toEqual(ETAT_INITIAL)
+  })
+
+  it('CHARGE et ECHEC_CHARGEMENT ignorés hors CHARGEMENT', () => {
+    const etat = pret()
+    expect(reduireEditeur(etat, CHARGE)).toBe(etat)
+    expect(reduireEditeur(etat, { type: 'ECHEC_CHARGEMENT', erreur: null })).toBe(etat)
+  })
+
+  it('CONNEXION : état final', () => {
+    const etat = suite({ type: 'ECHEC_CHARGEMENT', erreur: { statut: 401, error: null } })
+    expect(reduireEditeur(etat, { type: 'RECHARGER' })).toBe(etat)
+  })
+})
+
+describe('insertion', () => {
+  it('AUCUNE ──SELECTIONNER──▶ AUCUNE, sélection changée', () => {
+    const selection = { genre: 'PAGE_INSEREE', idPage: 1, titreQuiz: null } as const
+    expect(reduireEditeur(pret(), { type: 'SELECTIONNER', selection })).toMatchObject({
+      selection,
+      insertion: { nom: 'AUCUNE' },
+    })
+  })
+
+  it('AUCUNE ──OUVRIR_CHOIX──▶ CHOIX_QUIZ, premier quiz proposé', () => {
+    expect(enPret(choix()).insertion).toEqual({ nom: 'CHOIX_QUIZ', emplacement: EMPLACEMENT, idQuizPropose: 40 })
+    expect(insertionPossible(choix())).toBe(false)
+  })
+
+  it('CHOIX_QUIZ ──ANNULER_CHOIX──▶ AUCUNE', () => {
+    expect(enPret(reduireEditeur(choix(), { type: 'ANNULER_CHOIX' })).insertion).toEqual({ nom: 'AUCUNE' })
+  })
+
+  it('CHOIX_QUIZ ──CONFIRMER──▶ ENVOI, message effacé ; null = nouveau quiz', () => {
+    const avecErreur = reduireEditeur(envoi(), { type: 'INSERTION_REFUSEE', erreur: { statut: 409, code: 'QUIZ_EN_SEANCE', error: null } })
+    const relance = reduireEditeur(reduireEditeur(avecErreur, { type: 'OUVRIR_CHOIX', emplacement: EMPLACEMENT }), {
+      type: 'CONFIRMER',
+      idQuiz: null,
+    })
+    expect(enPret(relance).insertion).toEqual({ nom: 'ENVOI', emplacement: EMPLACEMENT, idQuiz: null })
+    expect(enPret(relance).erreur).toBeNull()
+  })
+
+  it('ENVOI : une seule insertion à la fois (OUVRIR_CHOIX, CONFIRMER, RECHARGER, SELECTIONNER ignorés)', () => {
+    const etat = envoi()
+    expect(insertionPossible(etat)).toBe(false)
+    const ignorees: ActionEditeur[] = [
+      { type: 'OUVRIR_CHOIX', emplacement: { numeroPage: 0, ordre: 0 } },
+      { type: 'CONFIRMER', idQuiz: 41 },
+      { type: 'ANNULER_CHOIX' },
+      { type: 'RECHARGER' },
+      { type: 'SELECTIONNER', selection: { genre: 'PAGE_PDF', numeroPage: 2 } },
+    ]
+    for (const action of ignorees) expect(reduireEditeur(etat, action)).toBe(etat)
+  })
+
+  it('ENVOI ──201──▶ AUCUNE : pages de la réponse, quiz créé ajouté, nouvelle page sélectionnée', () => {
+    const etat = enPret(reduireEditeur(envoi(null), { type: 'INSERTION_REUSSIE', reponse: REPONSE }))
+    expect(etat.insertion).toEqual({ nom: 'AUCUNE' })
+    expect(etat.pages).toBe(REPONSE.pages)
+    expect(etat.quiz).toEqual([
+      { idQuiz: 40, titre: 'Quiz 1' },
+      { idQuiz: 41, titre: 'Quiz 2' },
+      { idQuiz: 42, titre: 'Quiz 3' },
+    ])
+    expect(etat.selection).toEqual({ genre: 'PAGE_INSEREE', idPage: 2, titreQuiz: 'Quiz 3' })
+    expect(etat.idDernierQuiz).toBe(42)
+  })
+
+  it('201 avec un quiz existant : liste des quiz inchangée, quiz présélectionné ensuite', () => {
+    const reponse = { ...REPONSE, idQuiz: 41, titreQuiz: 'Quiz 2', quizCree: false }
+    const etat = reduireEditeur(envoi(41), { type: 'INSERTION_REUSSIE', reponse })
+    expect(enPret(etat).quiz).toHaveLength(2)
+    const rouvert = reduireEditeur(etat, { type: 'OUVRIR_CHOIX', emplacement: EMPLACEMENT })
+    expect(enPret(rouvert).insertion).toMatchObject({ idQuizPropose: 41 })
+  })
+
+  it('ENVOI ──401──▶ CONNEXION', () => {
+    expect(reduireEditeur(envoi(), { type: 'INSERTION_REFUSEE', erreur: { statut: 401, error: null } })).toEqual({
+      nom: 'CONNEXION',
+    })
+  })
+
+  it.each(['VERSION_PERIMEE', 'EMPLACEMENT_INVALIDE'])('ENVOI ──%s──▶ AUCUNE + « Recharger », insertion bloquée', (code) => {
+    const statut = code === 'VERSION_PERIMEE' ? 409 : 422
+    const etat = enPret(reduireEditeur(envoi(), { type: 'INSERTION_REFUSEE', erreur: { statut, code, error: null } }))
+    expect(etat.insertion).toEqual({ nom: 'AUCUNE' })
+    expect(etat.erreur?.action).toBe('RECHARGER')
+    expect(etat.bloquee).toBe(true)
+    expect(reduireEditeur(etat, { type: 'OUVRIR_CHOIX', emplacement: EMPLACEMENT })).toBe(etat)
+    expect(reduireEditeur(etat, { type: 'RECHARGER' })).toEqual(ETAT_INITIAL)
+  })
+
+  it('ENVOI ──autre erreur──▶ AUCUNE + message, boutons réactivés', () => {
+    const etat = enPret(reduireEditeur(envoi(), {
+      type: 'INSERTION_REFUSEE',
+      erreur: { statut: 409, code: 'QUIZ_EN_SEANCE', error: null },
+    }))
+    expect(etat.erreur?.message).toBe('Ce quiz est en cours de séance : réessayez après sa clôture.')
+    expect(etat.bloquee).toBe(false)
+    expect(insertionPossible(etat)).toBe(true)
+  })
+
+  it('ENVOI ──panne réseau──▶ AUCUNE + message provisoire et « Recharger », boutons réactivés', () => {
+    const avant = envoi()
+    const etat = enPret(reduireEditeur(avant, { type: 'ECHEC_RESEAU_INSERTION', pages: null }))
+    expect(etat.erreur).toMatchObject({ message: 'L\'insertion a échoué, réessayez.', action: 'RECHARGER' })
+    expect(insertionPossible(etat)).toBe(true)
+    expect(etat.pages).toBe(enPret(avant).pages)
+  })
+
+  it('ENVOI ──panne réseau, pages relues──▶ liste remplacée par les pages relues', () => {
+    const pages = [{ idPage: 77, numeroPage: 4, ordre: 0, type: 'QUIZ' as const, titreQuiz: 'Quiz 1' }]
+    const etat = enPret(reduireEditeur(envoi(), { type: 'ECHEC_RESEAU_INSERTION', pages }))
+    expect(etat.pages).toBe(pages)
+    expect(etat.erreur).toMatchObject({ action: 'RECHARGER' })
+  })
+
+  it('réponses d\'insertion ignorées hors ENVOI', () => {
+    const etat = pret()
+    expect(reduireEditeur(etat, { type: 'INSERTION_REUSSIE', reponse: REPONSE })).toBe(etat)
+    expect(reduireEditeur(etat, { type: 'INSERTION_REFUSEE', erreur: { statut: 500, error: null } })).toBe(etat)
+    expect(reduireEditeur(etat, { type: 'ECHEC_RESEAU_INSERTION', pages: [] })).toBe(etat)
+    expect(reduireEditeur(etat, { type: 'ANNULER_CHOIX' })).toBe(etat)
+    expect(reduireEditeur(etat, { type: 'CONFIRMER', idQuiz: 40 })).toBe(etat)
+  })
+
+  it('CHOIX_QUIZ : SELECTIONNER ignoré (dialogue ouvert)', () => {
+    const etat = choix()
+    expect(reduireEditeur(etat, { type: 'SELECTIONNER', selection: { genre: 'PAGE_PDF', numeroPage: 2 } })).toBe(etat)
+  })
+})
+
+describe('quizParDefaut (D11)', () => {
+  const quiz = [{ idQuiz: 1, titre: 'Quiz 1' }, { idQuiz: 2, titre: 'Quiz 2' }]
+
+  it('quiz de la dernière insertion s\'il existe encore', () => {
+    expect(quizParDefaut(quiz, 2)).toBe(2)
+  })
+
+  it('sinon premier quiz', () => {
+    expect(quizParDefaut(quiz, null)).toBe(1)
+    expect(quizParDefaut(quiz, 99)).toBe(1)
+  })
+
+  it('aucun quiz : null (« Nouveau quiz »)', () => {
+    expect(quizParDefaut([], null)).toBeNull()
+  })
+})
+
+describe('aucune autre transition que celles du §6 (B6)', () => {
+  const SELECTION = { genre: 'PAGE_PDF', numeroPage: 2 } as const
+  const ACTIONS: ActionEditeur[] = [
+    CHARGE,
+    { type: 'ECHEC_CHARGEMENT', erreur: null },
+    { type: 'RECHARGER' },
+    { type: 'SELECTIONNER', selection: SELECTION },
+    { type: 'OUVRIR_CHOIX', emplacement: EMPLACEMENT },
+    { type: 'ANNULER_CHOIX' },
+    { type: 'CONFIRMER', idQuiz: 40 },
+    { type: 'INSERTION_REUSSIE', reponse: REPONSE },
+    { type: 'INSERTION_REFUSEE', erreur: { statut: 500, error: null } },
+    { type: 'ECHEC_RESEAU_INSERTION', pages: null },
+    { type: 'DEMANDER_RETRAIT' },
+    { type: 'CONFIRMER_RETRAIT' },
+    { type: 'RETRAIT_REUSSI', pages: [] },
+    { type: 'DEMANDER_DEPLACEMENT' },
+    { type: 'DEPLACER', emplacement: EMPLACEMENT },
+    { type: 'DEPLACEMENT_REUSSI', pages: [] },
+    { type: 'MODIFICATION_REFUSEE', erreur: { statut: 500, error: null } },
+    { type: 'ECHEC_RESEAU_MODIFICATION', pages: null },
+  ]
+  const bloque = () => reduireEditeur(envoi(), {
+    type: 'INSERTION_REFUSEE',
+    erreur: { statut: 409, code: 'VERSION_PERIMEE', error: null },
+  })
+
+  // Pour chaque état, les seules actions qui le changent (plan §6) ; toutes les autres doivent rendre le même objet.
+  const ETATS: [string, () => EtatEditeur, string[]][] = [
+    ['CHARGEMENT', () => ETAT_INITIAL, ['CHARGE', 'ECHEC_CHARGEMENT']],
+    ['ERREUR_CHARGEMENT', () => suite({ type: 'ECHEC_CHARGEMENT', erreur: null }), ['RECHARGER']],
+    ['CONNEXION', () => suite({ type: 'ECHEC_CHARGEMENT', erreur: { statut: 401, error: null } }), []],
+    ['LECTURE_SEULE', () => suite({ ...CHARGE, cours: cours(true) } as ActionEditeur), ['RECHARGER', 'SELECTIONNER']],
+    ['PRET / AUCUNE', pret, ['RECHARGER', 'SELECTIONNER', 'OUVRIR_CHOIX']],
+    ['PRET / AUCUNE, insertion bloquée', bloque, ['RECHARGER', 'SELECTIONNER']],
+    ['PRET / CHOIX_QUIZ', choix, ['RECHARGER', 'ANNULER_CHOIX', 'CONFIRMER']],
+    ['PRET / ENVOI', () => envoi(), ['INSERTION_REUSSIE', 'INSERTION_REFUSEE', 'ECHEC_RESEAU_INSERTION']],
+    [
+      'PRET / AUCUNE, page de quiz sélectionnée',
+      quizChoisi,
+      ['RECHARGER', 'SELECTIONNER', 'OUVRIR_CHOIX', 'DEMANDER_RETRAIT', 'DEMANDER_DEPLACEMENT'],
+    ],
+    ['PRET / CONFIRMATION_RETRAIT', confirmationRetrait, ['RECHARGER', 'ANNULER_CHOIX', 'CONFIRMER_RETRAIT']],
+    ['PRET / RETRAIT', retrait, ['RETRAIT_REUSSI', 'MODIFICATION_REFUSEE', 'ECHEC_RESEAU_MODIFICATION']],
+    ['PRET / CHOIX_DEPLACEMENT', choixDeplacement, ['RECHARGER', 'ANNULER_CHOIX', 'DEPLACER']],
+    ['PRET / DEPLACEMENT', deplacement, ['DEPLACEMENT_REUSSI', 'MODIFICATION_REFUSEE', 'ECHEC_RESEAU_MODIFICATION']],
+  ]
+
+  it.each(ETATS)('%s : seules les actions prévues changent l\'état', (_nom, etat, prevues) => {
+    for (const action of ACTIONS) {
+      const avant = etat()
+      const apres = reduireEditeur(avant, action)
+      if (prevues.includes(action.type)) expect(apres, action.type).not.toBe(avant)
+      else expect(apres, action.type).toBe(avant)
+    }
+  })
+})
+
+describe('retrait d\'une page de quiz', () => {
+  it('« Retirer » seulement sur une page de quiz sélectionnée : page du PDF → état inchangé', () => {
+    const etat = pret()
+    expect(reduireEditeur(etat, { type: 'DEMANDER_RETRAIT' })).toBe(etat)
+    expect(enPret(confirmationRetrait()).insertion).toEqual({ nom: 'CONFIRMATION_RETRAIT', page: PAGE_QUIZ })
+  })
+
+  it('confirmé → RETRAIT, boutons désactivés ; 204 → pages relues, page du PDF qui précédait sélectionnée', () => {
+    expect(insertionPossible(retrait())).toBe(false)
+    const etat = enPret(reduireEditeur(retrait(), { type: 'RETRAIT_REUSSI', pages: [] }))
+    expect(etat).toMatchObject({ insertion: { nom: 'AUCUNE' }, pages: [], erreur: null })
+    expect(etat.selection).toEqual({ genre: 'PAGE_PDF', numeroPage: 2 })
+  })
+
+  it('204 mais relecture échouée : page ôtée, message de chargement et « Recharger »', () => {
+    const etat = enPret(reduireEditeur(retrait(), { type: 'RETRAIT_REUSSI', pages: null }))
+    expect(etat.pages).toEqual([])
+    expect(etat.erreur).toMatchObject({ message: 'Impossible de charger l\'éditeur.', action: 'RECHARGER' })
+  })
+
+  it('refus VERSION_PERIMEE : message de l\'UC3, bloqué ; 401 : CONNEXION', () => {
+    const refus = (statut: number, code?: string) =>
+      reduireEditeur(retrait(), { type: 'MODIFICATION_REFUSEE', erreur: { statut, code, error: null } })
+    expect(enPret(refus(409, 'VERSION_PERIMEE'))).toMatchObject({
+      insertion: { nom: 'AUCUNE' },
+      bloquee: true,
+      erreur: { message: 'Une nouvelle version du cours a été importée : rechargez l\'éditeur.' },
+    })
+    expect(refus(401).nom).toBe('CONNEXION')
+  })
+
+  it('« Annuler » → AUCUNE, page toujours sélectionnée', () => {
+    const etat = enPret(reduireEditeur(confirmationRetrait(), { type: 'ANNULER_CHOIX' }))
+    expect(etat.insertion).toEqual({ nom: 'AUCUNE' })
+    expect(etat.selection).toMatchObject({ genre: 'PAGE_INSEREE', idPage: 1 })
+  })
+})
+
+describe('déplacement d\'une page de quiz', () => {
+  it('CHOIX_DEPLACEMENT : boutons « Insérer un quiz ici » actifs, mais pas d\'insertion', () => {
+    expect(emplacementsActifs(choixDeplacement())).toBe(true)
+    expect(insertionPossible(choixDeplacement())).toBe(false)
+    expect(emplacementsActifs(deplacement())).toBe(false)
+  })
+
+  it('200 → pages de la réponse, page déplacée toujours sélectionnée', () => {
+    const pages = [{ ...PAGE_QUIZ, numeroPage: 4 }]
+    const etat = enPret(reduireEditeur(deplacement(), { type: 'DEPLACEMENT_REUSSI', pages }))
+    expect(etat).toMatchObject({ insertion: { nom: 'AUCUNE' }, pages, erreur: null })
+    expect(etat.selection).toMatchObject({ genre: 'PAGE_INSEREE', idPage: 1 })
+  })
+
+  it('panne réseau : pages relues si possible, texte provisoire et « Recharger »', () => {
+    const etat = enPret(reduireEditeur(deplacement(), { type: 'ECHEC_RESEAU_MODIFICATION', pages: null }))
+    expect(etat.pages).toEqual([PAGE_QUIZ])
+    expect(etat.erreur).toMatchObject({ message: 'La modification de la page a échoué, réessayez.', action: 'RECHARGER' })
+  })
+})

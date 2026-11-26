@@ -77,8 +77,9 @@ Les messages `error` sont en français et sans donnée personnelle : ils s'affic
   de l'application et par la garde des écrans enseignant.
 - **Déconnexion** : `POST /api/auth/deconnexion` → `204`, puis retour à E1.
 - **CSRF** : le front obtient le jeton par `GET /api/auth/csrf` et le renvoie dans l'en-tête `X-XSRF-TOKEN` sur toute
-  requête `POST`, `PUT`, `PATCH`, `DELETE`. Le jeton est demandé au démarrage et de nouveau après une connexion ou une
-  déconnexion. La forme exacte du corps de la réponse de `/api/auth/csrf` est à préciser dans la documentation du back.
+  requête `POST`, `PUT`, `PATCH`, `DELETE` hors `/api/public/**`. En place (`shared/http/csrf.ts`) : jeton demandé au
+  premier besoin et gardé en mémoire ; route en échec → envoi sans en-tête ; `403` → nouveau jeton et un seul rejeu.
+  À venir avec l'UC1 : nouveau jeton après une connexion ou une déconnexion. La forme exacte du corps de la réponse de `/api/auth/csrf` est à préciser dans la documentation du back.
 - **Développement** : tant que la connexion n'existe pas, le back tourne avec `SECURITE_OUVERTE=true` (routes ouvertes,
   CSRF coupé) ; le front doit fonctionner dans les deux cas.
 
@@ -112,7 +113,7 @@ sont celles du back.
 |---|---|
 | E1 Connexion | `GET /api/auth/csrf`, `POST /api/auth/connexion`, `GET /api/auth/moi` |
 | E2 Mes cours | `GET /api/cours`, `POST /api/cours` (import), `POST /api/cours/{idCours}/versions`, `PATCH /api/cours/{idCours}`, `POST /api/auth/deconnexion` |
-| E3 Éditeur | `GET /api/cours/{idCours}`, `GET .../versions/{idVersion}/fichier` (PDF.js), `GET` / `POST .../versions/{idVersion}/pages`, `PATCH` / `DELETE /api/pages/{idPage}`, `POST .../pages/validation` (UC6), `GET` / `POST /api/cours/{idCours}/quiz`, `GET` / `PATCH` / `DELETE /api/quiz/{idQuiz}`, `POST /api/quiz/{idQuiz}/questions`, `PUT` / `DELETE /api/questions/{idQuestion}`, `POST /api/questions/{idQuestion}/motifs/test`, `PUT` / `DELETE /api/questions/{idQuestion}/image`, `POST /api/quiz/{idQuiz}/sessions` (lancer) |
+| E3 Éditeur | **Fait (UC3, routes livrées par le back)** : `GET /api/cours/{idCours}` (back UC2), `GET .../versions/{idVersion}/pages` (`{idPage, numeroPage, ordre, type, idQuestion, idQuiz, titreQuiz}` : titre du quiz de chaque page ; quiz du cours déduits, faute de `GET /api/cours/{idCours}/quiz`), `GET .../versions/{idVersion}/fichier` (PDF.js), `POST /api/cours/{idCours}/pages-quiz` (insertion d'une page de quiz, avec CSRF ; panne réseau → relecture des pages, jamais de renvoi). Erreurs de lecture : `404` `COURS_INTROUVABLE` (ou sans code) → « Cours introuvable. » ; `404` `VERSION_INTROUVABLE` ou `FICHIER_INTROUVABLE` (PDF supprimé) → `error` du back. Retirer et déplacer une page de quiz (boutons de l'aperçu) : `DELETE /api/pages/{idPage}` (`204`, puis relecture des pages) et `PATCH /api/pages/{idPage}` `{numeroPage, ordre}` (`200`, pages à jour ; `ordre` = rang parmi les autres pages) ; `PAGE_INTROUVABLE` et `500` → `error` du back. **À venir** : `POST .../versions/{idVersion}/pages` (UC11), `POST .../pages/validation` (UC6), `GET` / `POST /api/cours/{idCours}/quiz`, `GET` / `PATCH` / `DELETE /api/quiz/{idQuiz}`, `POST /api/quiz/{idQuiz}/questions`, `PUT` / `DELETE /api/questions/{idQuestion}`, `POST /api/questions/{idQuestion}/motifs/test`, `PUT` / `DELETE /api/questions/{idQuestion}/image`, `POST /api/quiz/{idQuiz}/sessions` (lancer) |
 | E4 Classements | `GET` / `POST /api/classements`, `GET` / `PUT` / `DELETE /api/classements/{idClassement}`, `POST .../versions/{idVersion}/pages` (intégrer au cours) |
 | E5 Quiz en cours | `GET /api/sessions/{idSession}`, `GET /api/sessions/{idSession}/qrcode`, `POST .../question-suivante`, `POST .../cloture-question`, `POST .../cloture`, `POST .../identites-non-verifiees` |
 | E6 Classement | `GET /api/sessions/{idSession}/classement` ; pour une page de classement cumulé : `GET /api/classements/{idClassement}` |

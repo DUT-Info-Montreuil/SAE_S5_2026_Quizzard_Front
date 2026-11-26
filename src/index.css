@@ -1,0 +1,4 @@
+/* Styles globaux. Marge par défaut du navigateur retirée : les écrans occupent toute la fenêtre (100dvh). */
+body {
+  margin: 0;
+}
