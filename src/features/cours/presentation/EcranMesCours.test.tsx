@@ -40,7 +40,6 @@ function afficher() {
 const bouton = (name: string) => screen.getByRole('button', { name })
 
 async function choisir(fichier = new File(['%PDF-1.7'], 'Réseaux.pdf', { type: 'application/pdf' })) {
-  await userEvent.click(bouton('Importer un PDF'))
   await userEvent.setup({ applyAccept: false }).upload(screen.getByLabelText(/Fichier PDF/), fichier)
 }
 
@@ -48,7 +47,7 @@ describe('liste des cours', () => {
   it('affiche les cours', async () => {
     back({ liste: () => json([COURS]) })
     afficher()
-    expect(await screen.findByRole('rowheader', { name: 'Réseaux' })).toBeVisible()
+    expect(await screen.findByRole('rowheader', { name: /^Réseaux/ })).toBeVisible()
     expect(screen.getByRole('link', { name: 'Ouvrir Réseaux' })).toHaveAttribute('href', '/cours/4')
   })
 
@@ -68,19 +67,19 @@ describe('liste des cours', () => {
     let panne = true
     back({ liste: () => (panne ? erreur(500, 'x') : json([COURS])) })
     afficher()
-    expect(await screen.findByRole('alert')).toHaveTextContent('Impossible de charger vos cours')
+    expect(await screen.findByText(/Impossible de charger vos cours/)).toBeVisible()
     panne = false
     await userEvent.click(bouton('Réessayer'))
-    expect(await screen.findByRole('rowheader', { name: 'Réseaux' })).toBeVisible()
+    expect(await screen.findByRole('rowheader', { name: /^Réseaux/ })).toBeVisible()
   })
 
   it('liste absente du serveur (405) : l\'import reste possible', async () => {
     back({ liste: () => erreur(405, 'x') })
     afficher()
-    expect(await screen.findByRole('alert')).toHaveTextContent('pas encore disponible')
+    expect(await screen.findByText(/pas encore disponible/)).toBeVisible()
     await choisir()
     await userEvent.click(bouton('Importer'))
-    expect(await screen.findByRole('rowheader', { name: 'Réseaux' })).toBeVisible()
+    expect(await screen.findByRole('rowheader', { name: /^Réseaux/ })).toBeVisible()
   })
 })
 
@@ -92,7 +91,7 @@ describe('importer un PDF', () => {
     expect(screen.getByLabelText('Titre du cours')).toHaveValue('Réseaux')
     await userEvent.dblClick(bouton('Importer'))
     expect(await screen.findByText(/importé en version 1 \(12 pages\)/)).toBeVisible()
-    expect(screen.getByRole('rowheader', { name: 'Réseaux' })).toBeVisible()
+    expect(screen.getByRole('rowheader', { name: /^Réseaux/ })).toBeVisible()
     expect(envois).toHaveLength(1)
     expect((envois[0].get('fichier') as File).name).toBe('Réseaux.pdf')
     expect(envois[0].get('titre')).toBe('Réseaux')

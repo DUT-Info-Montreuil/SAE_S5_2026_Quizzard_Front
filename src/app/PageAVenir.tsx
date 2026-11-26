@@ -1,3 +1,5 @@
+import '../features/seance/presentation/ecranEnseignant.css'
+
 /** Écran d'un autre cas d'utilisation, pas encore réalisé. */
 export function PageAVenir({ titre }: { titre: string }) {
   return (

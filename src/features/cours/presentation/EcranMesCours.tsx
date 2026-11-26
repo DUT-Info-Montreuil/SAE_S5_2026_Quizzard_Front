@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router'
+import { Icone } from '../../../shared/ui/Icone.tsx'
 import { LogoIut } from '../../../shared/ui/LogoIut.tsx'
 import { useMesCours } from '../application/useMesCours.ts'
 import type { Cours } from '../domain/cours.ts'
@@ -18,33 +19,34 @@ interface EcranMesCoursProps {
 /** E2 « Mes cours » : liste des cours et import d'un PDF (UC2). */
 export function EcranMesCours({ compte, onNonConnecte }: EcranMesCoursProps) {
   const { etat, cours, recharger, ajouter } = useMesCours(onNonConnecte)
-  const [importOuvert, setImportOuvert] = useState(false)
+  // Change à chaque import ou abandon : remonte un formulaire vierge.
+  const [cleImport, setCleImport] = useState(0)
   const [importe, setImporte] = useState<Cours | null>(null)
+  const nbQuiz = cours.reduce((total, c) => total + c.nbQuiz, 0)
 
   return (
     <div className="mes-cours">
       <header className="mes-cours-entete">
-        <LogoIut />
-        {compte}
+        <div className="mes-cours-marque">
+          <LogoIut />
+          <span className="mes-cours-ecran">Mes cours</span>
+        </div>
+        <div className="boutons">
+          <Link className="bouton bouton-secondaire" to="/classements">
+            <Icone nom="trophee" /> Mes classements
+          </Link>
+          {compte}
+        </div>
       </header>
+
       <main>
         <div className="mes-cours-titre">
           <h1>Mes cours</h1>
-          <div className="boutons">
-            <Link className="lien" to="/classements">Mes classements</Link>
-            {!importOuvert && (
-              <button
-                type="button"
-                className="bouton bouton-action"
-                onClick={() => {
-                  setImporte(null)
-                  setImportOuvert(true)
-                }}
-              >
-                Importer un PDF
-              </button>
-            )}
-          </div>
+          {etat.phase !== 'CHARGEMENT' && (
+            <p className="mes-cours-compte">
+              {cours.length} cours · {nbQuiz} quiz
+            </p>
+          )}
         </div>
 
         <div role="status">
@@ -56,24 +58,23 @@ export function EcranMesCours({ compte, onNonConnecte }: EcranMesCoursProps) {
           )}
         </div>
 
-        {importOuvert && (
-          <FormulaireImport
-            onNonConnecte={onNonConnecte}
-            onAnnuler={() => setImportOuvert(false)}
-            onImporte={(nouveau) => {
-              ajouter(nouveau)
-              setImporte(nouveau)
-              setImportOuvert(false)
-            }}
-          />
-        )}
+        <FormulaireImport
+          key={cleImport}
+          onNonConnecte={onNonConnecte}
+          onAnnuler={() => setCleImport((n) => n + 1)}
+          onImporte={(nouveau) => {
+            ajouter(nouveau)
+            setImporte(nouveau)
+            setCleImport((n) => n + 1)
+          }}
+        />
 
         {etat.phase === 'CHARGEMENT' && <p role="status">Chargement de vos cours…</p>}
         {etat.phase === 'ECHEC' && (
           <div className="alerte" role="alert">
             <p>{etat.message}</p>
             {etat.requestId !== null && <p className="reference">Référence : {etat.requestId}</p>}
-            <button type="button" className="bouton" onClick={recharger}>Réessayer</button>
+            <button type="button" className="bouton bouton-secondaire" onClick={recharger}>Réessayer</button>
           </div>
         )}
         {etat.phase === 'PRETE' && cours.length === 0 && (

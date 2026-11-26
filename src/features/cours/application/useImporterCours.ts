@@ -69,6 +69,7 @@ export function useImporterCours({ onImporte, onNonConnecte }: OptionsImporterCo
   }
 
   return {
+    fichier,
     titre,
     etat,
     choisirFichier,

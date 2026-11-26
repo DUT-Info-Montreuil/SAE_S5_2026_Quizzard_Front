@@ -5,7 +5,7 @@
   padding: 4px 12px;
   border-radius: var(--espace-petit);
   background: var(--couleur-iut);
-  color: var(--couleur-texte);
+  color: var(--couleur-action-texte);
   font-family: var(--police);
   line-height: 1;
 }

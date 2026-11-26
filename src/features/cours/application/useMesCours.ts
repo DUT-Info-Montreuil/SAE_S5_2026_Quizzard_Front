@@ -30,7 +30,7 @@ export function useMesCours(onNonConnecte: () => void) {
           nonConnecte()
           return
         }
-        // Route pas encore écrite côté back : 404, ou 405 car POST /api/cours existe.
+        // Back déployé sans la route (pas encore fusionnée dans develop) : 404, ou 405 car POST /api/cours existe.
         const absente = http?.statut === 404 || http?.statut === 405
         setEtat({
           phase: 'ECHEC',
