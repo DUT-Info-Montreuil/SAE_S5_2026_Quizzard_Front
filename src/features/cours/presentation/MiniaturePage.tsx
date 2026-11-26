@@ -11,6 +11,8 @@ interface Props {
   element: ElementListe
   /** Titre du quiz d'une page de quiz, s'il est connu (plan UC3, Q5). */
   titreQuiz: string | null
+  /** Détail d'une page insérée (maquette : « QCM · 30 s », « cumulé ») ; `null` s'il est inconnu. */
+  detail?: string | null
   selectionnee: boolean
   rendrePage: RendrePage
   onSelectionner(): void
@@ -21,7 +23,7 @@ interface Props {
  * zone visible (plan UC3, D8) ; hors de cette zone, son canvas est retiré (rendu annulé, mémoire libérée) : un gros
  * PDF ne garde en mémoire que les miniatures proches de l'écran.
  */
-export function MiniaturePage({ element, titreQuiz, selectionnee, rendrePage, onSelectionner }: Props) {
+export function MiniaturePage({ element, titreQuiz, detail = null, selectionnee, rendrePage, onSelectionner }: Props) {
   const bouton = useRef<HTMLButtonElement>(null)
   const [visible, setVisible] = useState(false)
   const pagePdf = element.genre === 'PAGE_PDF'
@@ -53,10 +55,13 @@ export function MiniaturePage({ element, titreQuiz, selectionnee, rendrePage, on
         : (
           <span className="miniature-type">
             <IconePage type={element.page.type} />
-            {element.page.type === 'QUIZ' ? LIBELLES.pageQuiz : LIBELLES.pageClassement}
+            {/* Titre du quiz en tête quand il est connu (maquette) ; le type reste lu par les lecteurs d'écran. */}
+            {titreQuiz === null
+              ? element.page.type === 'QUIZ' ? LIBELLES.pageQuiz : LIBELLES.pageClassement
+              : <><span className="visuellement-cache">{LIBELLES.pageQuiz} </span>{titreQuiz}</>}
           </span>
         )}
-      {titreQuiz !== null && <span className="miniature-titre">{titreQuiz}</span>}
+      {detail !== null && <span className="miniature-titre">{detail}</span>}
       <span className="miniature-position">{LIBELLES.page(element.position)}</span>
     </button>
   )

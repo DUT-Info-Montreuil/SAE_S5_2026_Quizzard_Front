@@ -1,13 +1,12 @@
 // Séance vue par l'enseignant qui l'anime (UC7, écran E5) : types, règles et réducteur.
 // Domaine pur : aucun import de React, du réseau ni de STOMP.
+// Écrans intermédiaires (`…/ecran`, UC14) et classement (UC11) : hors périmètre de l'UC7.
 
 import { echeanceQuestion } from './echeance.ts'
 import type { ElementARelier, Proposition } from './question.ts'
 
-/** PREPAREE : lancée, avant la première question. */
+/** PREPAREE : lancée, avant la première question (back, `EtatSession`). */
 export type StatutSeance = 'PREPAREE' | 'EN_COURS' | 'CLOTUREE'
-
-export type TypeEcran = 'BONNE_REPONSE' | 'REPARTITION' | 'CLASSEMENT'
 
 /** Question projetée : jamais de réponse attendue. `echeance` vaut `null` une fois la question close. */
 interface QuestionProjeteeCommune {
@@ -39,6 +38,7 @@ export interface Repartition {
   propositions: NombreParProposition[]
 }
 
+/** Correction d'une question close (`…/correction`) ; les listes hors du type de la question sont vides. */
 export interface Correction {
   idQuestion: number
   position: number
@@ -54,7 +54,7 @@ export interface SeanceLancee {
   idSession: number
 }
 
-/** État complet lu par REST. */
+/** État complet lu par REST (`GET /api/sessions/{idSession}` et réponses des commandes). */
 export interface EtatSeance {
   idSession: number
   titre: string
@@ -66,6 +66,7 @@ export interface EtatSeance {
   codeAcces: string
   /** Absents d'une séance terminée : le lien et le QR code ne valent plus rien. */
   lienAcces: string | null
+  /** Image PNG du QR code, prête pour `src` (`data:image/png;base64,…`). */
   qrCode: string | null
   connectes: number
   questionOuverte: boolean
@@ -84,8 +85,6 @@ export interface FinDeQuestion {
 export interface SeanceEnDirect {
   seance: EtatSeance
   fin: FinDeQuestion | null
-  /** Écran intermédiaire demandé par le serveur ; `null` avant le premier. */
-  ecran: TypeEcran | null
   /** Dernier écart connu avec l'heure du serveur ; `null` si inconnu. */
   ecartMs: number | null
 }
@@ -97,7 +96,6 @@ export type ActionSeance =
   | { type: 'QUESTION_CLOSE', correction: Correction }
   | { type: 'REPARTITION_RECUE', repartition: Repartition }
   | { type: 'CONNECTES_RECUS', nombre: number }
-  | { type: 'ECRAN_DEMANDE', idQuestion: number, ecran: TypeEcran }
   | { type: 'SEANCE_TERMINEE' }
 
 /**
@@ -131,16 +129,12 @@ export function reduireSeance(etat: SeanceEnDirect | null, action: ActionSeance)
   if (action.type === 'ETAT_RELU') {
     const ecartMs = action.ecartMs ?? etat?.ecartMs ?? null
     const fin = finDeLEtat(action.seance, ecartMs, action.recuA)
-    if (etat === null) return { seance: action.seance, fin, ecran: null, ecartMs }
+    if (etat === null) return { seance: action.seance, fin, ecartMs }
     const ancien = avancement(etat.seance)
     const nouveau = avancement(action.seance)
     if (nouveau < ancien) return { ...etat, ecartMs }
-    if (nouveau > ancien) {
-      const memeQuestion = action.seance.position === etat.seance.position
-      return { seance: action.seance, fin, ecran: memeQuestion ? etat.ecran : null, ecartMs }
-    }
+    if (nouveau > ancien) return { seance: action.seance, fin, ecartMs }
     return {
-      ...etat,
       ecartMs,
       fin,
       seance: {
@@ -159,7 +153,6 @@ export function reduireSeance(etat: SeanceEnDirect | null, action: ActionSeance)
       if (question.position <= seance.position) return etat
       return {
         ...etat,
-        ecran: null,
         fin: finDe(question, etat.ecartMs, action.recuA),
         seance: {
           ...seance,
@@ -199,8 +192,6 @@ export function reduireSeance(etat: SeanceEnDirect | null, action: ActionSeance)
     }
     case 'CONNECTES_RECUS':
       return { ...etat, seance: { ...seance, connectes: action.nombre } }
-    case 'ECRAN_DEMANDE':
-      return seance.question?.idQuestion === action.idQuestion ? { ...etat, ecran: action.ecran } : etat
     case 'SEANCE_TERMINEE':
       return {
         ...etat,
@@ -214,10 +205,12 @@ export function estTerminee(seance: Pick<EtatSeance, 'statut'>): boolean {
   return seance.statut === 'CLOTUREE'
 }
 
-/** Libellé de la commande « question suivante » : après la dernière question, elle termine la séance. */
-export function libelleSuivant(seance: Pick<EtatSeance, 'position' | 'nbQuestions'>): string {
-  if (seance.position === 0) return 'Démarrer'
-  return seance.position >= seance.nbQuestions ? 'Terminer' : 'Suivant'
+/** Commande « question suivante » : démarre la première question, passe à la suivante, ou termine après la dernière. */
+export type EtapeSuivante = 'DEMARRER' | 'SUIVANT' | 'TERMINER'
+
+export function etapeSuivante(seance: Pick<EtatSeance, 'position' | 'nbQuestions'>): EtapeSuivante {
+  if (seance.position === 0) return 'DEMARRER'
+  return seance.position >= seance.nbQuestions ? 'TERMINER' : 'SUIVANT'
 }
 
 /** Une barre de l'histogramme, dans l'ordre d'affichage des propositions. */

@@ -10,6 +10,8 @@ interface Props {
   nbPages: number
   pages: readonly PageInseree[]
   selection: Selection
+  /** Détail de chaque page insérée, par `idPage` (maquette : « QCM · 30 s ») ; facultatif. */
+  detailsPages?: ReadonlyMap<number, string>
   rendrePage: RendrePage
   /** Faux en lecture seule (cours archivé) : aucun bouton « Insérer un quiz ici ». */
   insertionAffichee: boolean
@@ -68,6 +70,7 @@ export function ListePages(props: Props) {
             <MiniaturePage
               element={element}
               titreQuiz={element.genre === 'PAGE_INSEREE' ? element.page.titreQuiz : null}
+              detail={element.genre === 'PAGE_INSEREE' ? props.detailsPages?.get(element.page.idPage) ?? null : null}
               selectionnee={estSelectionne(element, selection)}
               rendrePage={rendrePage}
               onSelectionner={() => props.onSelectionner(element.genre === 'PAGE_PDF'

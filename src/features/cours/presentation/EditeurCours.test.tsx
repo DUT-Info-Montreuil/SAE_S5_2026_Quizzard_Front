@@ -83,7 +83,7 @@ describe('élément 2 : pages du cours', () => {
   it('numérotation du dossier : la page de quiz en (2, 0) est la page 3, la page 3 du PDF devient la 4', () => {
     afficher(pret())
     const textes = within(liste()).getAllByRole('button', { name: /^(?!Insérer)/ }).map((m) => m.textContent)
-    expect(textes).toEqual(['Page 1', 'Page 2', 'Page de quizQuiz 1Page 3', 'Page 4'])
+    expect(textes).toEqual(['Page 1', 'Page 2', 'Page de quiz Quiz 1Page 3', 'Page 4'])
   })
 
   it('clic sur une miniature : onSelectionner avec la page choisie et le titre de son quiz (liste des pages)', async () => {

@@ -48,7 +48,7 @@ describe('liste des cours', () => {
     back({ liste: () => json([COURS]) })
     afficher()
     expect(await screen.findByRole('rowheader', { name: /^Réseaux/ })).toBeVisible()
-    expect(screen.getByRole('link', { name: 'Ouvrir Réseaux' })).toHaveAttribute('href', '/cours/4')
+    expect(screen.getByRole('link', { name: 'Ouvrir Réseaux' })).toHaveAttribute('href', '/cours/4/editeur')
   })
 
   it('état vide', async () => {

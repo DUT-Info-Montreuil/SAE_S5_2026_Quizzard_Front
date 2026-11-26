@@ -7,12 +7,13 @@ import { BoutonLancerPresentation } from './BoutonLancerPresentation.tsx'
 const LANCER = 'POST /api/quiz/3/sessions'
 const DEJA = 'Une session est déjà ouverte pour le cours « Réseaux ». La reprendre ou la terminer ?'
 const ANNUAIRE = "L'annuaire de l'IUT est indisponible. Autoriser l'entrée en identité non vérifiée ?"
+const UN_QUIZ = [{ idQuiz: 3, titre: 'Quiz 1' }]
 const lancee = () => reponseJson({ idSession: 7 }, 201)
 
 async function cliquerLancer() {
   const onSeance = vi.fn()
   const onNonConnecte = vi.fn()
-  render(<BoutonLancerPresentation idQuiz={3} onSeance={onSeance} onNonConnecte={onNonConnecte} />)
+  render(<BoutonLancerPresentation quiz={UN_QUIZ} onSeance={onSeance} onNonConnecte={onNonConnecte} />)
   await userEvent.click(screen.getByRole('button', { name: 'Lancer la présentation' }))
   return { onSeance, onNonConnecte }
 }
@@ -31,13 +32,13 @@ describe('Lancer la présentation', () => {
 
   it('un double clic ne lance qu\'une fois', async () => {
     const requetes = backSimule(lancee)
-    render(<BoutonLancerPresentation idQuiz={3} onSeance={() => {}} onNonConnecte={() => {}} />)
+    render(<BoutonLancerPresentation quiz={UN_QUIZ} onSeance={() => {}} onNonConnecte={() => {}} />)
     await userEvent.dblClick(screen.getByRole('button'))
     expect(requetes).toEqual([LANCER])
   })
 
   it('désactivé, avec une alerte, si une question est incomplète', () => {
-    render(<BoutonLancerPresentation idQuiz={3} quizPret={false} onSeance={() => {}} onNonConnecte={() => {}} />)
+    render(<BoutonLancerPresentation quiz={UN_QUIZ} quizPret={false} onSeance={() => {}} onNonConnecte={() => {}} />)
     expect(screen.getByRole('button')).toBeDisabled()
     expect(screen.getByText(/incomplète/)).toBeVisible()
   })
@@ -108,5 +109,25 @@ describe('Lancer la présentation', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Lancer la présentation' }))
     await userEvent.click(await screen.findByRole('button', { name: 'Autoriser' }))
     expect(onSeance).toHaveBeenCalledExactlyOnceWith(7)
+  })
+
+  it('sans quiz dans le cours : désactivé, avec une aide', () => {
+    render(<BoutonLancerPresentation quiz={[]} onSeance={() => {}} onNonConnecte={() => {}} />)
+    expect(screen.getByRole('button', { name: 'Lancer la présentation' })).toBeDisabled()
+    expect(screen.getByText(/Insérez une page de quiz/)).toBeVisible()
+  })
+
+  it('plusieurs quiz : propose celui de la page sélectionnée, lance celui choisi', async () => {
+    const requetes = backSimule(lancee)
+    const quiz = [{ idQuiz: 3, titre: 'Quiz 1' }, { idQuiz: 4, titre: 'Quiz 2' }]
+    const { rerender } = render(
+      <BoutonLancerPresentation quiz={quiz} idQuizPropose={4} onSeance={() => {}} onNonConnecte={() => {}} />)
+    // Page de quiz sélectionnée : pas de liste, son quiz est lancé.
+    expect(screen.queryByRole('combobox')).toBeNull()
+    rerender(<BoutonLancerPresentation quiz={quiz} onSeance={() => {}} onNonConnecte={() => {}} />)
+    const liste = screen.getByRole('combobox', { name: 'Quiz à lancer' })
+    expect(liste).toHaveValue('3')
+    await userEvent.click(screen.getByRole('button', { name: 'Lancer la présentation' }))
+    expect(requetes).toEqual([LANCER])
   })
 })

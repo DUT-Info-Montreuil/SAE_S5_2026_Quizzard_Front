@@ -14,6 +14,8 @@ export interface PageInseree {
   type: TypePage
   /** Titre du quiz de la page ; `null` pour une page de classement. */
   titreQuiz: string | null
+  /** Quiz de la page, quand le back le donne (pages de quiz) : proposé au lancement de la présentation (UC7). */
+  idQuiz?: number
 }
 
 /** Emplacement d'insertion envoyé au back. */

@@ -31,4 +31,9 @@ export const LIBELLES = {
   actionsPage: 'Actions sur la page de quiz',
   retraitTitre: 'Retirer cette page de quiz ?',
   retraitTexte: (titreQuiz: string) => `La question reste enregistrée dans le quiz « ${titreQuiz} ».`,
+  // Élément 9 (UC6) : libellé de la maquette (docs/maquettes/Capture d'écran 2026-11-26 102631.png).
+  reappliquer: (version: number) => `Réappliquer les quiz de la v${version}`,
+  quizAReappliquer: (nombre: number) => `${nombre} quiz à réappliquer`,
+  // Détail d'une page de classement dans la bande des pages (maquette : « Classement · cumulé »).
+  classement: 'Classement',
 }

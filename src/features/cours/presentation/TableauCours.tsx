@@ -52,7 +52,7 @@ export function TableauCours({ cours }: { cours: CoursListe[] }) {
                   >
                     <Icone nom="personnes" /> Résultats
                   </Link>
-                  <Link className="bouton bouton-structure" to={`/cours/${c.idCours}`} aria-label={`Ouvrir ${c.titre}`}>
+                  <Link className="bouton bouton-structure" to={`/cours/${c.idCours}/editeur`} aria-label={`Ouvrir ${c.titre}`}>
                     Ouvrir <Icone nom="ouvrir" />
                   </Link>
                 </div>

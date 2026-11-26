@@ -26,7 +26,11 @@ function clientPilote() {
     creerClient: () => client,
     deconnecter,
     destinations: () => [...rappels.keys()],
-    connecter: (reconnexion = false) => act(async () => ecouteurs!.connecte(reconnexion)),
+    connecter: async (reconnexion = false) => {
+      // L'effet STOMP part après le rendu qui donne le code d'accès : attendre qu'il ait appelé connecter().
+      await waitFor(() => expect(ecouteurs).toBeDefined())
+      await act(async () => ecouteurs!.connecte(reconnexion))
+    },
     couper: () => act(async () => ecouteurs!.coupe()),
     recevoir: (canal: string, corps: object) =>
       act(async () => rappels.get(`/topic/sessions/code-acces/${canal}`)!(JSON.stringify(corps))),
@@ -58,7 +62,7 @@ describe('E5 « Quiz en cours »', () => {
     expect(screen.getByRole('button', { name: 'Démarrer' })).toBeEnabled()
     expect(screen.getByRole('button', { name: 'Clore' })).toBeDisabled()
     expect(stomp.destinations()).toEqual(
-      ['etat', 'question', 'correction', 'repartition', 'connectes', 'ecran'].map((c) => `/topic/sessions/code-acces/${c}`))
+      ['etat', 'question', 'correction', 'repartition', 'connectes'].map((c) => `/topic/sessions/code-acces/${c}`))
     await stomp.recevoir('connectes', { nombre: 12 })
     expect(screen.getByText('12')).toBeVisible()
   })
@@ -87,10 +91,6 @@ describe('E5 « Quiz en cours »', () => {
     expect(screen.getByText('✓ Bonne réponse')).toBeVisible()
     expect(screen.getByRole('img', { name: 'Réponses A : 7' })).toBeVisible()
 
-    await stomp.recevoir('ecran', { idQuestion: 12, position: 1, type: 'BONNE_REPONSE', rang: 0, delaiApresClotureSec: 0 })
-    expect(screen.queryByRole('img', { name: 'Réponses A : 7' })).toBeNull()
-    await stomp.recevoir('ecran', { idQuestion: 12, position: 1, type: 'REPARTITION', rang: 1, delaiApresClotureSec: 5 })
-    expect(screen.getByRole('img', { name: 'Réponses A : 7' })).toBeVisible()
 
     await userEvent.click(screen.getByRole('button', { name: 'Suivant' }))
     expect(await screen.findByText('Question 2 / 2')).toBeVisible()

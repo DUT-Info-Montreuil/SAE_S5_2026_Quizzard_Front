@@ -16,6 +16,7 @@ import type { LectureSeance } from '../api/animationApi.ts'
 import { destinationsAnimation } from '../api/destinationsAnimation.ts'
 import type { CanalAnimation } from '../api/destinationsAnimation.ts'
 import { convertirMessageAnimation } from '../api/lecturesAnimation.ts'
+import { MESSAGE_PANNE_SEANCE as MESSAGE_PANNE } from '../domain/erreursLancement.ts'
 import { estTerminee, reduireSeance } from '../domain/seanceAnimee.ts'
 
 /** Relecture par REST tant que le temps réel n'est pas connecté. */
@@ -25,8 +26,6 @@ const ATTENTE_CLOTURE_MS = 1500
 
 /** La commande est arrivée après coup (clôture automatique, autre onglet) : la relecture suffit. */
 const CODES_SANS_MESSAGE = ['AUCUNE_QUESTION_OUVERTE', 'SEANCE_TERMINEE']
-/** Même texte que le 500 du back. */
-const MESSAGE_PANNE = 'Une erreur est survenue. Réessayez dans un instant.'
 
 export interface ErreurSeance {
   message: string

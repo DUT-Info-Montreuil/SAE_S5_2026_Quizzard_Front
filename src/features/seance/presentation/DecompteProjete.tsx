@@ -1,9 +1,20 @@
 import { useEffect, useState } from 'react'
 import { tempsRestantMs } from '../../../shared/lib/heureServeur.ts'
 import type { FinDeQuestion } from '../domain/seanceAnimee.ts'
+import { Decompte } from './Decompte.tsx'
 
-/** Temps restant sur l'heure du serveur. Le rôle `timer` n'annonce pas chaque seconde aux lecteurs d'écran. */
-export function DecompteProjete({ fin, dureeSec }: { fin: FinDeQuestion, dureeSec: number }) {
+interface DecompteProjeteProps {
+  fin: FinDeQuestion
+  position: number
+  nbQuestions: number
+  dureeSec: number
+}
+
+/**
+ * E5 : le décompte de l'UC9 (`Decompte`), rafraîchi toutes les 200 ms sur l'heure du serveur (CLAUDE.md, règle 5).
+ * À 0, le serveur clôt seul la question ; l'écran attend le message de clôture.
+ */
+export function DecompteProjete({ fin, position, nbQuestions, dureeSec }: DecompteProjeteProps) {
   const [maintenant, setMaintenant] = useState(() => Date.now())
 
   useEffect(() => {
@@ -11,18 +22,12 @@ export function DecompteProjete({ fin, dureeSec }: { fin: FinDeQuestion, dureeSe
     return () => clearInterval(minuteur)
   }, [])
 
-  const restantMs = tempsRestantMs(fin.echeanceMs, fin.ecartMs, maintenant)
-  const secondes = Math.ceil(restantMs / 1000)
-  const part = Math.min(1, restantMs / (dureeSec * 1000))
-
   return (
-    <div className="decompte-projete">
-      <div className="decompte-projete-barre" aria-hidden="true">
-        <div className="decompte-projete-reste" style={{ width: `${part * 100}%` }} />
-      </div>
-      <p className="decompte-projete-chiffre" role="timer" aria-label={`${secondes} secondes restantes`}>
-        {Math.floor(secondes / 60)}:{String(secondes % 60).padStart(2, '0')}
-      </p>
-    </div>
+    <Decompte
+      position={position}
+      nbQuestions={nbQuestions}
+      tempsRestantMs={tempsRestantMs(fin.echeanceMs, fin.ecartMs, maintenant)}
+      dureeSec={dureeSec}
+    />
   )
 }

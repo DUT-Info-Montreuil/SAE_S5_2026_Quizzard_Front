@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { correctionJson, etatJson, etatQuestionOuverteJson, questionJson } from '../../../test/fabriquesAnimation.ts'
 import { convertirMessageAnimation, lireEtatSeance } from '../api/lecturesAnimation.ts'
 import type { CanalAnimation } from '../api/destinationsAnimation.ts'
-import { barres, libelleSuivant, reduireSeance } from './seanceAnimee.ts'
+import { barres, etapeSuivante, reduireSeance } from './seanceAnimee.ts'
 import type { SeanceEnDirect } from './seanceAnimee.ts'
 
 const relu = (etat: SeanceEnDirect | null, json: unknown, recuA = 1000) =>
@@ -32,17 +32,26 @@ describe('réducteur de la séance', () => {
     expect(apres?.fin).toBeNull()
   })
 
-  it('ignore une question, une correction, une répartition et un écran d\'une autre question', () => {
+  it('ignore une question, une correction et une répartition d\'une autre question', () => {
     const s = relu(null, etatQuestionOuverteJson({ position: 2, question: questionJson({ idQuestion: 13, position: 2 }) }))
     expect(message(s, 'question', questionJson())).toBe(s)
     expect(message(s, 'correction', correctionJson())).toBe(s)
     expect(message(s, 'repartition', { idQuestion: 12, total: 3, propositions: [] })).toBe(s)
-    expect(message(s, 'ecran', { idQuestion: 12, type: 'REPARTITION' })).toBe(s)
   })
 
   it('garde la répartition la plus complète', () => {
     const s = message(relu(null, etatQuestionOuverteJson()), 'repartition', { idQuestion: 12, total: 5, propositions: [] })
     expect(relu(s, etatQuestionOuverteJson())?.seance.repartition?.total).toBe(5)
+  })
+
+  it('met à jour le compteur de connectés', () => {
+    expect(message(relu(null, etatJson()), 'connectes', { nombre: 31 })?.seance.connectes).toBe(31)
+  })
+
+  it('révèle la correction et fige la répartition à la clôture', () => {
+    const s = message(relu(null, etatQuestionOuverteJson()), 'correction', correctionJson())
+    expect(s?.seance).toMatchObject({ questionOuverte: false, repartition: { total: 10 } })
+    expect(s?.fin).toBeNull()
   })
 
   it('termine la séance : plus de lien, de QR code ni d\'action possible', () => {
@@ -51,15 +60,6 @@ describe('réducteur de la séance', () => {
     expect(message(s, 'question', questionJson({ position: 2 }))).toBe(s)
     expect(relu(s, etatQuestionOuverteJson())?.seance.statut).toBe('CLOTUREE')
   })
-
-  it('efface l\'écran intermédiaire à la question suivante', () => {
-    let s = message(relu(null, etatQuestionOuverteJson()), 'correction', correctionJson())
-    s = message(s, 'ecran', { idQuestion: 12, position: 1, type: 'BONNE_REPONSE', rang: 0 })
-    expect(s?.ecran).toBe('BONNE_REPONSE')
-    s = message(s, 'question', questionJson({ idQuestion: 13, position: 2 }))
-    expect(s?.ecran).toBeNull()
-    expect(s?.seance.correction).toBeNull()
-  })
 })
 
 describe('lecture des données du back', () => {
@@ -67,16 +67,29 @@ describe('lecture des données du back', () => {
     expect(lireEtatSeance(etatJson({ statut: 'EN_ATTENTE' }))).toBeNull()
     expect(lireEtatSeance(etatJson({ question: { idQuestion: 1 } }))).toBeNull()
     expect(convertirMessageAnimation('question', '{', 0)).toBeNull()
-    expect(convertirMessageAnimation('ecran', '{"idQuestion":1,"type":"AUTRE"}', 0)).toBeNull()
     expect(convertirMessageAnimation('connectes', '{}', 0)).toBeNull()
+  })
+
+  it('accepte le QR code en base64 brut ou déjà en adresse data:', () => {
+    expect(lireEtatSeance(etatJson({ qrCode: 'iVBORw0KGgo=' }))?.qrCode).toBe('data:image/png;base64,iVBORw0KGgo=')
+    expect(lireEtatSeance(etatJson({ qrCode: 'data:image/png;base64,iVBORw0KGgo=' }))?.qrCode)
+      .toBe('data:image/png;base64,iVBORw0KGgo=')
+    expect(lireEtatSeance(etatJson({ qrCode: 'javascript:alert(1)' }))?.qrCode).toBeNull()
+  })
+
+  it('lit une séance terminée sans lien ni QR code', () => {
+    const sansAcces: Record<string, unknown> = etatJson({ statut: 'CLOTUREE' })
+    delete sansAcces.lienAcces
+    delete sansAcces.qrCode
+    expect(lireEtatSeance(sansAcces)).toMatchObject({ statut: 'CLOTUREE', lienAcces: null, qrCode: null })
   })
 })
 
 describe('règles d\'affichage', () => {
-  it('nomme la commande selon la position', () => {
-    expect(libelleSuivant({ position: 0, nbQuestions: 2 })).toBe('Démarrer')
-    expect(libelleSuivant({ position: 1, nbQuestions: 2 })).toBe('Suivant')
-    expect(libelleSuivant({ position: 2, nbQuestions: 2 })).toBe('Terminer')
+  it('choisit la commande selon la position', () => {
+    expect(etapeSuivante({ position: 0, nbQuestions: 2 })).toBe('DEMARRER')
+    expect(etapeSuivante({ position: 1, nbQuestions: 2 })).toBe('SUIVANT')
+    expect(etapeSuivante({ position: 2, nbQuestions: 2 })).toBe('TERMINER')
   })
 
   it('compte zéro pour une proposition jamais cochée', () => {

@@ -38,3 +38,9 @@ export function echecLancement(refus: RefusDuServeur | null): EchecLancement {
   if (statut >= 500) return { type: 'MESSAGE', message: MESSAGE_LANCEMENT_ECHOUE, requestId: request_id }
   return { type: 'MESSAGE', message: error ?? MESSAGES_PAR_STATUT[statut] ?? MESSAGE_LANCEMENT_ECHOUE, requestId: null }
 }
+
+/**
+ * Commande de E5 sans réponse du serveur, ou réponse hors du format du back.
+ * TODO(UC7): message absent de la spec (plan UC7, question U2). Valeur provisoire : le texte du 500 du back.
+ */
+export const MESSAGE_PANNE_SEANCE = 'Une erreur est survenue. Réessayez dans un instant.'

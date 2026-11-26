@@ -6,11 +6,9 @@ import '../shared/styles/police.css'
 import '../index.css'
 import { ConnexionProvisoire } from './ConnexionProvisoire.tsx'
 import { PageAVenir } from './PageAVenir.tsx'
-import { RouteEditeurProvisoire } from './RouteEditeurProvisoire.tsx'
 import { RouteMesCours } from './RouteMesCours.tsx'
 import { RouteQuestion } from './RouteQuestion.tsx'
 import { RouteRejoindre } from './RouteRejoindre.tsx'
-import { RouteSeance } from './RouteSeance.tsx'
 
 // Routes de la SPA (docs/ARCHITECTURE.md §4).
 const routeur = createBrowserRouter([
@@ -18,13 +16,12 @@ const routeur = createBrowserRouter([
   { path: '/rejoindre/:codeAcces/question', Component: RouteQuestion },
   { path: '/connexion', Component: ConnexionProvisoire },
   { path: '/cours', Component: RouteMesCours },
-  // E3 provisoire (UC7) : seul l'élément 11 « Lancer la présentation » y est branché.
-  { path: '/cours/:idCours', Component: RouteEditeurProvisoire },
   // Éditeur E3 (enseignant) en `lazy` : PDF.js et l'éditeur restent hors du bundle des écrans étudiants.
   { path: '/cours/:idCours/editeur', lazy: async () => ({ Component: (await import('./RouteEditeur.tsx')).RouteEditeur }) },
   { path: '/cours/:idCours/resultats', element: <PageAVenir titre="Résultats" /> },
   { path: '/classements', element: <PageAVenir titre="Mes classements" /> },
-  { path: '/seances/:idSession', Component: RouteSeance },
+  // E5 « Quiz en cours » (enseignant, projeté), en `lazy` comme l'éditeur.
+  { path: '/seances/:idSession', lazy: async () => ({ Component: (await import('./RouteSeance.tsx')).RouteSeance }) },
   // Démo sans back, en développement seulement : absente du build de production.
   ...(import.meta.env.DEV
     ? [

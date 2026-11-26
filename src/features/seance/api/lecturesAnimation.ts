@@ -2,7 +2,7 @@
 // Chaque donnée est vérifiée champ par champ ; mal formée, elle est refusée (`null`).
 
 import type {
-  ActionSeance, Correction, EtatSeance, NombreParProposition, QuestionProjetee, Repartition, SeanceLancee, TypeEcran,
+  ActionSeance, Correction, EtatSeance, NombreParProposition, QuestionProjetee, Repartition, SeanceLancee,
 } from '../domain/seanceAnimee.ts'
 import type { ElementARelier, Proposition } from '../domain/question.ts'
 import type { CanalAnimation } from './destinationsAnimation.ts'
@@ -96,6 +96,20 @@ function lireCorrection(v: unknown): Correction | null {
   }
 }
 
+const PREFIXE_PNG = 'data:image/png;base64,'
+const BASE64 = /^[A-Za-z0-9+/]+={0,2}$/
+
+/**
+ * QR code du lien (PNG en base64, généré par le back). Le back le décrit en base64 brut ou en adresse `data:`
+ * (docs/API.md du back, §3.4) : les deux sont acceptés et rendus en adresse `data:image/png`. Toute autre valeur est
+ * refusée, pour qu'aucune adresse reçue ne parte telle quelle dans `src`.
+ */
+function lireQrCode(v: unknown): string | null {
+  if (!estTexte(v)) return null
+  const base64 = v.startsWith(PREFIXE_PNG) ? v.slice(PREFIXE_PNG.length) : v
+  return BASE64.test(base64) ? PREFIXE_PNG + base64 : null
+}
+
 export function lireSeanceLancee(v: unknown): SeanceLancee | null {
   return estObjet(v) && estNombre(v.idSession) ? { idSession: v.idSession } : null
 }
@@ -117,15 +131,11 @@ export function lireEtatSeance(v: unknown): EtatSeance | null {
   return {
     idSession, titre, statut, modeNote, nbQuestions, position, codeAcces, connectes, questionOuverte, question,
     lienAcces: lireTexte(v.lienAcces),
-    qrCode: lireTexte(v.qrCode),
+    qrCode: lireQrCode(v.qrCode),
     tempsRestantMs: lireNombre(v.tempsRestantMs),
     repartition: lireRepartition(v.repartition),
     correction: lireCorrection(v.correction),
   }
-}
-
-function lireEcran(v: unknown): TypeEcran | null {
-  return v === 'BONNE_REPONSE' || v === 'REPARTITION' || v === 'CLASSEMENT' ? v : null
 }
 
 /** Convertit un message STOMP en action du réducteur ; `null` s'il est sans effet ou mal formé. */
@@ -155,11 +165,5 @@ export function convertirMessageAnimation(canal: CanalAnimation, corps: string, 
     }
     case 'connectes':
       return estNombre(v.nombre) ? { type: 'CONNECTES_RECUS', nombre: v.nombre } : null
-    case 'ecran': {
-      const ecran = lireEcran(v.type)
-      return estNombre(v.idQuestion) && ecran !== null
-        ? { type: 'ECRAN_DEMANDE', idQuestion: v.idQuestion, ecran }
-        : null
-    }
   }
 }

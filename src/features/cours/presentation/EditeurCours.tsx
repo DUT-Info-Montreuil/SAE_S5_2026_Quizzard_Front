@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import type { ReactNode } from 'react'
 import type { Emplacement } from '../domain/cours.ts'
 import { ERREURS_INSERTION } from '../domain/erreursEditeur.ts'
 import { emplacementsActifs, insertionPossible } from '../domain/machineEditeur.ts'
@@ -27,6 +28,18 @@ interface Props {
   onDemanderDeplacement(): void
   /** Bouton « Insérer un quiz ici » choisi pendant un déplacement. */
   onDeplacerVers(emplacement: Emplacement): void
+  /**
+   * Éléments fournis par l'assemblage (`app`), une feature n'importe pas l'autre (CLAUDE.md, règle 1) :
+   * - `actionsEntete` : éléments 9 à 11 de l'en-tête ;
+   * - `barreQuiz`, `apercuQuiz`, `panneau` : page de quiz sélectionnée (éléments 4 à 8 et 12 à 18).
+   * Absents : emplacements vides « hors périmètre », comme pour l'UC3.
+   */
+  actionsEntete?: ReactNode
+  barreQuiz?: ReactNode
+  apercuQuiz?: ReactNode
+  panneau?: ReactNode
+  /** Détail des pages insérées dans la bande des pages, par `idPage` (« QCM · 30 s »). */
+  detailsPages?: ReadonlyMap<number, string>
 }
 
 /**
@@ -62,7 +75,7 @@ export function EditeurCours(props: Props) {
 
   return (
     <div className="editeur-cours">
-      <EnteteEditeur cours={etat.cours} />
+      <EnteteEditeur cours={etat.cours} actions={props.actionsEntete} />
       {etat.nom === 'LECTURE_SEULE' && (
         // TODO(UC3): texte du mode lecture seule absent de la spec. Valeur provisoire : message de COURS_ARCHIVE.
         <p className="bandeau-lecture-seule">{ERREURS_INSERTION.COURS_ARCHIVE.message}</p>
@@ -70,31 +83,38 @@ export function EditeurCours(props: Props) {
       {pret?.erreur && <BandeauErreur erreur={pret.erreur} onRecharger={props.onRecharger} />}
       <p className="statut-insertion" role="status">{envoi ? LIBELLES.insertionEnCours : ''}</p>
       <main className="editeur-cours-corps">
-        <ApercuPage
-          nbPages={etat.nbPages}
-          pages={etat.pages}
-          selection={etat.selection}
-          rendrePage={rendrePage}
-          actions={pret === null ? undefined : {
-            desactivees: !insertionPossible(etat),
-            deplacementEnCours,
-            onRetirer: (bouton) => {
-              setBoutonOuvrant(bouton)
-              props.onDemanderRetrait()
-            },
-            onDeplacer: (bouton) => {
-              setBoutonOuvrant(bouton)
-              props.onDemanderDeplacement()
-            },
-            onAnnulerDeplacement: props.onAnnulerChoix,
-          }}
-        />
-        <aside className="hors-perimetre editeur-cours-question">{LIBELLES.horsPerimetre('5 à 8 et 12 à 18')}</aside>
+        <div className="editeur-cours-centre">
+          {props.barreQuiz}
+          <ApercuPage
+            nbPages={etat.nbPages}
+            pages={etat.pages}
+            selection={etat.selection}
+            rendrePage={rendrePage}
+            apercuQuiz={props.apercuQuiz}
+            actions={pret === null ? undefined : {
+              desactivees: !insertionPossible(etat),
+              deplacementEnCours,
+              onRetirer: (bouton) => {
+                setBoutonOuvrant(bouton)
+                props.onDemanderRetrait()
+              },
+              onDeplacer: (bouton) => {
+                setBoutonOuvrant(bouton)
+                props.onDemanderDeplacement()
+              },
+              onAnnulerDeplacement: props.onAnnulerChoix,
+            }}
+          />
+        </div>
+        {props.panneau === undefined
+          ? <aside className="hors-perimetre editeur-cours-question">{LIBELLES.horsPerimetre('5 à 8 et 12 à 18')}</aside>
+          : <aside className="editeur-cours-panneau">{props.panneau}</aside>}
       </main>
       <ListePages
         nbPages={etat.nbPages}
         pages={etat.pages}
         selection={etat.selection}
+        detailsPages={props.detailsPages}
         rendrePage={rendrePage}
         insertionAffichee={pret !== null}
         insertionDesactivee={!emplacementsActifs(etat)}
