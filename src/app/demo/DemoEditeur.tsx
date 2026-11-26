@@ -18,7 +18,7 @@ const COURS: Cours = {
   archive: false,
   version: { idVersion: 3, numero: 3, nbPages: NB_PAGES },
 }
-const PAGES: PageInseree[] = [{ idPage: 1, numeroPage: 2, ordre: 0, type: 'QUIZ' }]
+const PAGES: PageInseree[] = [{ idPage: 1, numeroPage: 2, ordre: 0, type: 'QUIZ', titreQuiz: 'Quiz 1' }]
 const QUIZ: QuizResume[] = [{ idQuiz: 1, titre: 'Quiz 1' }, { idQuiz: 2, titre: 'Quiz 2' }]
 
 const charge = (cours: Cours, pages = PAGES, quiz = QUIZ): ActionEditeur =>
@@ -96,7 +96,6 @@ function reduireDemo(etat: EtatEditeur, action: ActionDemo): EtatEditeur {
 export default function DemoEditeur() {
   const [etat, envoyer] = useReducer(reduireDemo, undefined, pret)
   const [choix, setChoix] = useState('Prêt')
-  const [titresQuiz, setTitresQuiz] = useState<ReadonlyMap<number, string>>(() => new Map([[1, 'Quiz 1']]))
   // Faux back : pages et quiz enregistrés, relus par « Recharger ».
   const serveur = useRef({ pages: PAGES, quiz: QUIZ, prochainId: 100 })
 
@@ -112,16 +111,13 @@ export default function DemoEditeur() {
     // Décalage fait par le faux back, comme le vrai : le front ne recalcule rien (plan UC3, D9).
     s.pages = [
       ...s.pages.map((p) => p.numeroPage === numeroPage && p.ordre >= ordre ? { ...p, ordre: p.ordre + 1 } : p),
-      { idPage, numeroPage, ordre, type: 'QUIZ' },
+      { idPage, numeroPage, ordre, type: 'QUIZ', titreQuiz: quiz.titre },
     ]
     if (quizCree) s.quiz = [...s.quiz, quiz]
     const reponse: PageQuizInseree = {
       idPage, idQuiz: quiz.idQuiz, titreQuiz: quiz.titre, quizCree, idQuestion: idPage, numeroPage, ordre, pages: s.pages,
     }
-    window.setTimeout(() => {
-      setTitresQuiz((titres) => new Map(titres).set(idPage, quiz.titre))
-      envoyer({ type: 'INSERTION_REUSSIE', reponse })
-    }, DELAI_MS)
+    window.setTimeout(() => envoyer({ type: 'INSERTION_REUSSIE', reponse }), DELAI_MS)
   }
 
   function recharger() {
@@ -146,7 +142,6 @@ export default function DemoEditeur() {
       <EditeurCours
         etat={etat}
         rendrePage={rendreFaussePage}
-        titresQuiz={titresQuiz}
         onSelectionner={(selection) => envoyer({ type: 'SELECTIONNER', selection })}
         onOuvrirChoix={(emplacement) => envoyer({ type: 'OUVRIR_CHOIX', emplacement })}
         onAnnulerChoix={() => envoyer({ type: 'ANNULER_CHOIX' })}

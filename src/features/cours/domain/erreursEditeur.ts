@@ -120,11 +120,13 @@ export interface ErreurChargement extends ErreurEditeur {
 
 /**
  * Erreur des routes de lecture (cours, pages, quiz, PDF ; hors dossier, plan UC3 §4) ; `null` = pas de réponse HTTP.
- * 401 : redirection ; 404 : « Cours introuvable. » ; autre : `error` du back, sinon texte provisoire. Toujours
+ * 401 : redirection ; 404 `COURS_INTROUVABLE` ou sans code : « Cours introuvable. » ; autre (dont 404
+ * `VERSION_INTROUVABLE`, `FICHIER_INTROUVABLE` : PDF supprimé) : `error` du back, sinon texte provisoire. Toujours
  * « Recharger ».
  */
 export function lireErreurChargement(erreur: ErreurRecue | null): ErreurChargement {
   if (erreur?.statut === 401) return { ...REDIRECTION_CONNEXION, requestId: null }
-  const message = erreur?.statut === 404 ? MESSAGE_COURS_INTROUVABLE : erreur?.error ?? MESSAGE_CHARGEMENT_PROVISOIRE
+  const coursIntrouvable = erreur?.statut === 404 && (erreur.code ?? 'COURS_INTROUVABLE') === 'COURS_INTROUVABLE'
+  const message = coursIntrouvable ? MESSAGE_COURS_INTROUVABLE : erreur?.error ?? MESSAGE_CHARGEMENT_PROVISOIRE
   return { message, affichage: 'BANDEAU', action: 'RECHARGER', bloquer: false, requestId: erreur?.request_id ?? null }
 }

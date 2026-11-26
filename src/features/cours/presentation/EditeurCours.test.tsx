@@ -21,7 +21,7 @@ const CHARGE: ActionEditeur = {
   type: 'CHARGE',
   cours: cours(),
   nbPages: 3,
-  pages: [{ idPage: 1, numeroPage: 2, ordre: 0, type: 'QUIZ' }],
+  pages: [{ idPage: 1, numeroPage: 2, ordre: 0, type: 'QUIZ', titreQuiz: 'Quiz 1' }],
   quiz: [{ idQuiz: 40, titre: 'Quiz 1' }, { idQuiz: 41, titre: 'Quiz 2' }],
 }
 const EMPLACEMENT = { numeroPage: 3, ordre: 0 }
@@ -79,13 +79,13 @@ describe('élément 2 : pages du cours', () => {
   it('numérotation du dossier : la page de quiz en (2, 0) est la page 3, la page 3 du PDF devient la 4', () => {
     afficher(pret())
     const textes = within(liste()).getAllByRole('button', { name: /^(?!Insérer)/ }).map((m) => m.textContent)
-    expect(textes).toEqual(['Page 1', 'Page 2', 'Page de quizPage 3', 'Page 4'])
+    expect(textes).toEqual(['Page 1', 'Page 2', 'Page de quizQuiz 1Page 3', 'Page 4'])
   })
 
-  it('clic sur une miniature : onSelectionner avec la page choisie', async () => {
+  it('clic sur une miniature : onSelectionner avec la page choisie et le titre de son quiz (liste des pages)', async () => {
     const { onSelectionner } = afficher(pret())
     await userEvent.click(within(liste()).getByRole('button', { name: /Page de quiz/ }))
-    expect(onSelectionner).toHaveBeenCalledWith({ genre: 'PAGE_INSEREE', idPage: 1, titreQuiz: null })
+    expect(onSelectionner).toHaveBeenCalledWith({ genre: 'PAGE_INSEREE', idPage: 1, titreQuiz: 'Quiz 1' })
   })
 
   it('miniature d\'une page du PDF rendue seulement une fois visible (D8)', () => {
@@ -183,7 +183,7 @@ describe('dialogue de choix du quiz (D11)', () => {
       idQuestion: 90,
       numeroPage: 3,
       ordre: 0,
-      pages: [{ idPage: 1, numeroPage: 2, ordre: 0, type: 'QUIZ' }, { idPage: 2, numeroPage: 3, ordre: 0, type: 'QUIZ' }],
+      pages: [{ idPage: 1, numeroPage: 2, ordre: 0, type: 'QUIZ', titreQuiz: 'Quiz 1' }, { idPage: 2, numeroPage: 3, ordre: 0, type: 'QUIZ', titreQuiz: 'Quiz 1' }],
     }
     const apres = reduireEditeur(reduireEditeur(choix(), { type: 'CONFIRMER', idQuiz: 41 }), {
       type: 'INSERTION_REUSSIE',
@@ -254,7 +254,7 @@ describe('élément 4 : aperçu', () => {
       idQuestion: 90,
       numeroPage: 3,
       ordre: 0,
-      pages: [{ idPage: 1, numeroPage: 2, ordre: 0, type: 'QUIZ' }, { idPage: 2, numeroPage: 3, ordre: 0, type: 'QUIZ' }],
+      pages: [{ idPage: 1, numeroPage: 2, ordre: 0, type: 'QUIZ', titreQuiz: 'Quiz 1' }, { idPage: 2, numeroPage: 3, ordre: 0, type: 'QUIZ', titreQuiz: 'Quiz 1' }],
     }
     afficher(reduireEditeur(envoi(), { type: 'INSERTION_REUSSIE', reponse }))
     const apercu = screen.getByRole('region', { name: 'Aperçu de la page' })

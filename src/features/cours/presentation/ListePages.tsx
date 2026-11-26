@@ -10,7 +10,6 @@ interface Props {
   nbPages: number
   pages: readonly PageInseree[]
   selection: Selection
-  titresQuiz: ReadonlyMap<number, string>
   rendrePage: RendrePage
   /** Faux en lecture seule (cours archivé) : aucun bouton « Insérer un quiz ici ». */
   insertionAffichee: boolean
@@ -36,7 +35,7 @@ function estSelectionne(element: ElementListe, selection: Selection): boolean {
  * espace : au début, entre deux pages et à la fin (élément 3). Ordre, positions et emplacements : domaine (§5).
  */
 export function ListePages(props: Props) {
-  const { nbPages, pages, selection, titresQuiz, rendrePage, insertionAffichee, insertionDesactivee } = props
+  const { nbPages, pages, selection, rendrePage, insertionAffichee, insertionDesactivee } = props
   const elements = listeAffichee(nbPages, pages)
   // emplacements[i] : espace juste avant elements[i] ; le dernier : espace après la fin.
   const emplacements = emplacementsInsertion(nbPages, pages)
@@ -68,18 +67,12 @@ export function ListePages(props: Props) {
             {insertionAffichee && boutonInsertion(i)}
             <MiniaturePage
               element={element}
-              titreQuiz={element.genre === 'PAGE_INSEREE' && element.page.type === 'QUIZ'
-                ? titresQuiz.get(element.page.idPage) ?? null
-                : null}
+              titreQuiz={element.genre === 'PAGE_INSEREE' ? element.page.titreQuiz : null}
               selectionnee={estSelectionne(element, selection)}
               rendrePage={rendrePage}
               onSelectionner={() => props.onSelectionner(element.genre === 'PAGE_PDF'
                 ? { genre: 'PAGE_PDF', numeroPage: element.numeroPage }
-                : {
-                    genre: 'PAGE_INSEREE',
-                    idPage: element.page.idPage,
-                    titreQuiz: titresQuiz.get(element.page.idPage) ?? null,
-                  })}
+                : { genre: 'PAGE_INSEREE', idPage: element.page.idPage, titreQuiz: element.page.titreQuiz })}
             />
           </li>
         ))}

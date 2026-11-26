@@ -8,6 +8,7 @@ const quiz = (idPage: number, numeroPage: number, ordre: number): PageInseree =>
   numeroPage,
   ordre,
   type: 'QUIZ',
+  titreQuiz: 'Quiz 1',
 })
 
 describe('listeAffichee', () => {
