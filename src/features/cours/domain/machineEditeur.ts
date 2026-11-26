@@ -26,11 +26,34 @@
 //                                                                  a réussi (la page a peut-être été créée)
 //   ENVOI             : OUVRIR_CHOIX, CONFIRMER, RECHARGER, SELECTIONNER ignorés (une seule insertion à la fois, D12)
 //
+//   PRET, retrait et déplacement d'une page de quiz (boutons de l'aperçu, demande du back du 26/11/2026) :
+//   AUCUNE            ──DEMANDER_RETRAIT (page de quiz sélectionnée, non bloqué)──▶ CONFIRMATION_RETRAIT
+//   CONFIRMATION_RETRAIT ──CONFIRMER_RETRAIT───────────────────▶ RETRAIT (message effacé, boutons désactivés)
+//   RETRAIT           ──RETRAIT_REUSSI (204, pages relues)──────▶ AUCUNE : pages relues, sélection = page du PDF
+//                                                                  qui précédait ; relecture échouée → page ôtée
+//                                                                  de la liste + message de chargement + « Recharger »
+//   AUCUNE            ──DEMANDER_DEPLACEMENT (page de quiz sélectionnée, non bloqué)──▶ CHOIX_DEPLACEMENT
+//                                                                  (les boutons « Insérer un quiz ici » choisissent
+//                                                                  le nouvel emplacement)
+//   CHOIX_DEPLACEMENT ──DEPLACER (emplacement)──────────────────▶ DEPLACEMENT (message effacé, boutons désactivés)
+//   DEPLACEMENT       ──DEPLACEMENT_REUSSI (200)────────────────▶ AUCUNE : pages = réponse, page toujours
+//                                                                  sélectionnée
+//   CHOIX_QUIZ | CONFIRMATION_RETRAIT | CHOIX_DEPLACEMENT ──ANNULER_CHOIX──▶ AUCUNE
+//   RETRAIT | DEPLACEMENT ──MODIFICATION_REFUSEE──────────────▶ comme INSERTION_REFUSEE (lireErreurModification)
+//   RETRAIT | DEPLACEMENT ──ECHEC_RESEAU_MODIFICATION──────────▶ comme ECHEC_RESEAU_INSERTION (texte provisoire)
+//   RETRAIT | DEPLACEMENT : RECHARGER et SELECTIONNER ignorés, comme pendant ENVOI
+//
 // « Erreur d'insertion » : PRET, insertion AUCUNE, `erreur` non nulle (bandeau). Elle s'efface à la tentative
 // suivante (CONFIRMER) ou au rechargement.
 
 import type { Cours, Emplacement, PageInseree, PageQuizInseree, QuizResume } from './cours.ts'
-import { erreurReseauInsertion, lireErreurChargement, lireErreurInsertion } from './erreursEditeur.ts'
+import {
+  erreurReseauInsertion,
+  erreurReseauModification,
+  lireErreurChargement,
+  lireErreurInsertion,
+  lireErreurModification,
+} from './erreursEditeur.ts'
 import type { ErreurChargement, ErreurEditeur, ErreurRecue } from './erreursEditeur.ts'
 
 /** Page affichée dans l'aperçu (élément 4 de E3). */
@@ -51,11 +74,18 @@ export interface DonneesEditeur {
   idDernierQuiz: number | null
 }
 
-/** `idQuiz` null : « Nouveau quiz » (requête sans `idQuiz`). */
+/**
+ * Opération en cours sur les pages : insertion (`idQuiz` null : « Nouveau quiz », requête sans `idQuiz`), retrait ou
+ * déplacement d'une page de quiz. Une seule à la fois (D12).
+ */
 export type Insertion =
   | { nom: 'AUCUNE' }
   | { nom: 'CHOIX_QUIZ', emplacement: Emplacement, idQuizPropose: number | null }
   | { nom: 'ENVOI', emplacement: Emplacement, idQuiz: number | null }
+  | { nom: 'CONFIRMATION_RETRAIT', page: PageInseree }
+  | { nom: 'RETRAIT', page: PageInseree }
+  | { nom: 'CHOIX_DEPLACEMENT', page: PageInseree }
+  | { nom: 'DEPLACEMENT', page: PageInseree, emplacement: Emplacement }
 
 export type EtatEditeur =
   | { nom: 'CHARGEMENT' }
@@ -84,6 +114,17 @@ export type ActionEditeur =
   | { type: 'INSERTION_REFUSEE', erreur: ErreurRecue }
   /** `pages` : pages relues après la panne (le hook reste en ENVOI pendant la relecture) ; `null` si elle a échoué. */
   | { type: 'ECHEC_RESEAU_INSERTION', pages: PageInseree[] | null }
+  | { type: 'DEMANDER_RETRAIT' }
+  | { type: 'CONFIRMER_RETRAIT' }
+  /** `pages` : pages relues après le `204` ; `null` si la relecture a échoué. */
+  | { type: 'RETRAIT_REUSSI', pages: PageInseree[] | null }
+  | { type: 'DEMANDER_DEPLACEMENT' }
+  /** `emplacement` : celui à envoyer au back (`emplacementDeplacement` du domaine). */
+  | { type: 'DEPLACER', emplacement: Emplacement }
+  | { type: 'DEPLACEMENT_REUSSI', pages: PageInseree[] }
+  | { type: 'MODIFICATION_REFUSEE', erreur: ErreurRecue }
+  /** `pages` : pages relues après la panne ; `null` si la relecture a échoué. */
+  | { type: 'ECHEC_RESEAU_MODIFICATION', pages: PageInseree[] | null }
 
 export const ETAT_INITIAL: EtatEditeur = { nom: 'CHARGEMENT' }
 
@@ -96,9 +137,26 @@ export function quizParDefaut(quiz: readonly QuizResume[], idDernierQuiz: number
   return quiz[0]?.idQuiz ?? null
 }
 
-/** Vrai si un bouton « Insérer un quiz ici » peut ouvrir le dialogue. */
+/** Vrai si un bouton « Insérer un quiz ici », « Retirer » ou « Déplacer » peut démarrer une opération. */
 export function insertionPossible(etat: EtatEditeur): boolean {
   return etat.nom === 'PRET' && etat.insertion.nom === 'AUCUNE' && !etat.bloquee
+}
+
+/** Vrai si les boutons « Insérer un quiz ici » sont actifs : opération possible, ou choix du nouvel emplacement. */
+export function emplacementsActifs(etat: EtatEditeur): boolean {
+  return insertionPossible(etat) || (etat.nom === 'PRET' && etat.insertion.nom === 'CHOIX_DEPLACEMENT')
+}
+
+/** Opération qui attend la réponse du back : rechargement et sélection ignorés. */
+function envoiEnCours(insertion: Insertion): boolean {
+  return insertion.nom === 'ENVOI' || insertion.nom === 'RETRAIT' || insertion.nom === 'DEPLACEMENT'
+}
+
+/** Page de quiz sélectionnée dans l'aperçu (cible de « Retirer » et « Déplacer »), sinon `null`. */
+export function pageQuizSelectionnee(etat: DonneesEditeur): PageInseree | null {
+  const { selection } = etat
+  if (selection.genre !== 'PAGE_INSEREE') return null
+  return etat.pages.find((p) => p.idPage === selection.idPage && p.type === 'QUIZ') ?? null
 }
 
 export function reduireEditeur(etat: EtatEditeur, action: ActionEditeur): EtatEditeur {
@@ -123,7 +181,7 @@ export function reduireEditeur(etat: EtatEditeur, action: ActionEditeur): EtatEd
     }
     case 'RECHARGER':
       if (etat.nom === 'ERREUR_CHARGEMENT' || etat.nom === 'LECTURE_SEULE') return ETAT_INITIAL
-      if (etat.nom === 'PRET' && etat.insertion.nom !== 'ENVOI') return ETAT_INITIAL
+      if (etat.nom === 'PRET' && !envoiEnCours(etat.insertion)) return ETAT_INITIAL
       return etat
     case 'SELECTIONNER':
       if (etat.nom === 'LECTURE_SEULE') return { ...etat, selection: action.selection }
@@ -139,9 +197,12 @@ export function reduireEditeur(etat: EtatEditeur, action: ActionEditeur): EtatEd
           idQuizPropose: quizParDefaut(etat.quiz, etat.idDernierQuiz),
         },
       }
-    case 'ANNULER_CHOIX':
-      if (etat.nom !== 'PRET' || etat.insertion.nom !== 'CHOIX_QUIZ') return etat
+    case 'ANNULER_CHOIX': {
+      if (etat.nom !== 'PRET') return etat
+      const { nom } = etat.insertion
+      if (nom !== 'CHOIX_QUIZ' && nom !== 'CONFIRMATION_RETRAIT' && nom !== 'CHOIX_DEPLACEMENT') return etat
       return { ...etat, insertion: { nom: 'AUCUNE' } }
+    }
     case 'CONFIRMER':
       if (etat.nom !== 'PRET' || etat.insertion.nom !== 'CHOIX_QUIZ') return etat
       return {
@@ -179,5 +240,58 @@ export function reduireEditeur(etat: EtatEditeur, action: ActionEditeur): EtatEd
         pages: action.pages ?? etat.pages,
         erreur: erreurReseauInsertion(),
       }
+    case 'DEMANDER_RETRAIT':
+    case 'DEMANDER_DEPLACEMENT': {
+      if (etat.nom !== 'PRET' || !insertionPossible(etat)) return etat
+      const page = pageQuizSelectionnee(etat)
+      if (page === null) return etat
+      const nom = action.type === 'DEMANDER_RETRAIT' ? 'CONFIRMATION_RETRAIT' : 'CHOIX_DEPLACEMENT'
+      return { ...etat, insertion: { nom, page } }
+    }
+    case 'CONFIRMER_RETRAIT':
+      if (etat.nom !== 'PRET' || etat.insertion.nom !== 'CONFIRMATION_RETRAIT') return etat
+      return { ...etat, insertion: { nom: 'RETRAIT', page: etat.insertion.page }, erreur: null }
+    case 'RETRAIT_REUSSI': {
+      if (etat.nom !== 'PRET' || etat.insertion.nom !== 'RETRAIT') return etat
+      const { page } = etat.insertion
+      // Relecture échouée : la page est ôtée, mais les autres gardent leur ancien rang jusqu'au rechargement.
+      const { message, affichage, action: bouton, bloquer } = lireErreurChargement(null)
+      return {
+        ...etat,
+        insertion: { nom: 'AUCUNE' },
+        pages: action.pages ?? etat.pages.filter((p) => p.idPage !== page.idPage),
+        selection: { genre: 'PAGE_PDF', numeroPage: Math.max(1, page.numeroPage) },
+        erreur: action.pages === null ? { message, affichage, action: bouton, bloquer } : null,
+      }
+    }
+    case 'DEPLACER':
+      if (etat.nom !== 'PRET' || etat.insertion.nom !== 'CHOIX_DEPLACEMENT') return etat
+      return {
+        ...etat,
+        insertion: { nom: 'DEPLACEMENT', page: etat.insertion.page, emplacement: action.emplacement },
+        erreur: null,
+      }
+    case 'DEPLACEMENT_REUSSI':
+      if (etat.nom !== 'PRET' || etat.insertion.nom !== 'DEPLACEMENT') return etat
+      // Liste de la réponse (D9) ; la page déplacée reste sélectionnée.
+      return { ...etat, insertion: { nom: 'AUCUNE' }, pages: action.pages }
+    case 'MODIFICATION_REFUSEE': {
+      if (etat.nom !== 'PRET' || !modificationEnCours(etat.insertion)) return etat
+      const erreur = lireErreurModification(action.erreur)
+      if (erreur.affichage === 'REDIRECTION') return { nom: 'CONNEXION' }
+      return { ...etat, insertion: { nom: 'AUCUNE' }, erreur, bloquee: etat.bloquee || erreur.bloquer }
+    }
+    case 'ECHEC_RESEAU_MODIFICATION':
+      if (etat.nom !== 'PRET' || !modificationEnCours(etat.insertion)) return etat
+      return {
+        ...etat,
+        insertion: { nom: 'AUCUNE' },
+        pages: action.pages ?? etat.pages,
+        erreur: erreurReseauModification(),
+      }
   }
+}
+
+function modificationEnCours(insertion: Insertion): boolean {
+  return insertion.nom === 'RETRAIT' || insertion.nom === 'DEPLACEMENT'
 }

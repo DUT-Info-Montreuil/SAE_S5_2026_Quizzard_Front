@@ -207,6 +207,16 @@ ENVOI ──« Insérer un quiz ici » ou « Insérer »──▶ ignoré (D12)
   Limite : jsdom ne traduit pas Échap en événement `cancel` du `<dialog>` ; le test envoie `cancel` directement.
   Revue du 25/11/2026 (gros PDF) : une miniature déjà rendue gardait son canvas et PDF.js les données de chaque page ;
   corrigé (D8 mis à jour : canvas retiré hors de la zone visible, `page.cleanup()` dans `shared/pdf`), test ajouté.
+- [x] **B7 Retirer et déplacer une page de quiz** (hors UC3 et hors cahier ; règles fixées par l'équipe le 26/11/2026,
+  routes du back `DELETE` et `PATCH /api/pages/{idPage}`, docs/API.md §3.2 du back). Boutons « Déplacer » et
+  « Retirer » sous l'aperçu d'une page de quiz (absents en lecture seule, désactivés pendant une opération).
+  Retirer : dialogue « Retirer cette page de quiz ? » / « La question reste enregistrée dans le quiz « {titreQuiz} ». »
+  / « Annuler » – « Retirer » ; après le `204`, pages relues (le front ne renumérote pas, D9) et page du PDF qui
+  précédait sélectionnée. Déplacer : les boutons « Insérer un quiz ici » choisissent le nouvel emplacement,
+  « Annuler » pour sortir ; `ordre` envoyé = rang parmi les autres pages (`emplacementDeplacement`) ; les deux espaces
+  qui entourent la page ne déplacent rien ; liste de la réponse `200`. Erreurs : codes et messages de l'insertion,
+  sauf `PAGE_INTROUVABLE` et `500` (`error` du back) ; sans réponse : pages relues et texte provisoire
+  (`TODO(UC3)`, U9). Reducer (§6 du fichier), hook, API, écran, démo et tests.
 
 ## 8. Questions ouvertes
 
@@ -233,6 +243,7 @@ ENVOI ──« Insérer un quiz ici » ou « Insérer »──▶ ignoré (D12)
 | U6 | Ressources annexes de PDF.js (`cmaps/`, `standard_fonts/`) | `standard_fonts/` copiées par un plugin de `vite.config.ts`, sans dépendance (demande du back, 26/11/2026). `cmaps/` non copiées : un PDF en écriture asiatique peut mal s'afficher |
 | U7 | B0 : commiter le dossier `Sae Kahoot (3).pdf` (12 Mo) et la suppression du PDF de l'UC9 ? | À décider |
 | U8 | PDF de la démo : en générer un petit (quelques pages de texte) ou en fournir un ? | Petit PDF généré, sans donnée réelle |
+| U9 | Message d'échec de « Retirer » / « Déplacer » sans réponse du serveur ou sans `error` du back : absent | Provisoire « La modification de la page a échoué, réessayez. » (`MESSAGE_MODIFICATION_PROVISOIRE`) |
 
 ## 9. Critères d'acceptation
 

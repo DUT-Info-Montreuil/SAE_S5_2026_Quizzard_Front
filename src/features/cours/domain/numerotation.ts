@@ -58,3 +58,23 @@ export function emplacementsInsertion(nbPages: number, pages: readonly PageInser
   }
   return emplacements
 }
+
+/**
+ * Emplacement à envoyer à `PATCH /api/pages/{idPage}` pour déplacer `page` vers l'espace `emplacement` (un des
+ * `emplacementsInsertion`, calculés avec la page encore en place). Le back compte `ordre` parmi les AUTRES pages
+ * déjà à cet endroit : au même endroit et après la page, le rang baisse de 1. `null` si la page ne bouge pas (les
+ * deux espaces qui l'entourent).
+ */
+export function emplacementDeplacement(
+  page: PageInseree,
+  emplacement: Emplacement,
+  pages: readonly PageInseree[],
+): Emplacement | null {
+  if (emplacement.numeroPage !== page.numeroPage) return emplacement
+  const rang = pages
+    .filter((p) => p.numeroPage === page.numeroPage)
+    .sort((a, b) => a.ordre - b.ordre)
+    .findIndex((p) => p.idPage === page.idPage)
+  if (emplacement.ordre === rang || emplacement.ordre === rang + 1) return null
+  return emplacement.ordre > rang ? { ...emplacement, ordre: emplacement.ordre - 1 } : emplacement
+}

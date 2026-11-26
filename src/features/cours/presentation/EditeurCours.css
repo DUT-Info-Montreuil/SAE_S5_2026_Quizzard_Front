@@ -258,6 +258,14 @@
   overflow-wrap: anywhere;
 }
 
+/* « Déplacer », « Retirer » (page de quiz) et « Annuler » pendant le choix du nouvel emplacement */
+.apercu-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espace-petit);
+  padding-bottom: var(--arete);
+}
+
 /* Rendu d'une page du PDF : largeur du conteneur, hauteur selon la page */
 .rendu-pdf {
   width: 100%;

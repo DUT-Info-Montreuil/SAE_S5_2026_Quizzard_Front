@@ -3,11 +3,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ErreurHttp } from '../../../shared/http/ErreurHttp.ts'
 import { oublierJetonCsrf } from '../../../shared/http/csrf.ts'
 import {
+  deplacerPage,
   insererPageQuiz,
   lireCours,
   lireFichierPdf,
   lirePagesInserees,
   lireQuizDuCours,
+  retirerPage,
 } from './coursApi.ts'
 import type { DemandeInsertion } from './coursApi.ts'
 
@@ -196,5 +198,28 @@ describe('insererPageQuiz : résultat', () => {
       return Promise.reject(new DOMException('Annulé', 'AbortError'))
     })
     await expect(insererPageQuiz(1, demande, controleur.signal)).rejects.toThrow('Annulé')
+  })
+})
+
+describe('retirerPage, deplacerPage', () => {
+  it('retrait : DELETE /api/pages/{idPage}, 204 → REUSSIE sans pages', async () => {
+    const faux = fauxFetch(() => new Response(null, { status: 204 }))
+    await expect(retirerPage(9)).resolves.toEqual({ resultat: 'REUSSIE', pages: null })
+    expect(dernierAppel(faux)).toMatchObject({ chemin: '/api/pages/9', methode: 'DELETE', corps: undefined })
+  })
+
+  it('déplacement : PATCH /api/pages/{idPage} {numeroPage, ordre}, 200 → pages converties', async () => {
+    const faux = fauxFetch(() => json(PAGES))
+    await expect(deplacerPage(7, { numeroPage: 4, ordre: 1 })).resolves.toEqual({ resultat: 'REUSSIE', pages: PAGES })
+    expect(dernierAppel(faux)).toMatchObject({ chemin: '/api/pages/7', methode: 'PATCH', corps: { numeroPage: 4, ordre: 1 } })
+  })
+
+  it('PAGE_INTROUVABLE → REFUSEE ; pas de réponse ou 200 mal formé → ECHEC_RESEAU', async () => {
+    fauxFetch(() => json({ error: 'Page introuvable.', request_id: 'r', code: 'PAGE_INTROUVABLE' }, 404))
+    await expect(retirerPage(9)).resolves.toMatchObject({ resultat: 'REFUSEE', erreur: { statut: 404, code: 'PAGE_INTROUVABLE' } })
+    fauxFetch(() => Promise.reject(new TypeError('Failed to fetch')))
+    await expect(retirerPage(9)).resolves.toEqual({ resultat: 'ECHEC_RESEAU' })
+    fauxFetch(() => json({ pages: 'non' }))
+    await expect(deplacerPage(7, { numeroPage: 4, ordre: 1 })).resolves.toEqual({ resultat: 'ECHEC_RESEAU' })
   })
 })
