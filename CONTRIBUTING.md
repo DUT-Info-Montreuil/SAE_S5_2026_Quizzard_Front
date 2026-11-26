@@ -33,7 +33,7 @@ npm ci
 ```
 
 ```bash
-cp .env.example .env
+cp .env
 ```
 
 Le fichier `.env` est facultatif : il sert à changer `VITE_API_URL` (adresse du back, `http://localhost:8080` par

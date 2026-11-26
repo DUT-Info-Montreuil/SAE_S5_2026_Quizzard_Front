@@ -1,0 +1,268 @@
+/* E2 « Mes cours ». Règles limitées à .mes-cours ; couleurs : variables de tokens.css uniquement. */
+body:has(.mes-cours) { margin: 0; background: var(--couleur-fond); }
+
+.mes-cours {
+  --texte-doux: color-mix(in srgb, var(--couleur-texte) 70%, var(--couleur-carte));
+  --ombre-carte: 0 2px 0 color-mix(in srgb, var(--couleur-texte) 8%, transparent);
+
+  box-sizing: border-box;
+  min-height: 100dvh;
+  color: var(--couleur-texte);
+  font-family: var(--police);
+  font-size: var(--taille-texte);
+
+  & h1, & h2, & p { margin: 0; }
+
+  & .visuellement-cache {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  /* En-tête */
+  & .mes-cours-entete {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--espace);
+    padding: 10px var(--espace);
+    border-bottom: var(--bordure);
+    background: var(--couleur-carte);
+  }
+  & .mes-cours-marque { display: flex; align-items: center; gap: var(--espace); }
+  & .mes-cours-ecran { font-size: 1.125rem; font-weight: 600; }
+  & .nom-utilisateur {
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--couleur-structure) 12%, var(--couleur-carte));
+    color: var(--couleur-structure);
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  /* Contenu */
+  & main {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--espace);
+    padding: 24px var(--espace) 48px;
+  }
+  & h1 { font-size: 1.75rem; font-weight: 700; }
+  & .mes-cours-compte { margin-top: 4px; color: var(--texte-doux); font-size: 0.875rem; }
+  & [role='status']:empty { display: none; }
+
+  & .carte {
+    padding: 24px;
+    border: var(--bordure);
+    border-radius: var(--rayon);
+    background: var(--couleur-carte);
+    box-shadow: var(--ombre-carte);
+  }
+
+  /* Zone d'import */
+  & .zone-import {
+    display: grid;
+    gap: var(--espace);
+    padding: 18px;
+    border: 2px dashed color-mix(in srgb, var(--couleur-structure) 40%, var(--couleur-carte));
+    border-radius: var(--rayon);
+    background: color-mix(in srgb, var(--couleur-structure) 8%, var(--couleur-fond));
+  }
+  & .zone-import-entete { display: flex; flex-wrap: wrap; align-items: center; gap: var(--espace); }
+  & .zone-import-icone {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 44px;
+    height: 44px;
+    border-radius: var(--rayon);
+    background: var(--couleur-structure);
+    color: var(--couleur-action-texte);
+  }
+  & .zone-import-textes { display: grid; flex: 1 1 280px; gap: 4px; }
+  & .zone-import-textes h2 { font-size: 1.0625rem; font-weight: 600; }
+  & .zone-import-textes p { color: var(--texte-doux); font-size: 0.8125rem; }
+  & .zone-import-textes .zone-import-fichier { color: var(--couleur-texte); font-weight: 600; overflow-wrap: anywhere; }
+  & .choix-fichier { position: relative; }
+  & .choix-fichier:focus-within { outline: 3px solid var(--couleur-texte); outline-offset: 2px; }
+  & .choix-fichier-bloque { opacity: 0.6; cursor: not-allowed; }
+  & .zone-import-details {
+    display: grid;
+    gap: var(--espace);
+    padding-top: var(--espace);
+    border-top: var(--bordure);
+  }
+
+  & .champ { display: grid; gap: var(--espace-petit); max-width: 640px; }
+  & .champ label { font-weight: 600; }
+  & .champ input {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: var(--hauteur-touche-min);
+    padding: var(--espace-petit) 12px;
+    border: 1px solid color-mix(in srgb, var(--couleur-texte) 55%, var(--couleur-carte));
+    border-radius: var(--rayon);
+    background: var(--couleur-carte);
+    color: inherit;
+    font: inherit;
+  }
+  & .champ input[aria-invalid='true'] { border: 2px solid var(--couleur-action); }
+  & .champ-erreur { color: color-mix(in srgb, var(--couleur-action) 85%, var(--couleur-texte)); font-weight: 600; }
+  & .champ-erreur:empty { display: none; }
+
+  /* Liste des cours : une carte par ligne de tableau */
+  & .tableau-cours {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 12px;
+    margin-top: -12px;
+    text-align: left;
+  }
+  & .tableau-cours :is(th, td) {
+    padding: 16px 12px;
+    border-block: var(--bordure);
+    background: var(--couleur-carte);
+    font-weight: 400;
+    vertical-align: middle;
+  }
+  & .tableau-cours tbody tr { box-shadow: var(--ombre-carte); }
+  & .tableau-cours tbody :is(th, td):first-child {
+    padding-left: var(--espace);
+    border-left: var(--bordure);
+    border-radius: var(--rayon) 0 0 var(--rayon);
+  }
+  & .tableau-cours tbody td:last-child {
+    padding-right: var(--espace);
+    border-right: var(--bordure);
+    border-radius: 0 var(--rayon) var(--rayon) 0;
+  }
+  & .cours-identite { display: flex; align-items: center; gap: var(--espace); min-width: 0; }
+  & .cours-textes { display: grid; gap: 2px; min-width: 0; }
+  & .cours-titre { font-size: 1.0625rem; font-weight: 600; overflow-wrap: anywhere; }
+  & .cours-resume { color: var(--texte-doux); font-size: 0.8125rem; }
+  & .cours-date { color: var(--texte-doux); font-size: 0.9375rem; white-space: nowrap; }
+
+  & .pastille {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--rayon);
+    color: var(--couleur-action-texte);
+    font-size: 0.875rem;
+    font-weight: 700;
+  }
+  & .pastille-0 { background: var(--couleur-reponse-d); }
+  & .pastille-1 { background: var(--couleur-structure); }
+  & .pastille-2 { background: var(--couleur-succes); }
+  & .pastille-3 { background: var(--couleur-reponse-a); }
+
+  & .etiquette {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  & .etiquette-prete {
+    background: color-mix(in srgb, var(--couleur-succes) 15%, var(--couleur-carte));
+    color: color-mix(in srgb, var(--couleur-succes) 70%, var(--couleur-texte));
+  }
+  & .etiquette-sans-quiz {
+    background: color-mix(in srgb, var(--couleur-alerte) 22%, var(--couleur-carte));
+    color: color-mix(in srgb, var(--couleur-alerte) 35%, var(--couleur-texte));
+  }
+
+  /* Boutons à arête basse qui s'enfoncent à l'appui (charte) */
+  & .boutons { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+  & .boutons-cours { justify-content: flex-end; }
+  & .bouton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--espace-petit);
+    box-sizing: border-box;
+    min-height: 36px;
+    margin-bottom: 3px;
+    padding: 6px 16px;
+    border: 0;
+    border-radius: 10px;
+    background: var(--couleur-structure);
+    color: var(--couleur-action-texte);
+    font: inherit;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+    box-shadow: 0 3px 0 color-mix(in srgb, var(--couleur-texte) 35%, transparent);
+    transition: transform var(--duree-animation), box-shadow var(--duree-animation);
+  }
+  & .bouton-action {
+    background: var(--couleur-action);
+    box-shadow: 0 3px 0 color-mix(in srgb, var(--couleur-action) 60%, var(--couleur-texte));
+  }
+  & .bouton-structure {
+    background: var(--couleur-structure);
+    box-shadow: 0 3px 0 color-mix(in srgb, var(--couleur-structure) 60%, var(--couleur-texte));
+  }
+  & .bouton-secondaire {
+    border: 1px solid color-mix(in srgb, var(--couleur-texte) 18%, var(--couleur-carte));
+    background: var(--couleur-carte);
+    color: var(--couleur-texte);
+    box-shadow: 0 3px 0 color-mix(in srgb, var(--couleur-structure) 18%, var(--couleur-carte));
+  }
+  & .bouton:active:not(:disabled) { transform: translateY(3px); box-shadow: none; }
+  & .bouton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  & :is(a, button, input):focus-visible { outline: 3px solid var(--couleur-texte); outline-offset: 2px; }
+
+  & .alerte,
+  & .succes {
+    margin: 0;
+    padding: 12px var(--espace);
+    border-left: var(--arete) solid var(--couleur-action);
+    border-radius: var(--rayon);
+    background: color-mix(in srgb, var(--couleur-action) 10%, var(--couleur-carte));
+    font-weight: 600;
+  }
+  & .alerte p { margin-bottom: var(--espace-petit); }
+  & .alerte .reference { font-weight: 400; }
+  & .succes {
+    border-color: var(--couleur-succes);
+    background: color-mix(in srgb, var(--couleur-succes) 12%, var(--couleur-carte));
+  }
+
+  /* Écran étroit : chaque carte passe sur plusieurs lignes */
+  @media (max-width: 860px) {
+    & .tableau-cours, & .tableau-cours tbody, & .tableau-cours tr { display: block; }
+    & .tableau-cours tbody tr {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: var(--espace-petit) var(--espace);
+      margin-bottom: 12px;
+      padding: var(--espace);
+      border: var(--bordure);
+      border-radius: var(--rayon);
+      background: var(--couleur-carte);
+    }
+    & .tableau-cours tbody :is(th, td),
+    & .tableau-cours tbody :is(th, td):is(:first-child, :last-child) {
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+    }
+    & .tableau-cours tbody th { grid-column: 1 / -1; }
+    & .tableau-cours tbody td:last-child { grid-column: 1 / -1; }
+    & .boutons-cours { justify-content: flex-start; }
+  }
+}

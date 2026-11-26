@@ -17,7 +17,7 @@ export type MethodeHttp = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
 export interface OptionsRequete {
   /** `GET` par défaut. */
   methode?: MethodeHttp
-  /** Objet envoyé en JSON. */
+  /** Objet envoyé en JSON, ou `FormData` envoyé en `multipart/form-data` (fichier). */
   corps?: unknown
   /** Jeton de participant (routes /api/public/**), envoyé dans l'en-tête X-Jeton-Participant. */
   jetonParticipant?: string
@@ -74,7 +74,9 @@ function envoyerUneFois(
   jeton: string | null,
 ): Promise<Response> {
   const enTetes = new Headers({ Accept: accept })
-  if (corps !== undefined) enTetes.set('Content-Type', 'application/json')
+  // FormData : le navigateur fixe lui-même Content-Type, avec la frontière.
+  const enFormulaire = corps instanceof FormData
+  if (corps !== undefined && !enFormulaire) enTetes.set('Content-Type', 'application/json')
   if (jetonParticipant !== undefined) enTetes.set('X-Jeton-Participant', jetonParticipant)
   if (jeton !== null) enTetes.set('X-XSRF-TOKEN', jeton)
 
@@ -82,7 +84,7 @@ function envoyerUneFois(
     method: methode,
     headers: enTetes,
     credentials: 'include',
-    body: corps === undefined ? undefined : JSON.stringify(corps),
+    body: enFormulaire ? corps : corps === undefined ? undefined : JSON.stringify(corps),
     signal,
   })
 }

@@ -1,0 +1,32 @@
+/* E3, en-tête du cours ouvert. Couleurs : variables de tokens.css uniquement. */
+.entete-cours {
+  display: grid;
+  gap: var(--espace);
+
+  & h1, & p { margin: 0; }
+  & .entete-cours-retour { color: var(--couleur-structure); font-weight: 600; }
+  & .entete-cours-titre { display: flex; align-items: center; gap: var(--espace); }
+  & .entete-cours-titre h1 { font-size: 1.5rem; overflow-wrap: anywhere; }
+  & .entete-cours-titre p { color: color-mix(in srgb, var(--couleur-texte) 70%, var(--couleur-carte)); }
+  & .entete-cours-pastille {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 48px;
+    height: 48px;
+    border-radius: var(--rayon);
+    color: var(--couleur-action-texte);
+    font-weight: 700;
+  }
+  & .pastille-0 { background: var(--couleur-reponse-d); }
+  & .pastille-1 { background: var(--couleur-structure); }
+  & .pastille-2 { background: var(--couleur-succes); }
+  & .pastille-3 { background: var(--couleur-reponse-a); }
+  & .entete-cours-alerte {
+    padding: 12px var(--espace);
+    border-left: var(--arete) solid var(--couleur-action);
+    border-radius: var(--rayon);
+    background: color-mix(in srgb, var(--couleur-action) 10%, var(--couleur-carte));
+    font-weight: 600;
+  }
+}

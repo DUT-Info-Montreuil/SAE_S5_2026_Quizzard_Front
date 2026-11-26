@@ -155,6 +155,16 @@ Onze écrans : six pour l'enseignant, deux projetés en salle, trois pour l'étu
 - Par cours : « Ouvrir » (E3 sur la dernière version), « Nouvelle version » (UC6), « Résultats » (E10).
 - « Mes classements » : E4.
 - Erreurs d'import affichées clairement : fichier non PDF, trop lourd, déjà importé.
+- **Réalisé (UC2)** : `features/cours`, route `/cours`. Type et taille contrôlés avant l'envoi ; erreurs du fichier et
+  du titre sous leur champ ; PDF déjà importé : « Importer quand même » ou « Ne pas importer ». « Nouvelle version »
+  est désactivé (UC6) ; les écrans E4 et E10 sont à venir.
+- **Visuel (d'après la maquette E2)** : barre d'en-tête blanche (logo, « Mes cours », « Mes classements », nom
+  « A. Nom » en pastille violette, « Se déconnecter ») ; sous le titre, nombre de cours et de quiz ; zone d'import
+  toujours visible (bordure violette en pointillés, bouton rouge « Choisir un fichier ») qui déplie le titre et
+  « Importer » une fois le fichier choisi ; un cours par carte : pastille colorée avec le sigle (« CM1 »), titre,
+  « v3 · 6 pages · 2 quiz », état « Prêt » (vert) ou « Sans quiz » (ambre), « Modifié hier » / « Importé le 8 oct. »
+  (date complète en infobulle), boutons « Nouvelle version », « Résultats », « Ouvrir ». Les cartes restent un
+  tableau HTML pour les lecteurs d'écran ; elles passent sur plusieurs lignes sous 860 px.
 
 ### E3 – Éditeur cours + quiz (enseignant, ordinateur) · UC3, UC4, UC5, UC6, UC13, UC14
 
@@ -166,6 +176,8 @@ quiz ici », « Annuler » pour sortir). Un `401`
 mène à `/connexion` ; « Recharger » relit cours, pages, quiz et PDF. Démo sans back : `/demo/editeur` (développement).
 
 - Titre et version (lecture seule).
+  **Réalisé** : en-tête `EnteteCours` (`GET /api/cours/{idCours}`) : retour « ← Mes cours », pastille, titre,
+  « v2 · 12 pages · 3 quiz » ; cours introuvable ou erreur avec « Réessayer ». Le reste de l'éditeur est provisoire.
 - Colonne des pages : miniatures des pages du PDF et des pages de quiz, distinguées par la couleur **et** une icône ;
   bouton « Insérer un quiz ici » entre deux pages ; un clic affiche la page dans l'aperçu.
 - Aperçu de la page sélectionnée (rendu PDF.js, lecture seule).

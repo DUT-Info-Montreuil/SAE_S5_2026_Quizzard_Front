@@ -126,7 +126,8 @@ absentes du build de production.
 | Chemin proposé | Écran | Accès | Remarque |
 |---|---|---|---|
 | `/connexion` | E1 Connexion | Public | Page vide provisoire (UC1 à venir) ; paramètre `retour` : écran à rouvrir après la connexion |
-| `/cours` | E2 Mes cours | Enseignant | Page d'accueil de l'enseignant |
+| `/cours` | E2 Mes cours | Enseignant | Page d'accueil de l'enseignant ; **en place** (UC2) |
+| `/cours/:idCours` | E3 provisoire | Enseignant | **Provisoire** (UC7) : seul l'élément 11 « Lancer la présentation » est branché ; lien vers l'éditeur ci-dessous |
 | `/cours/:idCours/editeur` | E3 Éditeur cours + quiz | Enseignant | **En place** (UC3, éléments 1 à 4). Ouvre la dernière version ; sélection de page dans l'état ; hook `useEditeurCours` ; identifiant non entier → « Cours introuvable. » ; routes de lecture livrées par le back (cours, pages avec titre du quiz, PDF) ; retirer et déplacer une page de quiz (`DELETE` / `PATCH /api/pages/{idPage}`) |
 | `/classements` | E4 Classements | Enseignant | |
 | `/seances/:idSession` | E5 Quiz en cours, E6 Classement | Enseignant | Présentation projetée : pages du cours, page de quiz (E5), page de classement (E6) |

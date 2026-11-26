@@ -35,6 +35,7 @@ export default defineConfig({
   plugins: [react(), policesPdf()],
   test: {
     environment: 'jsdom',
+    env: { VITE_API_URL: 'http://localhost:8080' },
     setupFiles: ['./src/test/preparation.ts'],
   },
 })

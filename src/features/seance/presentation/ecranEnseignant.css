@@ -1,0 +1,160 @@
+/* Lancement (E3) et écran projeté (E5). Couleurs : variables de tokens.css uniquement. */
+body:has(.ecran-projete, .page-enseignant) {
+  margin: 0;
+  background: var(--couleur-fond);
+}
+
+.ecran-projete,
+.page-enseignant {
+  box-sizing: border-box;
+  min-height: 100dvh;
+  padding: 24px 32px;
+  color: var(--couleur-texte);
+  font-family: var(--police);
+}
+
+.page-enseignant { max-width: 960px; margin: 0 auto; }
+
+/* Écran projeté : 24 px au moins, 28 px pour les réponses (DESIGN.md §2.1) */
+.ecran-projete {
+  --taille-projetee: 1.5rem;
+  --taille-reponse-projetee: 1.75rem;
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--espace);
+  font-size: var(--taille-projetee);
+}
+
+.ecran-projete h1 { margin: 0; font-size: 2rem; }
+.ecran-projete p { margin: 0; }
+.ecran-projete > .bouton { align-self: flex-start; }
+
+.projete-entete { display: flex; justify-content: space-between; align-items: center; gap: var(--espace); }
+.projete-corps { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 32px; flex: 1; align-items: start; }
+.ecran-projete[data-attente='true'] .projete-corps { display: flex; align-items: center; justify-content: center; }
+
+.zone-acces {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espace);
+  padding: var(--espace);
+  border: var(--bordure);
+  border-radius: var(--rayon);
+  background: var(--couleur-carte);
+}
+.zone-acces-qr { display: block; width: 100%; image-rendering: pixelated; }
+.ecran-projete[data-attente='true'] .zone-acces { flex-direction: row; align-items: center; max-width: 1000px; }
+.ecran-projete[data-attente='true'] .zone-acces-qr { width: 45vh; flex: none; }
+.zone-acces-titre { font-weight: 800; }
+.zone-acces-lien { overflow-wrap: anywhere; color: var(--couleur-structure); font-weight: 600; }
+
+.decompte-projete { display: flex; align-items: center; gap: var(--espace); margin-bottom: var(--espace); }
+.decompte-projete-barre {
+  flex: 1;
+  height: 16px;
+  border-radius: var(--rayon);
+  overflow: hidden;
+  background: color-mix(in srgb, var(--couleur-structure) 15%, var(--couleur-carte));
+}
+.decompte-projete-reste { height: 100%; background: var(--couleur-structure); }
+.decompte-projete-chiffre { font-size: 2.5rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+
+.question-projetee { display: flex; flex-direction: column; gap: var(--espace); }
+.question-projetee-position { font-weight: 600; }
+.question-projetee-enonce { margin: 0; font-size: 2.25rem; line-height: 1.2; overflow-wrap: anywhere; }
+
+.histogramme { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.histogramme-ligne {
+  display: flex;
+  align-items: center;
+  gap: var(--espace);
+  padding: 8px var(--espace);
+  border: var(--bordure);
+  border-width: 3px;
+  border-radius: var(--rayon);
+  background: var(--couleur-carte);
+  font-size: var(--taille-reponse-projetee);
+}
+.histogramme-bonne { border-color: var(--couleur-succes); }
+.histogramme-lettre {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--rayon);
+  color: var(--couleur-carte);
+  font-weight: 800;
+}
+.couleur-reponse-0 { background: var(--couleur-reponse-a); }
+.couleur-reponse-1 { background: var(--couleur-reponse-b); }
+.couleur-reponse-2 { background: var(--couleur-reponse-c); }
+.couleur-reponse-3 { background: var(--couleur-reponse-d); color: var(--couleur-texte); }
+.histogramme-corps { flex: 1; min-width: 0; }
+.histogramme-libelle { font-weight: 600; overflow-wrap: anywhere; }
+.histogramme-marque { margin-left: 12px; font-size: var(--taille-projetee); font-weight: 800; }
+.histogramme-piste { display: block; height: 14px; margin-top: 6px; }
+.histogramme-barre { display: block; height: 100%; border-radius: 0 7px 7px 0; transition: width var(--duree-animation); }
+.histogramme-nombre { min-width: 2ch; text-align: right; font-weight: 800; font-variant-numeric: tabular-nums; }
+
+.relier-projete { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+.relier-projete ul { display: grid; align-content: start; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.relier-projete li,
+.correction {
+  padding: 12px var(--espace);
+  border: var(--bordure);
+  border-radius: var(--rayon);
+  background: var(--couleur-carte);
+  font-size: var(--taille-reponse-projetee);
+}
+.correction { border: 3px solid var(--couleur-succes); }
+.correction-titre { font-weight: 800; }
+
+.boutons { display: flex; flex-wrap: wrap; gap: var(--espace); }
+.bouton {
+  min-height: var(--hauteur-touche-min);
+  margin-bottom: var(--arete);
+  padding: 8px 24px;
+  border: 0;
+  border-radius: var(--rayon);
+  background: var(--couleur-structure);
+  color: var(--couleur-action-texte);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 var(--arete) 0 color-mix(in srgb, var(--couleur-texte) 40%, transparent);
+  transition: transform var(--duree-animation), box-shadow var(--duree-animation);
+}
+.bouton-action { background: var(--couleur-action); }
+.bouton-discret { border: var(--bordure); background: var(--couleur-carte); color: var(--couleur-texte); }
+.bouton:active:not(:disabled) { transform: translateY(var(--arete)); box-shadow: none; }
+.bouton:focus-visible { outline: 3px solid var(--couleur-texte); outline-offset: 2px; }
+.bouton:disabled {
+  background: color-mix(in srgb, var(--couleur-structure) 20%, var(--couleur-fond));
+  color: color-mix(in srgb, var(--couleur-texte) 75%, var(--couleur-fond));
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.alerte {
+  margin-top: var(--espace);
+  padding: 12px var(--espace);
+  border-left: var(--arete) solid var(--couleur-action);
+  border-radius: var(--rayon);
+  background: color-mix(in srgb, var(--couleur-action) 10%, var(--couleur-carte));
+}
+.alerte p { margin: 0 0 var(--espace-petit); font-weight: 600; }
+.alerte .reference { font-weight: 400; }
+
+.bandeau-projete {
+  padding: 12px var(--espace);
+  border-radius: var(--rayon);
+  background: var(--couleur-alerte);
+  font-weight: 600;
+}
+
+@media (max-width: 900px) {
+  .projete-corps { grid-template-columns: 1fr; }
+}

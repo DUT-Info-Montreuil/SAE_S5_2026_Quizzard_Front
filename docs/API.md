@@ -128,7 +128,13 @@ Les chemins abrégés par `...` reprennent le préfixe de la ligne (par exemple
 
 Fichiers :
 
-- **Import d'un PDF** : `FormData` avec le champ `fichier` (et `titre` facultatif) ; ne pas fixer `Content-Type`.
+- **Import d'un PDF** (`POST /api/cours`) : `FormData` avec `fichier`, `titre` (obligatoire, 200 caractères au plus) et
+  `confirmerDoublon` ; ne pas fixer `Content-Type`. Sur `409 DOUBLON_COURS`, le même fichier est renvoyé avec
+  `confirmerDoublon=true` si l'enseignant confirme. La taille (50 Mo) est contrôlée avant l'envoi.
+- **Liste et ouverture d'un cours** : `GET /api/cours` (tableau sans enveloppe, champs de la réponse de l'import) sur
+  E2 ; `GET /api/cours/{idCours}` (mêmes champs plus `idVersion`, la dernière version) à l'ouverture de E3 ; un `404`
+  (`COURS_INTROUVABLE` : inexistant, archivé ou d'un autre enseignant) ou un identifiant illisible affiche « Ce cours
+  n'existe pas ou n'est plus disponible. » (`features/cours`, `useCours`).
 - **PDF** : chargé par PDF.js depuis la route protégée, jamais par un lien direct.
 - **QR code** : image `image/png` générée par le back, affichée telle quelle sur E5.
 - **Export CSV** : téléchargé par le navigateur (réponse `text/csv` transformée en fichier) ; action journalisée par
@@ -187,3 +193,4 @@ la seconde. Le serveur reste seul juge : une réponse hors délai reçoit un `40
 | A5 | Accès étudiant au PDF (`.../fichier` avec `X-Jeton-Participant`) | Utile seulement si le mode « cours visible sur les appareils étudiants » est retenu (point ouvert du cahier des charges). |
 | A6 | Codes d'erreur de l'UC8 dans `ReponseErreur` : `SESSION_INTROUVABLE`, `SESSION_CLOSE`, `CONNEXION_IUT_REQUISE`, `PSEUDONYME_INVALIDE`, `PSEUDONYME_DEJA_PRIS`, `ERREUR_SERVEUR`, `REQUETE_INVALIDE` (noms proposés), et champ `suggestion` | Sans `code`, un `409` sans `suggestion` est ambigu (séance close, quiz noté, doublon) : le front affiche alors le message `error` du back (plan UC8, questions K1, K2, K5). |
 | A7 | Façon de compter les 2 à 20 caractères du pseudonyme et espaces retirés | Le front compte en points de code et nettoie avec `trim()` et `\s+` (plan UC8, question K3) ; il doit suivre le back. |
+| A8 | ~~Écrire `GET /api/cours` et fixer sa forme~~ **Réglé** : écrite côté back (branche `feature/uc2-importer-un-cours`) avec la forme supposée, ainsi que `GET /api/cours/{idCours}` (mêmes champs plus `idVersion`, 404 `COURS_INTROUVABLE`). Reste à fusionner dans `develop` du back | Tant que le back déployé n'a pas la route (404 ou 405), E2 l'indique et ne montre que les cours importés depuis l'ouverture de l'écran. |

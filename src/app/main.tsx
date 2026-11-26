@@ -1,21 +1,30 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { createBrowserRouter, RouterProvider } from 'react-router'
+import { createBrowserRouter, Navigate, RouterProvider } from 'react-router'
 import '../shared/styles/tokens.css'
 import '../shared/styles/police.css'
 import '../index.css'
-import App from '../App.tsx'
 import { ConnexionProvisoire } from './ConnexionProvisoire.tsx'
+import { PageAVenir } from './PageAVenir.tsx'
+import { RouteEditeurProvisoire } from './RouteEditeurProvisoire.tsx'
+import { RouteMesCours } from './RouteMesCours.tsx'
 import { RouteQuestion } from './RouteQuestion.tsx'
 import { RouteRejoindre } from './RouteRejoindre.tsx'
+import { RouteSeance } from './RouteSeance.tsx'
 
 // Routes de la SPA (docs/ARCHITECTURE.md §4).
 const routeur = createBrowserRouter([
   { path: '/rejoindre/:codeAcces', Component: RouteRejoindre },
   { path: '/rejoindre/:codeAcces/question', Component: RouteQuestion },
+  { path: '/connexion', Component: ConnexionProvisoire },
+  { path: '/cours', Component: RouteMesCours },
+  // E3 provisoire (UC7) : seul l'élément 11 « Lancer la présentation » y est branché.
+  { path: '/cours/:idCours', Component: RouteEditeurProvisoire },
   // Éditeur E3 (enseignant) en `lazy` : PDF.js et l'éditeur restent hors du bundle des écrans étudiants.
   { path: '/cours/:idCours/editeur', lazy: async () => ({ Component: (await import('./RouteEditeur.tsx')).RouteEditeur }) },
-  { path: '/connexion', Component: ConnexionProvisoire },
+  { path: '/cours/:idCours/resultats', element: <PageAVenir titre="Résultats" /> },
+  { path: '/classements', element: <PageAVenir titre="Mes classements" /> },
+  { path: '/seances/:idSession', Component: RouteSeance },
   // Démo sans back, en développement seulement : absente du build de production.
   ...(import.meta.env.DEV
     ? [
@@ -24,8 +33,7 @@ const routeur = createBrowserRouter([
       { path: '/demo/editeur', lazy: async () => ({ Component: (await import('./demo/DemoEditeur.tsx')).default }) },
     ]
     : []),
-  // Modèle Vite, à remplacer.
-  { path: '*', Component: App },
+  { path: '*', element: <Navigate to="/cours" replace /> },
 ])
 
 createRoot(document.getElementById('root')!).render(
