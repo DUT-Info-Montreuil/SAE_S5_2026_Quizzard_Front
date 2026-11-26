@@ -24,10 +24,11 @@ const TYPES_PAGE: readonly TypePage[] = ['QUIZ', 'CLASSEMENT']
 
 function lirePage(valeur: unknown): PageInseree | null {
   if (!estObjet(valeur)) return null
-  const { idPage, numeroPage, ordre, type } = valeur
+  const { idPage, numeroPage, ordre, type, titreQuiz } = valeur
   if (!estEntier(idPage) || !estEntier(numeroPage) || !estEntier(ordre)) return null
   if (!TYPES_PAGE.includes(type as TypePage)) return null
-  return { idPage, numeroPage, ordre, type: type as TypePage }
+  if (titreQuiz !== null && typeof titreQuiz !== 'string') return null
+  return { idPage, numeroPage, ordre, type: type as TypePage, titreQuiz }
 }
 
 function lireVersion(valeur: unknown): VersionCours | null {
@@ -53,8 +54,9 @@ export function convertirCours(valeur: unknown): Cours | null {
 }
 
 /**
- * `GET /api/cours/{idCours}/versions/{idVersion}/pages` : pages insérées ; `null` si mal formé.
- * TODO(UC3): forme provisoire (même forme que `pages` du 201), route absente du back (plan UC3, Q1).
+ * `GET /api/cours/{idCours}/versions/{idVersion}/pages` : pages insérées, forme
+ * `[{idPage, numeroPage, ordre, type, idQuestion, idQuiz, titreQuiz}]` (même forme que `pages` du 201) ; `null` si
+ * mal formé.
  */
 export function convertirPages(valeur: unknown): PageInseree[] | null {
   return estListe(valeur, lirePage)

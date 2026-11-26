@@ -48,8 +48,6 @@ const ouvrirAvecPdfJs = async (donnees: ArrayBuffer) =>
 export interface EditeurCoursConnecte {
   etat: EtatEditeur
   rendrePage: DocumentPdf['rendrePage']
-  /** Titre du quiz des pages insérées dans l'éditeur, par `idPage` (plan UC3, Q5). */
-  titresQuiz: ReadonlyMap<number, string>
   onSelectionner(selection: Selection): void
   onOuvrirChoix(emplacement: Emplacement): void
   onAnnulerChoix(): void
@@ -61,7 +59,6 @@ export function useEditeurCours(idCours: number, options: OptionsEditeurCours = 
   // Lues au premier rendu seulement : changer d'API en cours de route relancerait le chargement.
   const [{ api, ouvrirPdf }] = useState(() => ({ api: options.api ?? API_COURS, ouvrirPdf: options.ouvrirPdf ?? ouvrirAvecPdfJs }))
   const [etat, envoyer] = useReducer(reduireEditeur, ETAT_INITIAL)
-  const [titresQuiz, setTitresQuiz] = useState<ReadonlyMap<number, string>>(() => new Map())
   const documentPdf = useRef<DocumentPdf | null>(null)
   // Verrou synchrone (D12) : un second clic avant le rendu suivant voit déjà l'insertion en cours.
   const insertionEnCours = useRef(false)
@@ -135,8 +132,6 @@ export function useEditeurCours(idCours: number, options: OptionsEditeurCours = 
       if (signal.aborted) return
       const resultat = await api.insererPageQuiz(idCours, { idVersion, emplacement, idQuiz, repereTexte }, signal)
       if (resultat.resultat === 'REUSSIE') {
-        const { idPage, titreQuiz } = resultat.reponse
-        setTitresQuiz((titres) => new Map(titres).set(idPage, titreQuiz))
         envoyer({ type: 'INSERTION_REUSSIE', reponse: resultat.reponse })
       } else if (resultat.resultat === 'REFUSEE') {
         envoyer({ type: 'INSERTION_REFUSEE', erreur: resultat.erreur })
@@ -158,7 +153,6 @@ export function useEditeurCours(idCours: number, options: OptionsEditeurCours = 
   return {
     etat,
     rendrePage,
-    titresQuiz,
     onSelectionner: (selection) => envoyer({ type: 'SELECTIONNER', selection }),
     onOuvrirChoix: (emplacement) => envoyer({ type: 'OUVRIR_CHOIX', emplacement }),
     onAnnulerChoix: () => envoyer({ type: 'ANNULER_CHOIX' }),

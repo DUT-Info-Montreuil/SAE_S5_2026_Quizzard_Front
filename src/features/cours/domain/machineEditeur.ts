@@ -36,7 +36,7 @@ import type { ErreurChargement, ErreurEditeur, ErreurRecue } from './erreursEdit
 /** Page affichée dans l'aperçu (élément 4 de E3). */
 export type Selection =
   | { genre: 'PAGE_PDF', numeroPage: number }
-  /** `titreQuiz` : connu seulement après une insertion faite dans l'éditeur (plan UC3, Q5). */
+  /** `titreQuiz` : `null` pour une page de classement. */
   | { genre: 'PAGE_INSEREE', idPage: number, titreQuiz: string | null }
 
 /** Données de l'éditeur une fois chargé. */

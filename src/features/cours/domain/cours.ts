@@ -4,7 +4,7 @@
 /** Type d'une page insérée : page de quiz (UC3) ou page de classement (UC11, affichée sans action). */
 export type TypePage = 'QUIZ' | 'CLASSEMENT'
 
-/** Page insérée dans une version du cours (élément de `pages` de la réponse 201). */
+/** Page insérée dans une version du cours (élément de `pages` du 201 et de `GET .../pages`). */
 export interface PageInseree {
   idPage: number
   /** Page du PDF après laquelle la page s'insère (0 : avant la première, nbPages : après la dernière). */
@@ -12,6 +12,8 @@ export interface PageInseree {
   /** Rang parmi les pages insérées au même endroit (0 : juste après la page du PDF). */
   ordre: number
   type: TypePage
+  /** Titre du quiz de la page ; `null` pour une page de classement. */
+  titreQuiz: string | null
 }
 
 /** Emplacement d'insertion envoyé au back. */

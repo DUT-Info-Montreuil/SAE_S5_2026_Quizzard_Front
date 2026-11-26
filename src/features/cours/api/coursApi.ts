@@ -21,12 +21,12 @@ async function lire<T>(chemin: string, convertir: (valeur: unknown) => T | null,
 // Les fonctions de lecture lèvent l'erreur de requete() (ErreurHttp, ou erreur de fetch si le serveur n'a pas
 // répondu), ou une Error si la réponse est mal formée.
 
-/** `GET /api/cours/{idCours}` : cours et dernière version. TODO(UC3): route à confirmer (plan UC3, Q1). */
+/** `GET /api/cours/{idCours}` : cours et dernière version. */
 export function lireCours(idCours: number, signal?: AbortSignal): Promise<Cours> {
   return lire(cheminCours(idCours), convertirCours, signal)
 }
 
-/** `GET .../versions/{idVersion}/pages` : pages insérées. TODO(UC3): route à confirmer (plan UC3, Q1). */
+/** `GET .../versions/{idVersion}/pages` : pages insérées. */
 export function lirePagesInserees(idCours: number, idVersion: number, signal?: AbortSignal): Promise<PageInseree[]> {
   return lire(`${cheminVersion(idCours, idVersion)}/pages`, convertirPages, signal)
 }
@@ -42,7 +42,7 @@ export function lireQuizDuCours(idCours: number, idVersion: number, signal?: Abo
 
 /**
  * `GET .../versions/{idVersion}/fichier` : PDF de la version, à donner à `ouvrirDocumentPdf()` (D6).
- * TODO(UC3): route à confirmer (plan UC3, Q1).
+ * `404` `FICHIER_INTROUVABLE` si le fichier a été supprimé (UC20).
  */
 export function lireFichierPdf(idCours: number, idVersion: number, signal?: AbortSignal): Promise<ArrayBuffer> {
   return requeteBinaire(`${cheminVersion(idCours, idVersion)}/fichier`, { signal })

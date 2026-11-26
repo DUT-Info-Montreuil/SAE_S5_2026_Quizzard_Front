@@ -34,7 +34,7 @@ function dernierAppel(faux: ReturnType<typeof fauxFetch>) {
   }
 }
 
-const PAGES = [{ idPage: 7, numeroPage: 2, ordre: 0, type: 'QUIZ' }, { idPage: 8, numeroPage: 4, ordre: 0, type: 'CLASSEMENT' }]
+const PAGES = [{ idPage: 7, numeroPage: 2, ordre: 0, type: 'QUIZ', titreQuiz: 'Quiz 1' }, { idPage: 8, numeroPage: 4, ordre: 0, type: 'CLASSEMENT', titreQuiz: null }]
 
 const REPONSE_201 = {
   idPage: 9,
@@ -44,7 +44,7 @@ const REPONSE_201 = {
   idQuestion: 21,
   numeroPage: 4,
   ordre: 1,
-  pages: [...PAGES, { idPage: 9, numeroPage: 4, ordre: 1, type: 'QUIZ' }],
+  pages: [...PAGES, { idPage: 9, numeroPage: 4, ordre: 1, type: 'QUIZ', titreQuiz: 'Quiz 1' }],
 }
 
 beforeEach(() => oublierJetonCsrf())

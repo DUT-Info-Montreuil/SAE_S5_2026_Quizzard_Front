@@ -111,6 +111,17 @@ describe('erreurs du chargement', () => {
     expect(erreur).toMatchObject({ message: 'Cours introuvable.', affichage: 'BANDEAU', action: 'RECHARGER', requestId: 'r1' })
   })
 
+  it.each([
+    ['VERSION_INTROUVABLE', 'Version introuvable.'],
+    ['FICHIER_INTROUVABLE', 'Le fichier de cette version n\'est plus disponible.'],
+  ])('404 %s : `error` du back, pas « Cours introuvable. »', (code, error) => {
+    expect(lireErreurChargement({ statut: 404, code, error, request_id: 'r3' })).toMatchObject({
+      message: error,
+      action: 'RECHARGER',
+      requestId: 'r3',
+    })
+  })
+
   it('autre : `error` du back et request_id, sinon texte provisoire ; toujours « Recharger »', () => {
     expect(lireErreurChargement({ statut: 500, error: 'Panne.', request_id: 'r2' })).toMatchObject({
       message: 'Panne.',

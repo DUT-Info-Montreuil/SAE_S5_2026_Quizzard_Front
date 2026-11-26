@@ -20,6 +20,8 @@ motifs, déroulé, image) : **emplacement prévu seulement** ; paramétrage de l
   - `POST /api/cours/{idCours}/pages-quiz` est **codé** (branche UC3) : requête, réponse et codes conformes au dossier.
   - **Aucune route de lecture n'existe** sur aucune branche (`GET /api/cours/{idCours}`, `.../pages`, `.../quiz`,
     `.../fichier`), ni `GET /api/auth/csrf`.
+  - Mise à jour du 26/11/2026 : `GET /api/cours/{idCours}`, `.../pages`, `.../fichier`, `DELETE` et
+    `PATCH /api/pages/{idPage}` sont livrés (Q1, Q5 réglées) ; `.../quiz` et `GET /api/auth/csrf` toujours absents.
   - CSRF actif hors `SECURITE_OUVERTE`, ignoré sur `/api/public/**` ; dépôt de jeton non configuré pour un front
     (prévu avec la feature `compte`). En développement, `SECURITE_OUVERTE=true` coupe le CSRF.
   - CORS expose `X-Request-Id` et `Date` (pas `Location`, inutile ici).
@@ -58,7 +60,7 @@ motifs, déroulé, image) : **emplacement prévu seulement** ; paramétrage de l
 | `GET /api/cours/{idCours}/versions/{idVersion}/pages` | Back, branche UC3 | — | `[{idPage, numeroPage, ordre, type, idQuestion, idQuiz, titreQuiz}]` |
 | `GET /api/cours/{idCours}/quiz` | Absente du back | — | Remplacée : quiz du cours déduits des pages (`idQuiz`, `titreQuiz`) ; seuls les quiz qui ont une page sont listés |
 | `GET /api/cours/{idCours}/versions/{idVersion}/fichier` | Back, branche UC3 | — | `application/pdf` (`ArrayBuffer`) |
-| `POST /api/cours/{idCours}/pages-quiz` | **Dossier, codée** (branche UC3 du back) | `{idVersion, numeroPage, ordre, idQuiz?, repereTexte?}` ; `idQuiz` absent = nouveau quiz ; `repereTexte` absent si vide ou non extrait ; cookie de session + `X-XSRF-TOKEN` | `201 {idPage, idQuiz, titreQuiz, quizCree, idQuestion, numeroPage, ordre, pages: [{idPage, numeroPage, ordre, type}]}` ; `Location` non lu |
+| `POST /api/cours/{idCours}/pages-quiz` | **Dossier, codée** (branche UC3 du back) | `{idVersion, numeroPage, ordre, idQuiz?, repereTexte?}` ; `idQuiz` absent = nouveau quiz ; `repereTexte` absent si vide ou non extrait ; cookie de session + `X-XSRF-TOKEN` | `201 {idPage, idQuiz, titreQuiz, quizCree, idQuestion, numeroPage, ordre, pages: [{idPage, numeroPage, ordre, type, idQuestion, idQuiz, titreQuiz}]}` ; `Location` non lu |
 
 Erreurs : `{error, request_id, champs?, code?}` (`ErreurHttp`).
 
@@ -91,8 +93,9 @@ Replis sans `code` connu (corps absent ou hors format, ou back pas encore align�
 
 Le bandeau est une zone `role="alert"` ; il s'efface à la tentative d'insertion suivante ou au rechargement.
 
-Erreurs de **chargement** (routes de lecture, absentes de la spec) : `401` → redirection ; `404` → « Cours
-introuvable. » ; autre → `error` du back et `request_id`, sinon texte provisoire (U4) ; toujours avec « Recharger ».
+Erreurs de **chargement** (routes de lecture, absentes de la spec) : `401` → redirection ; `404`
+`COURS_INTROUVABLE` ou sans code → « Cours introuvable. » ; `404` `VERSION_INTROUVABLE` ou `FICHIER_INTROUVABLE`
+(PDF supprimé) → `error` du back ; autre → `error` du back et `request_id`, sinon texte provisoire (U4) ; toujours avec « Recharger ».
 
 ## 5. Domaine `cours`
 
@@ -173,7 +176,7 @@ ENVOI ──« Insérer un quiz ici » ou « Insérer »──▶ ignoré (D12)
   aperçu et zone 5 à 18 côte à côte, bande des pages en bas. Écarts : l'écran reçoit l'état du reducer
   (`EtatEditeur`) et une fonction `rendrePage` (signature de `DocumentPdf.rendrePage`) ; bouton « + » avec
   « Insérer un quiz ici » en infobulle et un libellé accessible par position (« Insérer un quiz après la page 4 ») ;
-  titres des quiz des miniatures passés par la prop `titresQuiz` (provisoire, `TODO(UC3)`, Q5) ; bandeau de lecture
+  titres des quiz des miniatures lus dans les pages (`titreQuiz`, Q5 réglée) ; bandeau de lecture
   seule avec le message de `COURS_ARCHIVE` (provisoire, `TODO(UC3)`) ; le focus revient au bouton « + » quand
   l'insertion se termine. Démo sans PDF : pages dessinées sur le canvas (U8). Tests des composants : B6.
 - [x] **B5 Assemblage** : hook `useEditeurCours` (API et ouverture du PDF injectables, chargement parallèle,
@@ -211,11 +214,11 @@ ENVOI ──« Insérer un quiz ici » ou « Insérer »──▶ ignoré (D12)
 
 | # | Question | Bloque |
 |---|---|---|
-| Q1 | Formes de `GET /api/cours/{idCours}`, `.../versions/{idVersion}/pages`, `/api/cours/{idCours}/quiz` et `.../fichier` (§3, provisoires), et date de livraison : aucune n'existe sur `develop`, UC2 ni UC3 | B3, B5 (démo en attendant) |
+| Q1 | **Réglée** (routes livrées, sauf `.../quiz`). Formes de `GET /api/cours/{idCours}`, `.../versions/{idVersion}/pages`, `/api/cours/{idCours}/quiz` et `.../fichier` (§3, provisoires), et date de livraison : aucune n'existe sur `develop`, UC2 ni UC3 | B3, B5 (démo en attendant) |
 | Q2 | Le `500` de l'insertion n'a pas de `code` (`GestionnaireErreurs`) alors que le dossier donne `ERREUR_SERVEUR` : l'ajouter ? | Repli par statut en attendant |
 | Q3 | Une contrainte de base violée répond `409` sans code (« Cette opération entre en conflit… ») alors que le dossier prévoit `500 ERREUR_SERVEUR` | Repli §4 en attendant |
 | Q4 | `GET /api/auth/csrf` : forme du corps (A3), date ; dépôt de jeton prévu (session ou cookie `XSRF-TOKEN`) | D4 (provisoire) |
-| Q5 | Ajouter `idQuiz` (et `titreQuiz`, `idQuestion`) aux pages de la liste : sans eux, l'aperçu d'une page de quiz déjà enregistrée ne peut pas nommer son quiz | Aperçu (élément 4) |
+| Q5 | **Réglée** (`idQuiz`, `titreQuiz`, `idQuestion` dans la liste). Ajouter `idQuiz` (et `titreQuiz`, `idQuestion`) aux pages de la liste : sans eux, l'aperçu d'une page de quiz déjà enregistrée ne peut pas nommer son quiz | Aperçu (élément 4) |
 | Q6 | `nbPages` de la version et `numPages` du PDF peuvent-ils différer ? Le front affiche `numPages` | D8 |
 
 ### Pour l'équipe front, l'auteur de l'UC3 et l'enseignant
