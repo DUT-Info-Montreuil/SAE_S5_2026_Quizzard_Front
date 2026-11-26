@@ -17,7 +17,7 @@ export type ElementListe =
 /** Pages insérées groupées par `numeroPage` (0 à nbPages), chaque groupe trié par `ordre`. */
 function grouperParPage(nbPages: number, pages: readonly PageInseree[]): PageInseree[][] {
   const groupes: PageInseree[][] = Array.from({ length: nbPages + 1 }, () => [])
-  // Une page hors de 0..nbPages (nbPages du back différent de numPages du PDF, plan UC3 Q6) n'a pas de place : ignorée.
+  // Une page hors de 0..nbPages (le back l'interdit ; garde contre une réponse incohérente) n'a pas de place : ignorée.
   for (const page of pages) groupes[page.numeroPage]?.push(page)
   for (const groupe of groupes) groupe.sort((a, b) => a.ordre - b.ordre)
   return groupes

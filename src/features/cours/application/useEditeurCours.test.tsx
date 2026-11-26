@@ -73,7 +73,7 @@ beforeEach(() => {
 })
 
 describe('chargement', () => {
-  it('cours, pages, quiz et PDF lus → PRET, page 1 sélectionnée, nombre de pages du PDF ; document fermé au démontage', async () => {
+  it('cours, pages, quiz et PDF lus → PRET, page 1 sélectionnée ; document fermé au démontage', async () => {
     const { api, document, editeur, vue } = monter()
     expect(editeur().etat.nom).toBe('CHARGEMENT')
     await attendrePret(editeur)
@@ -81,6 +81,12 @@ describe('chargement', () => {
     expect(donnees(editeur)).toMatchObject({ nbPages: 12, pages: PAGES, quiz: QUIZ, selection: { genre: 'PAGE_PDF', numeroPage: 1 } })
     vue.unmount()
     expect(document.fermer).toHaveBeenCalledOnce()
+  })
+
+  it('nombre de pages : `nbPages` de la version (validé par le back), pas `numPages` du PDF (D8)', async () => {
+    const { editeur } = monter(fausseApi(), fauxDocumentPdf(13, async () => ''))
+    await attendrePret(editeur)
+    expect(donnees(editeur).nbPages).toBe(12)
   })
 
   it('« Recharger » : relit cours, pages, quiz et PDF, ferme l\'ancien document', async () => {

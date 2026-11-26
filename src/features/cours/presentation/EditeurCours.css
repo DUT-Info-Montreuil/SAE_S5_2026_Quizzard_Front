@@ -172,6 +172,27 @@
   }
 }
 
+/* Ordinateur : l'éditeur tient dans la fenêtre, l'aperçu et le panneau de droite défilent seuls ; la bande des pages
+   reste toujours visible en bas. */
+@media (min-width: 901px) {
+  .editeur-cours {
+    height: 100dvh;
+  }
+
+  .editeur-cours-corps {
+    min-height: 0;
+  }
+
+  .apercu,
+  .editeur-cours-question {
+    overflow-y: auto;
+  }
+
+  .liste-pages {
+    flex: none;
+  }
+}
+
 .apercu {
   display: flex;
   flex-direction: column;

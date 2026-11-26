@@ -39,7 +39,7 @@ motifs, déroulé, image) : **emplacement prévu seulement** ; paramétrage de l
 | D5 | **401** (choix du 25/11/2026) : géré **par écran**, comme `onRejoindre` de l'UC9. Le hook signale l'action `CONNEXION` ; `app/RouteEditeur.tsx` redirige vers `/connexion?retour=/cours/{idCours}/editeur`, page provisoire isolée `app/ConnexionProvisoire.tsx` (`TODO(UC1)`), à remplacer par E1. |
 | D6 | **PDF** (choix du 25/11/2026) : téléchargé par `shared/http` (variante binaire, `ArrayBuffer`, mêmes erreurs typées), puis donné à PDF.js (`data`). Un seul document par écran, fermé au démontage et au rechargement. |
 | D7 | **PDF.js** (`pdfjs-dist`, version du `package-lock.json` à l'installation) : worker importé par `?url` de Vite (copié dans `dist/assets`, aucun CDN), `isEvalSupported: false`. Chargé uniquement par la route de l'éditeur (`lazy`) : absent du bundle étudiant (`docs/ARCHITECTURE.md` §4). |
-| D8 | **Miniatures** rendues quand elles approchent de la zone visible (`IntersectionObserver` natif, marge de 200 px) ; hors de cette zone ou hors du DOM, rendu annulé et canvas retiré et vidé (mémoire bornée pour un gros PDF) ; données de chaque page libérées après rendu ou lecture du texte (`page.cleanup()`) ; **aperçu** rendu à la demande, à la largeur de sa zone. Nombre de pages : `numPages` du document PDF. |
+| D8 | **Miniatures** rendues quand elles approchent de la zone visible (`IntersectionObserver` natif, marge de 200 px) ; hors de cette zone ou hors du DOM, rendu annulé et canvas retiré et vidé (mémoire bornée pour un gros PDF) ; données de chaque page libérées après rendu ou lecture du texte (`page.cleanup()`) ; **aperçu** rendu à la demande, à la largeur de sa zone. Nombre de pages : `nbPages` de la version (celui que le back valide pour l'emplacement), pas `numPages` du PDF (demande du back, 26/11/2026). |
 | D9 | **Numérotation, emplacements, repère** : fonctions pures de `cours/domain` (§5). Le front ne recalcule jamais les décalages : après un `201`, la liste des pages insérées est **remplacée** par `pages` de la réponse. |
 | D10 | **Repère de texte** : texte de la page `numeroPage` (page 1 si `numeroPage` vaut 0) par `getTextContent()`, espaces normalisés, 300 derniers caractères (300 premiers pour 0), absent si vide. Coupe sans casser une paire de substitution UTF-16 (limite du back en unités UTF-16). Si l'extraction échoue : insertion **sans** repère. |
 | D11 | **Choix du quiz** (proposition du 25/11/2026, à valider avec l'auteur de l'UC3, U1) : clic sur « Insérer un quiz ici » → `<dialog>` natif avec boutons radio (quiz du cours, puis « Nouveau quiz ») et deux boutons « Insérer » / « Annuler ». Présélection : quiz de la dernière insertion faite dans l'éditeur, sinon premier quiz, sinon « Nouveau quiz ». « Nouveau quiz » envoie la requête **sans** `idQuiz`. |
@@ -219,7 +219,7 @@ ENVOI ──« Insérer un quiz ici » ou « Insérer »──▶ ignoré (D12)
 | Q3 | Une contrainte de base violée répond `409` sans code (« Cette opération entre en conflit… ») alors que le dossier prévoit `500 ERREUR_SERVEUR` | Repli §4 en attendant |
 | Q4 | `GET /api/auth/csrf` : forme du corps (A3), date ; dépôt de jeton prévu (session ou cookie `XSRF-TOKEN`) | D4 (provisoire) |
 | Q5 | **Réglée** (`idQuiz`, `titreQuiz`, `idQuestion` dans la liste). Ajouter `idQuiz` (et `titreQuiz`, `idQuestion`) aux pages de la liste : sans eux, l'aperçu d'une page de quiz déjà enregistrée ne peut pas nommer son quiz | Aperçu (élément 4) |
-| Q6 | `nbPages` de la version et `numPages` du PDF peuvent-ils différer ? Le front affiche `numPages` | D8 |
+| Q6 | **Réglée** : le front affiche `nbPages` de la version, que le back valide (D8). | D8 |
 
 ### Pour l'équipe front, l'auteur de l'UC3 et l'enseignant
 
@@ -230,7 +230,7 @@ ENVOI ──« Insérer un quiz ici » ou « Insérer »──▶ ignoré (D12)
 | U3 | Message d'une panne réseau pendant l'insertion | Message `ERREUR_SERVEUR` + « Recharger » |
 | U4 | Messages d'erreur du chargement de l'éditeur (routes de lecture hors dossier) | `error` du back, sinon texte provisoire |
 | U5 | Maquette E3 : exporter la Figure 30 du dossier en `docs/maquettes/E3.png` avant B4 | Mise en page en trois zones (pages, aperçu, zone 5 à 18) |
-| U6 | Ressources annexes de PDF.js (`cmaps/`, `standard_fonts/`) : les copier dans le build demande une dépendance (`vite-plugin-static-copy`) ou un script, choix d'équipe | Non copiées : un PDF à polices non embarquées ou en écriture asiatique peut mal s'afficher |
+| U6 | Ressources annexes de PDF.js (`cmaps/`, `standard_fonts/`) | `standard_fonts/` copiées par un plugin de `vite.config.ts`, sans dépendance (demande du back, 26/11/2026). `cmaps/` non copiées : un PDF en écriture asiatique peut mal s'afficher |
 | U7 | B0 : commiter le dossier `Sae Kahoot (3).pdf` (12 Mo) et la suppression du PDF de l'UC9 ? | À décider |
 | U8 | PDF de la démo : en générer un petit (quelques pages de texte) ou en fournir un ? | Petit PDF généré, sans donnée réelle |
 

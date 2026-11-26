@@ -2,11 +2,13 @@
 // Partagé par l'éditeur (E3) et la présentation projetée (E5, E6) : les types de PDF.js ne sortent pas de ce fichier.
 // Le worker est importé par `?url` : Vite le copie dans dist/assets et l'application le sert elle-même (aucun CDN).
 // À n'importer que depuis une route chargée en `lazy` : PDF.js ne doit pas entrer dans le bundle des écrans étudiants.
-// Ressources annexes (cmaps, polices standard) non embarquées : question U6 du plan UC3.
+// Polices standard (Helvetica, Times… non embarquées dans le PDF) servies par l'application (`urlPolicesPdf`) :
+// sans elles, PDF.js dépend des polices installées sur l'appareil. Tables de caractères (cmaps) non embarquées (U6).
 
 import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist'
 import type { PDFDocumentProxy, PDFPageProxy, RenderTask } from 'pdfjs-dist'
 import urlWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
+import { urlPolicesPdf } from '../config/config.ts'
 
 GlobalWorkerOptions.workerSrc = urlWorker
 
@@ -29,7 +31,7 @@ export interface DocumentPdf {
 
 /** Ouvre un PDF reçu par `requeteBinaire()`. PDF.js transfère les octets au worker : `donnees` devient inutilisable. */
 export async function ouvrirDocumentPdf(donnees: ArrayBuffer): Promise<DocumentPdf> {
-  const chargement = getDocument({ data: new Uint8Array(donnees) })
+  const chargement = getDocument({ data: new Uint8Array(donnees), standardFontDataUrl: urlPolicesPdf })
   const document = await chargement.promise
   return {
     nbPages: document.numPages,

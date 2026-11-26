@@ -3,8 +3,8 @@
 // présentation qui reçoit ce que renvoie ce hook.
 //
 // - Chargement (état CHARGEMENT) : cours (dernière version), puis en parallèle pages insérées, quiz et PDF (téléchargé
-//   et ouvert). CHARGE part une fois le document ouvert, car le nombre de pages est `numPages` (D8) ; les miniatures
-//   se rendent ensuite, à la demande. Un seul document ouvert : l'ancien est fermé au rechargement et au démontage.
+//   et ouvert). CHARGE part une fois le document ouvert ; le nombre de pages est le `nbPages` de la version, celui que
+//   le back valide (D8), pas `numPages` ; les miniatures se rendent ensuite, à la demande. Un seul document ouvert : l'ancien est fermé au rechargement et au démontage.
 // - Insertion (D12) : verrou synchrone contre le double clic, extraction du repère (échec → sans repère), POST.
 //   Panne réseau : les pages sont relues (la page a peut-être été créée), jamais de renvoi automatique.
 // - Quitter l'écran annule les requêtes en cours (AbortController) et libère le document PDF.
@@ -89,7 +89,7 @@ export function useEditeurCours(idCours: number, options: OptionsEditeurCours = 
           return
         }
         documentPdf.current = pdf
-        envoyer({ type: 'CHARGE', cours, nbPages: pdf.nbPages, pages, quiz })
+        envoyer({ type: 'CHARGE', cours, nbPages: cours.version.nbPages, pages, quiz })
       } catch (erreur) {
         // Échec d'une autre lecture : le document, s'il s'ouvre quand même, est libéré.
         void promessePdf?.then((pdf) => pdf.fermer(), () => undefined)

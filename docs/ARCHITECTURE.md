@@ -247,8 +247,10 @@ route de l'éditeur (`lazy`) et par un `import()` dynamique du hook `useEditeurC
   `404` `FICHIER_INTROUVABLE` si le fichier a été supprimé) `GET /api/cours/{idCours}/versions/{idVersion}/fichier`, avec le cookie de session (enseignant) ou l'en-tête
   `X-Jeton-Participant` (étudiant, si le mode d'affichage l'exige).
 - **Tout est embarqué** : le worker de PDF.js est importé par `?url` (Vite le copie dans `dist/assets`) et servi
-  par l'application ; aucune adresse de CDN. Ressources annexes (polices standard, tables de caractères) **pas encore
-  copiées** (question U6 du plan UC3) : un PDF à polices non embarquées peut mal s'afficher.
+  par l'application ; aucune adresse de CDN. Polices standard (`pdfjs-dist/standard_fonts`) copiées
+  sous `pdfjs/standard_fonts/` par un plugin de `vite.config.ts` (servies aussi par `npm run dev`) et passées à
+  `getDocument()` (`standardFontDataUrl`, `shared/config`). Tables de caractères (`cmaps/`) **pas encore copiées**
+  (question U6 du plan UC3) : un PDF en écriture asiatique peut mal s'afficher.
 - Usages :
   - E3 : miniatures des pages du cours et aperçu de la page sélectionnée ;
   - présentation projetée (`/seances/:idSession`) : page courante en grand, pages de quiz (E5) et de classement (E6)
@@ -315,7 +317,7 @@ Vite lit `.env` (non commité) ; seules les variables préfixées par `VITE_` so
 | F2 | Découpage par feature, mêmes noms que le back ; couches `api`, `application`, `domain`, `presentation` | En place (dossiers) |
 | F3 | Commandes en REST, diffusion en STOMP, resynchronisation REST après reconnexion | Retenu (aligné sur le back) |
 | F4 | Décompte calé sur l'échéance et l'heure du serveur | Retenu |
-| F5 | PDF.js embarqué, PDF chargé par route protégée | En place (`pdfjs-dist`, `shared/pdf`, E3) ; ressources annexes à copier (U6) |
+| F5 | PDF.js embarqué, PDF chargé par route protégée | En place (`pdfjs-dist`, `shared/pdf`, E3) ; polices standard embarquées ; cmaps à copier (U6) |
 | F6 | Routeur, client STOMP, outil de test | Retenu et installé : React Router (`react-router`), `@stomp/stompjs`, Vitest + RTL |
 | F7 | Chemins des écrans (§4) et format du `lien` de séance | Proposition, à confirmer avec le back |
 | F8 | Mode d'affichage du cours sur les appareils étudiants | Point ouvert du cahier des charges, à redemander au client |

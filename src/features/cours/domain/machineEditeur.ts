@@ -42,7 +42,7 @@ export type Selection =
 /** Données de l'éditeur une fois chargé. */
 export interface DonneesEditeur {
   cours: Cours
-  /** Nombre de pages affichées : `numPages` du document PDF (D8). */
+  /** Nombre de pages affichées : `nbPages` de la version, que le back valide pour l'emplacement (D8). */
   nbPages: number
   pages: PageInseree[]
   quiz: QuizResume[]
